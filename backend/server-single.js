@@ -303,12 +303,13 @@ app.post(
   async (req, res) => {
     try {
       const { To, From, CallerId } = req.body;
-      
+
       console.log("Twilio voice webhook called:", { To, From, CallerId });
 
       // Use CallerId parameter or fallback to From or environment variable
-      const callerIdToUse = CallerId || From || process.env.TWILIO_PHONE_NUMBER;
-      
+      // Treat "null" string as undefined
+      const callerIdToUse = (CallerId && CallerId !== "null") ? CallerId : (From || process.env.TWILIO_PHONE_NUMBER);
+
       if (!callerIdToUse) {
         console.error("No caller ID available");
         const errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>

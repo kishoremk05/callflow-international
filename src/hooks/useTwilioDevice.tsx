@@ -160,20 +160,21 @@ export function useTwilioDevice() {
       }
 
       // Get caller ID to use
-      const callerIdParam = callerIdNumber || await getPublicNumber();
-      
-      const call = await device.connect({
-        params: {
-          To: `${countryCode}${toNumber}`,
-          CallId: data.callId,
-          CallerId: callerIdParam,
-        },
-      });
-      
-      console.log("Call initiated with params:", {
+      const callerIdParam = callerIdNumber || (await getPublicNumber());
+
+      // Build params object, only include CallerId if it exists
+      const params: any = {
         To: `${countryCode}${toNumber}`,
-        CallerId: callerIdParam,
-      });
+        CallId: data.callId,
+      };
+      
+      if (callerIdParam) {
+        params.CallerId = callerIdParam;
+      }
+
+      const call = await device.connect({ params });
+
+      console.log("Call initiated with params:", params);
 
       call.on("accept", () => {
         console.log("Call accepted");
