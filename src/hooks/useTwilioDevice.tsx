@@ -167,7 +167,7 @@ export function useTwilioDevice() {
         To: `${countryCode}${toNumber}`,
         CallId: data.callId,
       };
-      
+
       if (callerIdParam) {
         params.CallerId = callerIdParam;
       }

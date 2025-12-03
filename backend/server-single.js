@@ -308,10 +308,11 @@ app.post(
 
       // Use CallerId parameter or fallback to From or environment variable
       // Treat "null" string as undefined, and skip From if it's a client identifier
-      const callerIdToUse = (CallerId && CallerId !== "null") 
-        ? CallerId 
-        : (!From || From.startsWith("client:")) 
-          ? process.env.TWILIO_PHONE_NUMBER 
+      const callerIdToUse =
+        CallerId && CallerId !== "null"
+          ? CallerId
+          : !From || From.startsWith("client:")
+          ? process.env.TWILIO_PHONE_NUMBER
           : From;
 
       if (!callerIdToUse) {
