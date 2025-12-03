@@ -11,15 +11,18 @@ export function useTwilioDevice() {
   const [isInitializing, setIsInitializing] = useState(false);
   const [currentCall, setCurrentCall] = useState<Call | null>(null);
   const callStartTimeRef = useRef<number | null>(null);
+  const hasShownReadyToast = useRef(false);
 
   useEffect(() => {
+    let isMounted = true;
+
     // Check if user is authenticated before initializing
     const checkAndInitialize = async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession();
 
-      if (session) {
+      if (session && isMounted && !device) {
         initializeDevice();
       }
     };
@@ -30,7 +33,7 @@ export function useTwilioDevice() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session && !device) {
+      if (session && !device && isMounted) {
         initializeDevice();
       } else if (!session && device) {
         device.destroy();
@@ -39,20 +42,12 @@ export function useTwilioDevice() {
       }
     });
 
-    // Retry connection if failed after 5 seconds
-    const retryTimer = setTimeout(() => {
-      if (!isConnected && !isInitializing && !device) {
-        console.log("Retrying Twilio device initialization...");
-        checkAndInitialize();
-      }
-    }, 5000);
-
     return () => {
+      isMounted = false;
       device?.destroy();
       subscription.unsubscribe();
-      clearTimeout(retryTimer);
     };
-  }, [isConnected, isInitializing, device]);
+  }, []);
 
   const initializeDevice = async () => {
     try {
@@ -92,7 +87,11 @@ export function useTwilioDevice() {
       newDevice.on("registered", () => {
         console.log("✅ Twilio Device registered and ready");
         setIsConnected(true);
-        toast.success("Ready to make calls!");
+        // Only show toast once
+        if (!hasShownReadyToast.current) {
+          toast.success("Ready to make calls!");
+          hasShownReadyToast.current = true;
+        }
       });
 
       newDevice.on("error", (error) => {
