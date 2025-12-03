@@ -307,8 +307,12 @@ app.post(
       console.log("Twilio voice webhook called:", { To, From, CallerId });
 
       // Use CallerId parameter or fallback to From or environment variable
-      // Treat "null" string as undefined
-      const callerIdToUse = (CallerId && CallerId !== "null") ? CallerId : (From || process.env.TWILIO_PHONE_NUMBER);
+      // Treat "null" string as undefined, and skip From if it's a client identifier
+      const callerIdToUse = (CallerId && CallerId !== "null") 
+        ? CallerId 
+        : (!From || From.startsWith("client:")) 
+          ? process.env.TWILIO_PHONE_NUMBER 
+          : From;
 
       if (!callerIdToUse) {
         console.error("No caller ID available");
