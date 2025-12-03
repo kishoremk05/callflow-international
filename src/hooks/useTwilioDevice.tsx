@@ -159,11 +159,20 @@ export function useTwilioDevice() {
         throw new Error(data.error || "Failed to initiate call");
       }
 
+      // Get caller ID to use
+      const callerIdParam = callerIdNumber || await getPublicNumber();
+      
       const call = await device.connect({
         params: {
           To: `${countryCode}${toNumber}`,
           CallId: data.callId,
+          CallerId: callerIdParam,
         },
+      });
+      
+      console.log("Call initiated with params:", {
+        To: `${countryCode}${toNumber}`,
+        CallerId: callerIdParam,
       });
 
       call.on("accept", () => {

@@ -3,11 +3,13 @@
 ## Frontend Deployment (Vercel)
 
 ### Step 1: Prepare Frontend
+
 1. Make sure your `.env` has all variables set
 2. Build command: `npm run build`
 3. Output directory: `dist`
 
 ### Step 2: Deploy to Vercel
+
 1. Go to [vercel.com](https://vercel.com)
 2. Sign in with GitHub
 3. Click "Add New" → "Project"
@@ -20,12 +22,15 @@
    - **Install Command**: `npm install`
 
 ### Step 3: Add Environment Variables in Vercel
+
 Go to Settings → Environment Variables and add:
+
 ```
 VITE_SUPABASE_URL=https://tfeuximanivyhdsqfiby.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmZXV4aW1hbml2eWhkc3FmaWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3MzI2NzAsImV4cCI6MjA4MDMwODY3MH0.Fxsg7b2zy1gGcwTkBxtyLIBhrRSKrb1bKbkmXKDgYho
 VITE_API_URL=https://your-backend-url.onrender.com
 ```
+
 (Replace `your-backend-url` with actual Render URL after backend deployment)
 
 ---
@@ -33,9 +38,11 @@ VITE_API_URL=https://your-backend-url.onrender.com
 ## Backend Deployment (Render)
 
 ### Step 1: Create render.yaml
+
 Already exists in your backend folder!
 
 ### Step 2: Deploy to Render
+
 1. Go to [render.com](https://render.com)
 2. Sign in with GitHub
 3. Click "New" → "Web Service"
@@ -49,6 +56,7 @@ Already exists in your backend folder!
    - **Plan**: Free (or paid for better performance)
 
 ### Step 3: Add Environment Variables in Render
+
 Go to Environment section and add all these variables:
 
 ```bash
@@ -81,7 +89,9 @@ FRONTEND_URL=https://your-app.vercel.app
 ```
 
 ### Step 4: Update Twilio TwiML App
+
 After backend is deployed on Render, update Twilio webhooks:
+
 1. Go to Twilio Console → Voice → TwiML Apps
 2. Update Voice Request URL to: `https://your-backend.onrender.com/api/twilio/voice`
 
@@ -92,6 +102,7 @@ After backend is deployed on Render, update Twilio webhooks:
 ### Option 1: Using Git (Recommended)
 
 1. **Initialize Git** (if not already):
+
 ```bash
 git init
 git add .
@@ -102,6 +113,7 @@ git commit -m "Initial commit"
    - Go to GitHub.com
    - Create new repository
    - Push your code:
+
 ```bash
 git remote add origin https://github.com/yourusername/your-repo.git
 git branch -M main
@@ -109,6 +121,7 @@ git push -u origin main
 ```
 
 3. **Deploy Frontend to Vercel**:
+
    - Go to vercel.com
    - Import from GitHub
    - Select your repository
@@ -126,11 +139,13 @@ git push -u origin main
 ### Option 2: Using Vercel CLI & Render CLI
 
 **Install Vercel CLI:**
+
 ```bash
 npm i -g vercel
 ```
 
 **Deploy Frontend:**
+
 ```bash
 vercel --prod
 ```
@@ -165,13 +180,16 @@ vercel --prod
 ## Troubleshooting
 
 **Frontend can't connect to backend:**
+
 - Check `VITE_API_URL` in Vercel matches your Render URL
 - Check `FRONTEND_URL` in Render matches your Vercel URL
 
 **Twilio calls not working:**
+
 - Update TwiML App URLs to use Render backend URL
 - Check all Twilio environment variables are set in Render
 
 **Database errors:**
+
 - Verify Supabase credentials in Render
 - Check RLS policies are enabled in Supabase

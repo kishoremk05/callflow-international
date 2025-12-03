@@ -302,14 +302,29 @@ app.post(
   express.urlencoded({ extended: false }),
   async (req, res) => {
     try {
-      const { To, From } = req.body;
+      const { To, From, CallerId } = req.body;
+      
+      console.log("Twilio voice webhook called:", { To, From, CallerId });
+
+      // Use CallerId parameter or fallback to From or environment variable
+      const callerIdToUse = CallerId || From || process.env.TWILIO_PHONE_NUMBER;
+      
+      if (!callerIdToUse) {
+        console.error("No caller ID available");
+        const errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Say>No caller ID configured. Please configure a Twilio phone number.</Say>
+</Response>`;
+        return res.type("text/xml").send(errorTwiml);
+      }
 
       // Create TwiML response to make the call
       const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Dial callerId="${From || process.env.TWILIO_PHONE_NUMBER || ""}">${To}</Dial>
+  <Dial callerId="${callerIdToUse}">${To}</Dial>
 </Response>`;
 
+      console.log("Sending TwiML:", twiml);
       res.type("text/xml");
       res.send(twiml);
     } catch (error) {
