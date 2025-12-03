@@ -141,60 +141,86 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-blue-950 dark:to-purple-950">
       <Header user={user} onSignOut={signOut} />
 
-      <main className="container py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Welcome back, {user?.user_metadata?.full_name || "there"}!
+      <main className="container py-8 px-4 md:px-6 lg:px-8">
+        {/* Hero Section */}
+        <div className="mb-10 relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-purple-500/20 to-pink-500/20 blur-3xl opacity-30 -z-10" />
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+            Dashboard
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Welcome back, {user?.user_metadata?.full_name || "there"}! 👋
           </p>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
+          {/* Main Content Area */}
           <div className="lg:col-span-2 space-y-6">
             <StatsCards stats={stats} />
             <RecentCalls calls={calls} loading={loading} />
           </div>
 
+          {/* Sidebar */}
           <div className="space-y-6">
             <WalletCard
               balance={wallet.balance}
               currency={wallet.currency}
               onAddFunds={handleAddFunds}
             />
+            
             <Dialer
               onCall={handleCall}
               disabled={!!currentCall || isInitializing}
             />
 
+            {/* Status Messages */}
             {isInitializing && (
-              <div className="text-center text-sm text-muted-foreground">
-                Initializing calling device...
+              <div className="animate-pulse p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl backdrop-blur-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping" />
+                  <p className="text-sm font-medium text-blue-700 dark:text-blue-400">
+                    Initializing calling device...
+                  </p>
+                </div>
               </div>
             )}
 
             {!isConnected && !isInitializing && (
-              <div className="text-center text-sm text-yellow-600">
-                ⚠️ Calling device not connected. Attempting to reconnect...
+              <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl backdrop-blur-sm">
+                <div className="flex items-center gap-3">
+                  <div className="text-2xl">⚠️</div>
+                  <div>
+                    <p className="text-sm font-medium text-yellow-700 dark:text-yellow-400">
+                      Device not connected
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Attempting to reconnect...
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
             {currentCall && (
-              <div className="p-4 bg-green-500/10 border border-green-500 rounded-lg">
+              <div className="p-6 bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-2xl backdrop-blur-sm shadow-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-semibold text-green-600">
-                      Call In Progress
-                    </p>
-                    <p className="text-sm text-muted-foreground">Connected</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                      <p className="font-bold text-green-700 dark:text-green-400 text-lg">
+                        Call In Progress
+                      </p>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Connected and active</p>
                   </div>
                   <button
                     onClick={hangupCall}
-                    className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                    className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 active:scale-95 transition-all duration-200 shadow-lg font-medium"
                   >
-                    Hang Up
+                    End Call
                   </button>
                 </div>
               </div>

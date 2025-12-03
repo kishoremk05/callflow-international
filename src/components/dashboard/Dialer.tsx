@@ -68,17 +68,21 @@ export function Dialer({ onCall, disabled }: DialerProps) {
   };
 
   return (
-    <Card>
+    <Card className="border-0 bg-gradient-to-br from-white/80 to-white/50 dark:from-slate-900/80 dark:to-slate-900/50 backdrop-blur-sm shadow-xl">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2">
-          <Phone className="w-5 h-5 text-primary" />
-          Make a Call
+          <div className="p-2 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5">
+            <Phone className="w-5 h-5 text-primary" />
+          </div>
+          <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+            Make a Call
+          </span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex gap-2">
           <Select value={countryCode} onValueChange={setCountryCode}>
-            <SelectTrigger className="w-28">
+            <SelectTrigger className="w-28 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -93,18 +97,18 @@ export function Dialer({ onCall, disabled }: DialerProps) {
             </SelectContent>
           </Select>
           <div className="flex-1 relative">
-            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/60" />
             <input
               type="text"
               value={formatPhoneNumber(phoneNumber)}
               readOnly
               placeholder="Enter number"
-              className="w-full h-10 pl-10 pr-10 text-lg font-mono bg-secondary rounded-md border-0 focus:ring-2 focus:ring-primary/20"
+              className="w-full h-10 pl-10 pr-10 text-lg font-mono bg-gradient-to-br from-secondary to-secondary/50 rounded-xl border border-primary/10 focus:ring-2 focus:ring-primary/30 transition-all"
             />
             {phoneNumber && (
               <button
                 onClick={handleDelete}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-destructive transition-colors"
               >
                 <Delete className="w-4 h-4" />
               </button>
@@ -112,14 +116,14 @@ export function Dialer({ onCall, disabled }: DialerProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-3">
           {dialPad.map(({ digit, letters }) => (
             <button
               key={digit}
               onClick={() => handleDigitPress(digit)}
-              className="flex flex-col items-center justify-center h-16 rounded-xl bg-secondary hover:bg-secondary/80 active:scale-95 transition-all"
+              className="group flex flex-col items-center justify-center h-16 rounded-2xl bg-gradient-to-br from-secondary to-secondary/50 hover:from-primary/20 hover:to-primary/10 border border-transparent hover:border-primary/20 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md"
             >
-              <span className="text-xl font-semibold">{digit}</span>
+              <span className="text-2xl font-bold group-hover:text-primary transition-colors">{digit}</span>
               {letters && (
                 <span className="text-[10px] text-muted-foreground tracking-widest">
                   {letters}
@@ -132,7 +136,7 @@ export function Dialer({ onCall, disabled }: DialerProps) {
         <Button
           onClick={handleCall}
           disabled={phoneNumber.length < 7 || disabled}
-          className="w-full h-14 text-lg"
+          className="w-full h-14 text-lg bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg hover:shadow-xl hover:shadow-primary/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           size="lg"
         >
           <Phone className="w-5 h-5 mr-2" />

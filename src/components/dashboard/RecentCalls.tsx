@@ -39,19 +39,23 @@ export function RecentCalls({ calls, loading }: RecentCallsProps) {
   };
 
   return (
-    <Card>
+    <Card className="border-0 bg-gradient-to-br from-white/80 to-white/50 dark:from-slate-900/80 dark:to-slate-900/50 backdrop-blur-sm shadow-xl">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2">
-          <PhoneIncoming className="w-5 h-5 text-primary" />
-          Recent Calls
+          <div className="p-2 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5">
+            <PhoneIncoming className="w-5 h-5 text-primary" />
+          </div>
+          <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+            Recent Calls
+          </span>
         </CardTitle>
       </CardHeader>
       <CardContent>
         {loading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="animate-pulse flex items-center gap-3">
-                <div className="w-10 h-10 bg-muted rounded-full" />
+              <div key={i} className="animate-pulse flex items-center gap-3 p-4 rounded-2xl bg-gradient-to-r from-muted/50 to-muted/30">
+                <div className="w-12 h-12 bg-muted rounded-full" />
                 <div className="flex-1 space-y-2">
                   <div className="h-4 bg-muted rounded w-1/3" />
                   <div className="h-3 bg-muted rounded w-1/2" />
@@ -60,23 +64,25 @@ export function RecentCalls({ calls, loading }: RecentCallsProps) {
             ))}
           </div>
         ) : calls.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <Phone className="w-10 h-10 mx-auto mb-2 opacity-50" />
-            <p>No calls yet</p>
+          <div className="text-center py-12 text-muted-foreground">
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary/10 to-purple-500/10 flex items-center justify-center">
+              <Phone className="w-10 h-10 text-primary/50" />
+            </div>
+            <p className="font-medium text-lg mb-1">No calls yet</p>
             <p className="text-sm">Make your first call to get started</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {calls.map((call) => (
               <div
                 key={call.id}
-                className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
+                className="group flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-secondary/50 to-secondary/30 hover:from-secondary hover:to-secondary/80 border border-transparent hover:border-primary/10 transition-all duration-200 cursor-pointer"
               >
-                <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/10 to-purple-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
                   {getStatusIcon(call.status)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium truncate">
+                  <div className="font-semibold truncate text-lg group-hover:text-primary transition-colors">
                     {call.to_country_code} {call.to_number}
                   </div>
                   <div className="text-sm text-muted-foreground">
@@ -84,11 +90,11 @@ export function RecentCalls({ calls, loading }: RecentCallsProps) {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-medium">
+                  <div className="text-base font-bold">
                     {formatDuration(call.duration_seconds)}
                   </div>
                   {call.billed_amount !== null && (
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-sm text-primary font-medium">
                       ${call.billed_amount?.toFixed(2)}
                     </div>
                   )}
