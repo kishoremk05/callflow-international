@@ -238,21 +238,21 @@ const Landing = () => {
           }}
         />
         {/* Navigation - Transparent with shadow for readability */}
-        <nav className="absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/30 to-transparent">
-          <div className="container mx-auto px-6 py-6">
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/40 to-transparent backdrop-blur-sm">
+          <div className="container mx-auto px-4 md:px-6 py-3 md:py-4">
             <div className="flex items-center justify-between">
               {/* Logo/Brand */}
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-500 rounded-lg flex items-center justify-center shadow-lg">
-                  <Phone className="w-6 h-6 text-white" />
+                <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-orange-500 to-amber-500 rounded-lg flex items-center justify-center shadow-lg">
+                  <Phone className="w-4 h-4 md:w-6 md:h-6 text-white" />
                 </div>
-                <h1 className="text-2xl font-bold text-white drop-shadow-lg">
+                <h1 className="text-base md:text-2xl font-bold text-white drop-shadow-lg">
                   GlobalConnect
                 </h1>
               </div>
 
-              {/* Navigation Links */}
-              <div className="flex items-center gap-10">
+              {/* Navigation Links - Desktop */}
+              <div className="hidden md:flex items-center gap-6">
                 <a
                   href="#home"
                   className="text-white hover:text-amber-300 transition-colors font-semibold text-sm drop-shadow-lg"
@@ -263,7 +263,7 @@ const Landing = () => {
                   href="#pricing"
                   className="text-white hover:text-amber-300 transition-colors font-semibold text-sm drop-shadow-lg"
                 >
-                  Pricings
+                  Pricing
                 </a>
                 <a
                   href="#resources"
@@ -278,6 +278,80 @@ const Landing = () => {
                   Contact
                 </a>
               </div>
+
+              {/* Mobile Menu Button */}
+              <button
+                className="md:hidden text-white p-2 hover:bg-white/10 rounded-lg transition-colors"
+                onClick={() => {
+                  const menu = document.getElementById("mobile-menu");
+                  if (menu) {
+                    menu.classList.toggle("hidden");
+                  }
+                }}
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Mobile Menu Dropdown */}
+            <div
+              id="mobile-menu"
+              className="hidden md:hidden bg-black/95 backdrop-blur-md rounded-lg mt-2 overflow-hidden"
+            >
+              <div className="flex flex-col">
+                <a
+                  href="#home"
+                  className="text-white hover:text-amber-300 transition-colors font-semibold text-sm py-3 px-4 hover:bg-white/10 border-b border-white/10"
+                  onClick={() => {
+                    const menu = document.getElementById("mobile-menu");
+                    if (menu) menu.classList.add("hidden");
+                  }}
+                >
+                  Home
+                </a>
+                <a
+                  href="#pricing"
+                  className="text-white hover:text-amber-300 transition-colors font-semibold text-sm py-3 px-4 hover:bg-white/10 border-b border-white/10"
+                  onClick={() => {
+                    const menu = document.getElementById("mobile-menu");
+                    if (menu) menu.classList.add("hidden");
+                  }}
+                >
+                  Pricing
+                </a>
+                <a
+                  href="#resources"
+                  className="text-white hover:text-amber-300 transition-colors font-semibold text-sm py-3 px-4 hover:bg-white/10 border-b border-white/10"
+                  onClick={() => {
+                    const menu = document.getElementById("mobile-menu");
+                    if (menu) menu.classList.add("hidden");
+                  }}
+                >
+                  Resources
+                </a>
+                <a
+                  href="#contact"
+                  className="text-white hover:text-amber-300 transition-colors font-semibold text-sm py-3 px-4 hover:bg-white/10"
+                  onClick={() => {
+                    const menu = document.getElementById("mobile-menu");
+                    if (menu) menu.classList.add("hidden");
+                  }}
+                >
+                  Contact
+                </a>
+              </div>
             </div>
           </div>
         </nav>
@@ -287,13 +361,15 @@ const Landing = () => {
           {/* Hero Content - Centered at Top */}
           <div className="container mx-auto px-4 md:px-6 relative z-20">
             <div className="text-center max-w-4xl mx-auto mb-6 md:mb-12">
-              <div 
+              <div
                 className="inline-block mb-6 px-4 py-2 bg-orange-100 rounded-full"
                 style={{ animation: "fadeInUp 0.6s ease-out" }}
               >
-                <span className="text-orange-600 font-medium text-sm">🌍 Trusted by 50,000+ users worldwide</span>
+                <span className="text-orange-600 font-medium text-sm">
+                  🌍 Trusted by 50,000+ users worldwide
+                </span>
               </div>
-              
+
               <h1
                 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 leading-tight px-2"
                 style={{
@@ -313,8 +389,8 @@ const Landing = () => {
                 className="text-gray-600 text-lg md:text-xl mb-8 max-w-2xl mx-auto leading-relaxed"
                 style={{ animation: "fadeInUp 1s ease-out 0.2s backwards" }}
               >
-                Crystal-clear calls to 190+ countries. No apps, no SIM cards, no restrictions. 
-                Just open your browser and start calling.
+                Crystal-clear calls to 190+ countries. No apps, no SIM cards, no
+                restrictions. Just open your browser and start calling.
               </p>
 
               {/* CTA Buttons */}
@@ -343,7 +419,7 @@ const Landing = () => {
             <div className="mt-8 md:mt-32"></div>
 
             {/* Phone Mockup - Centered */}
-            <div 
+            <div
               className="flex justify-center items-center relative mt-8 md:mt-12"
               style={{ animation: "fadeInUp 1.2s ease-out 0.5s backwards" }}
             >
@@ -359,8 +435,11 @@ const Landing = () => {
                   </div>
                 </div>
                 <div className="flex -space-x-2">
-                  {['S', 'M', 'P', 'A'].map((letter, i) => (
-                    <div key={i} className="w-8 h-8 bg-gradient-to-br from-orange-400 to-amber-500 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white">
+                  {["S", "M", "P", "A"].map((letter, i) => (
+                    <div
+                      key={i}
+                      className="w-8 h-8 bg-gradient-to-br from-orange-400 to-amber-500 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white"
+                    >
                       {letter}
                     </div>
                   ))}
@@ -382,8 +461,10 @@ const Landing = () => {
                   </div>
                 </div>
                 <div className="flex gap-1">
-                  {['🇺🇸', '🇬🇧', '🇮🇳', '🇩🇪', '🇯🇵'].map((flag, i) => (
-                    <span key={i} className="text-xl">{flag}</span>
+                  {["🇺🇸", "🇬🇧", "🇮🇳", "🇩🇪", "🇯🇵"].map((flag, i) => (
+                    <span key={i} className="text-xl">
+                      {flag}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -392,7 +473,8 @@ const Landing = () => {
               <div
                 className="relative w-[200px] h-[400px] sm:w-[240px] sm:h-[480px] md:w-[300px] md:h-[620px] bg-gradient-to-br from-gray-800 via-gray-900 to-black p-[2px] md:p-[3px] rounded-[2rem] sm:rounded-[2.5rem] md:rounded-[3rem] shadow-2xl z-20"
                 style={{
-                  boxShadow: "0 50px 100px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.1)",
+                  boxShadow:
+                    "0 50px 100px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.1)",
                 }}
               >
                 {/* Phone Frame Inner */}
@@ -405,16 +487,27 @@ const Landing = () => {
 
                   {/* Status Bar */}
                   <div className="h-7 sm:h-8 md:h-10 flex items-end justify-between px-3 sm:px-4 md:px-6 pb-0.5 sm:pb-1 relative z-20">
-                    <div className="text-white/90 text-[10px] sm:text-xs font-semibold">9:41</div>
+                    <div className="text-white/90 text-[10px] sm:text-xs font-semibold">
+                      9:41
+                    </div>
                     <div className="flex gap-0.5 sm:gap-1 items-center">
                       <div className="flex gap-0.5">
-                        {[1,2,3,4].map(i => (
-                          <div key={i} className="w-0.5 bg-white/80 rounded-full" style={{height: `${3 + i*1.5}px`}}></div>
+                        {[1, 2, 3, 4].map((i) => (
+                          <div
+                            key={i}
+                            className="w-0.5 bg-white/80 rounded-full"
+                            style={{ height: `${3 + i * 1.5}px` }}
+                          ></div>
                         ))}
                       </div>
-                      <span className="text-white/80 text-[8px] sm:text-[10px] font-medium ml-0.5 sm:ml-1">5G</span>
+                      <span className="text-white/80 text-[8px] sm:text-[10px] font-medium ml-0.5 sm:ml-1">
+                        5G
+                      </span>
                       <div className="w-4 sm:w-5 md:w-6 h-2 sm:h-2.5 md:h-3 border border-white/60 rounded-sm ml-0.5 sm:ml-1 relative">
-                        <div className="absolute inset-0.5 bg-green-400 rounded-[1px]" style={{width: '80%'}}></div>
+                        <div
+                          className="absolute inset-0.5 bg-green-400 rounded-[1px]"
+                          style={{ width: "80%" }}
+                        ></div>
                       </div>
                     </div>
                   </div>
@@ -431,48 +524,63 @@ const Landing = () => {
                         <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg md:rounded-xl flex items-center justify-center">
                           <Phone className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 text-white" />
                         </div>
-                        <span className="text-white/90 font-medium text-[10px] sm:text-xs md:text-sm">Dialer</span>
+                        <span className="text-white/90 font-medium text-[10px] sm:text-xs md:text-sm">
+                          Dialer
+                        </span>
                       </div>
                       <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 bg-white/10 rounded-full flex items-center justify-center">
-                        <span className="text-white/70 text-[10px] sm:text-xs md:text-sm">⋮</span>
+                        <span className="text-white/70 text-[10px] sm:text-xs md:text-sm">
+                          ⋮
+                        </span>
                       </div>
                     </div>
 
                     {/* Phone Number Display */}
                     <div className="text-center mb-2 sm:mb-4 md:mb-6 py-2 sm:py-3 md:py-4 bg-gradient-to-r from-transparent via-white/5 to-transparent rounded-xl md:rounded-2xl">
-                      <div className="text-white text-lg sm:text-xl md:text-3xl font-light tracking-wider md:tracking-widest mb-1 sm:mb-2" style={{fontFamily: 'system-ui'}}>
+                      <div
+                        className="text-white text-lg sm:text-xl md:text-3xl font-light tracking-wider md:tracking-widest mb-1 sm:mb-2"
+                        style={{ fontFamily: "system-ui" }}
+                      >
                         +1 212 555 0188
                       </div>
                       <div className="flex items-center justify-center gap-1 sm:gap-2">
                         <div className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full flex items-center justify-center">
                           <Globe className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 text-white" />
                         </div>
-                        <span className="text-blue-400 text-[8px] sm:text-[10px] md:text-xs font-medium">Virtual Number • USA</span>
+                        <span className="text-blue-400 text-[8px] sm:text-[10px] md:text-xs font-medium">
+                          Virtual Number • USA
+                        </span>
                       </div>
                     </div>
 
                     {/* Number Pad - Responsive */}
                     <div className="grid grid-cols-3 gap-1 sm:gap-1.5 md:gap-2 flex-1 max-h-[160px] sm:max-h-[200px] md:max-h-[260px]">
                       {[
-                        {num: '1', sub: ''},
-                        {num: '2', sub: 'ABC'},
-                        {num: '3', sub: 'DEF'},
-                        {num: '4', sub: 'GHI'},
-                        {num: '5', sub: 'JKL'},
-                        {num: '6', sub: 'MNO'},
-                        {num: '7', sub: 'PQRS'},
-                        {num: '8', sub: 'TUV'},
-                        {num: '9', sub: 'WXYZ'},
-                        {num: '*', sub: ''},
-                        {num: '0', sub: '+'},
-                        {num: '#', sub: ''},
+                        { num: "1", sub: "" },
+                        { num: "2", sub: "ABC" },
+                        { num: "3", sub: "DEF" },
+                        { num: "4", sub: "GHI" },
+                        { num: "5", sub: "JKL" },
+                        { num: "6", sub: "MNO" },
+                        { num: "7", sub: "PQRS" },
+                        { num: "8", sub: "TUV" },
+                        { num: "9", sub: "WXYZ" },
+                        { num: "*", sub: "" },
+                        { num: "0", sub: "+" },
+                        { num: "#", sub: "" },
                       ].map((item, i) => (
                         <div
                           key={i}
                           className="w-10 h-8 sm:w-12 sm:h-10 md:w-16 md:h-14 mx-auto flex flex-col items-center justify-center bg-transparent hover:bg-white/5 transition-all cursor-pointer border border-white/20"
                         >
-                          <span className="text-white text-sm sm:text-base md:text-lg font-normal">{item.num}</span>
-                          {item.sub && <span className="text-white/40 text-[5px] sm:text-[6px] md:text-[7px] tracking-wider">{item.sub}</span>}
+                          <span className="text-white text-sm sm:text-base md:text-lg font-normal">
+                            {item.num}
+                          </span>
+                          {item.sub && (
+                            <span className="text-white/40 text-[5px] sm:text-[6px] md:text-[7px] tracking-wider">
+                              {item.sub}
+                            </span>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -480,18 +588,23 @@ const Landing = () => {
                     {/* Bottom Actions */}
                     <div className="flex justify-center items-center gap-3 sm:gap-4 md:gap-6 py-2 sm:py-3 md:py-4 mt-1 md:mt-2">
                       <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-white/10 rounded-full flex items-center justify-center cursor-pointer hover:bg-white/20 transition-all">
-                        <span className="text-white text-xs sm:text-sm md:text-lg">✕</span>
+                        <span className="text-white text-xs sm:text-sm md:text-lg">
+                          ✕
+                        </span>
                       </div>
-                      <div 
+                      <div
                         className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center shadow-lg cursor-pointer hover:scale-105 transition-transform"
                         style={{
-                          boxShadow: '0 8px 24px rgba(16, 185, 129, 0.4), inset 0 1px 0 rgba(255,255,255,0.3)'
+                          boxShadow:
+                            "0 8px 24px rgba(16, 185, 129, 0.4), inset 0 1px 0 rgba(255,255,255,0.3)",
                         }}
                       >
                         <Phone className="w-4 h-4 sm:w-5 sm:h-5 md:w-7 md:h-7 text-white" />
                       </div>
                       <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-white/10 rounded-full flex items-center justify-center cursor-pointer hover:bg-white/20 transition-all">
-                        <span className="text-white text-xs sm:text-sm md:text-lg">⌫</span>
+                        <span className="text-white text-xs sm:text-sm md:text-lg">
+                          ⌫
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -503,7 +616,7 @@ const Landing = () => {
             </div>
 
             {/* Trust Badges */}
-            <div 
+            <div
               className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-8 mt-6 md:mt-12 flex-wrap px-4"
               style={{ animation: "fadeInUp 1.2s ease-out 0.7s backwards" }}
             >
@@ -531,14 +644,15 @@ const Landing = () => {
                 Why Choose Us
               </span>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-                Everything You Need for 
+                Everything You Need for
                 <span className="text-orange-500"> Global Calling</span>
               </h2>
               <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                Powerful features designed to make international communication seamless
+                Powerful features designed to make international communication
+                seamless
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
               {features.map((feature, index) => (
                 <div
@@ -568,7 +682,8 @@ const Landing = () => {
                 Simple Process
               </span>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-                Start Calling in <span className="text-orange-500">3 Easy Steps</span>
+                Start Calling in{" "}
+                <span className="text-orange-500">3 Easy Steps</span>
               </h2>
               <p className="text-gray-600 text-lg max-w-2xl mx-auto">
                 No complicated setup. Get started in under 2 minutes.
@@ -579,11 +694,26 @@ const Landing = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
                 {/* Connection Line */}
                 <div className="hidden md:block absolute top-16 left-[20%] right-[20%] h-0.5 bg-gradient-to-r from-orange-200 via-orange-400 to-orange-200"></div>
-                
+
                 {[
-                  { step: 1, title: "Create Account", desc: "Sign up in seconds with just your email. No credit card required.", icon: "👤" },
-                  { step: 2, title: "Add Credits", desc: "Top up instantly with Stripe, Razorpay, or UPI payments.", icon: "💳" },
-                  { step: 3, title: "Start Calling", desc: "Dial any number worldwide directly from your browser.", icon: "📞" }
+                  {
+                    step: 1,
+                    title: "Create Account",
+                    desc: "Sign up in seconds with just your email. No credit card required.",
+                    icon: "👤",
+                  },
+                  {
+                    step: 2,
+                    title: "Add Credits",
+                    desc: "Top up instantly with Stripe, Razorpay, or UPI payments.",
+                    icon: "💳",
+                  },
+                  {
+                    step: 3,
+                    title: "Start Calling",
+                    desc: "Dial any number worldwide directly from your browser.",
+                    icon: "📞",
+                  },
                 ].map((item) => (
                   <div key={item.step} className="text-center relative z-10">
                     <div className="w-20 h-20 bg-white border-4 border-orange-400 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
@@ -613,10 +743,12 @@ const Landing = () => {
                 Transparent Pricing
               </span>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-                Pay Only for <span className="text-orange-500">What You Use</span>
+                Pay Only for{" "}
+                <span className="text-orange-500">What You Use</span>
               </h2>
               <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                No monthly subscriptions. No hidden fees. Just simple credit-based pricing.
+                No monthly subscriptions. No hidden fees. Just simple
+                credit-based pricing.
               </p>
             </div>
 
@@ -624,14 +756,30 @@ const Landing = () => {
               {/* Starter */}
               <div className="bg-white rounded-2xl border border-gray-200 p-8 hover:shadow-xl transition-shadow">
                 <div className="text-center mb-6">
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">Starter</h3>
-                  <div className="text-4xl font-bold text-gray-800 mb-1">$5</div>
-                  <p className="text-gray-500 text-sm">One-time credit purchase</p>
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">
+                    Starter
+                  </h3>
+                  <div className="text-4xl font-bold text-gray-800 mb-1">
+                    $5
+                  </div>
+                  <p className="text-gray-500 text-sm">
+                    One-time credit purchase
+                  </p>
                 </div>
                 <ul className="space-y-4 mb-8">
-                  {["Call 50+ countries", "HD browser calling", "Basic support", "Call history"].map((item) => (
-                    <li key={item} className="flex items-center gap-3 text-gray-600">
-                      <span className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-xs">✓</span>
+                  {[
+                    "Call 50+ countries",
+                    "HD browser calling",
+                    "Basic support",
+                    "Call history",
+                  ].map((item) => (
+                    <li
+                      key={item}
+                      className="flex items-center gap-3 text-gray-600"
+                    >
+                      <span className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-xs">
+                        ✓
+                      </span>
                       {item}
                     </li>
                   ))}
@@ -655,9 +803,17 @@ const Landing = () => {
                   <p className="text-white/80 text-sm">+10% bonus credits</p>
                 </div>
                 <ul className="space-y-4 mb-8">
-                  {["All Starter features", "190+ countries", "Call recording", "Priority support", "Team features"].map((item) => (
+                  {[
+                    "All Starter features",
+                    "190+ countries",
+                    "Call recording",
+                    "Priority support",
+                    "Team features",
+                  ].map((item) => (
                     <li key={item} className="flex items-center gap-3">
-                      <span className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center text-xs">✓</span>
+                      <span className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center text-xs">
+                        ✓
+                      </span>
                       {item}
                     </li>
                   ))}
@@ -673,14 +829,31 @@ const Landing = () => {
               {/* Enterprise */}
               <div className="bg-white rounded-2xl border border-gray-200 p-8 hover:shadow-xl transition-shadow">
                 <div className="text-center mb-6">
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">Enterprise</h3>
-                  <div className="text-4xl font-bold text-gray-800 mb-1">$200+</div>
-                  <p className="text-gray-500 text-sm">Volume discounts available</p>
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">
+                    Enterprise
+                  </h3>
+                  <div className="text-4xl font-bold text-gray-800 mb-1">
+                    $200+
+                  </div>
+                  <p className="text-gray-500 text-sm">
+                    Volume discounts available
+                  </p>
                 </div>
                 <ul className="space-y-4 mb-8">
-                  {["All Business features", "Dedicated manager", "Custom numbers", "API access", "SLA guarantee"].map((item) => (
-                    <li key={item} className="flex items-center gap-3 text-gray-600">
-                      <span className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-xs">✓</span>
+                  {[
+                    "All Business features",
+                    "Dedicated manager",
+                    "Custom numbers",
+                    "API access",
+                    "SLA guarantee",
+                  ].map((item) => (
+                    <li
+                      key={item}
+                      className="flex items-center gap-3 text-gray-600"
+                    >
+                      <span className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-xs">
+                        ✓
+                      </span>
                       {item}
                     </li>
                   ))}
@@ -696,24 +869,36 @@ const Landing = () => {
 
             {/* Call Rates Preview */}
             <div className="max-w-4xl mx-auto bg-gradient-to-r from-gray-50 to-orange-50 rounded-2xl p-8">
-              <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">Sample Call Rates</h3>
+              <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">
+                Sample Call Rates
+              </h3>
               <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
                 {[
                   { flag: "🇺🇸", country: "USA", rate: "$0.02" },
                   { flag: "🇬🇧", country: "UK", rate: "$0.03" },
                   { flag: "🇮🇳", country: "India", rate: "$0.01" },
                   { flag: "🇩🇪", country: "Germany", rate: "$0.03" },
-                  { flag: "🇯🇵", country: "Japan", rate: "$0.04" }
+                  { flag: "🇯🇵", country: "Japan", rate: "$0.04" },
                 ].map((item) => (
-                  <div key={item.country} className="text-center p-4 bg-white rounded-xl">
+                  <div
+                    key={item.country}
+                    className="text-center p-4 bg-white rounded-xl"
+                  >
                     <span className="text-3xl mb-2 block">{item.flag}</span>
-                    <div className="text-sm font-medium text-gray-600">{item.country}</div>
-                    <div className="text-lg font-bold text-orange-600">{item.rate}/min</div>
+                    <div className="text-sm font-medium text-gray-600">
+                      {item.country}
+                    </div>
+                    <div className="text-lg font-bold text-orange-600">
+                      {item.rate}/min
+                    </div>
                   </div>
                 ))}
               </div>
               <div className="text-center mt-6">
-                <Button variant="outline" className="border-orange-500 text-orange-600 hover:bg-orange-500 hover:text-white rounded-full">
+                <Button
+                  variant="outline"
+                  className="border-orange-500 text-orange-600 hover:bg-orange-500 hover:text-white rounded-full"
+                >
                   View All 190+ Countries
                 </Button>
               </div>
@@ -738,22 +923,49 @@ const Landing = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
               {[
-                { name: "Sarah Johnson", role: "Business Owner", avatar: "S", quote: "Amazing call quality with unbeatable rates. I save over $200 every month on international calls!" },
-                { name: "Michael Chen", role: "Team Lead", avatar: "M", quote: "Great for managing my remote team. No apps needed, works right in the browser. Highly recommend!" },
-                { name: "Priya Patel", role: "Consultant", avatar: "P", quote: "Reliable and affordable. I stay connected with global clients easily. The best VoIP service I've used." }
+                {
+                  name: "Sarah Johnson",
+                  role: "Business Owner",
+                  avatar: "S",
+                  quote:
+                    "Amazing call quality with unbeatable rates. I save over $200 every month on international calls!",
+                },
+                {
+                  name: "Michael Chen",
+                  role: "Team Lead",
+                  avatar: "M",
+                  quote:
+                    "Great for managing my remote team. No apps needed, works right in the browser. Highly recommend!",
+                },
+                {
+                  name: "Priya Patel",
+                  role: "Consultant",
+                  avatar: "P",
+                  quote:
+                    "Reliable and affordable. I stay connected with global clients easily. The best VoIP service I've used.",
+                },
               ].map((testimonial, i) => (
-                <div key={i} className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+                <div
+                  key={i}
+                  className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow"
+                >
                   <div className="flex items-center gap-4 mb-6">
                     <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
                       {testimonial.avatar}
                     </div>
                     <div>
-                      <h4 className="font-bold text-gray-800">{testimonial.name}</h4>
-                      <p className="text-gray-500 text-sm">{testimonial.role}</p>
+                      <h4 className="font-bold text-gray-800">
+                        {testimonial.name}
+                      </h4>
+                      <p className="text-gray-500 text-sm">
+                        {testimonial.role}
+                      </p>
                     </div>
                   </div>
                   <div className="text-orange-400 mb-4">★★★★★</div>
-                  <p className="text-gray-600 leading-relaxed">"{testimonial.quote}"</p>
+                  <p className="text-gray-600 leading-relaxed">
+                    "{testimonial.quote}"
+                  </p>
                 </div>
               ))}
             </div>
@@ -768,10 +980,12 @@ const Landing = () => {
                 { value: "50K+", label: "Active Users" },
                 { value: "190+", label: "Countries" },
                 { value: "2M+", label: "Calls Monthly" },
-                { value: "99.9%", label: "Uptime" }
+                { value: "99.9%", label: "Uptime" },
               ].map((stat, i) => (
                 <div key={i}>
-                  <div className="text-4xl md:text-5xl font-bold mb-2">{stat.value}</div>
+                  <div className="text-4xl md:text-5xl font-bold mb-2">
+                    {stat.value}
+                  </div>
                   <div className="text-white/80 font-medium">{stat.label}</div>
                 </div>
               ))}
@@ -786,13 +1000,14 @@ const Landing = () => {
               {/* Decorative elements */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/20 rounded-full blur-3xl"></div>
               <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber-500/20 rounded-full blur-3xl"></div>
-              
+
               <div className="relative z-10">
                 <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
                   Ready to Start Calling?
                 </h2>
                 <p className="text-gray-300 text-lg mb-8 max-w-2xl mx-auto">
-                  Join 50,000+ users making crystal-clear international calls. Start your free account today.
+                  Join 50,000+ users making crystal-clear international calls.
+                  Start your free account today.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button
@@ -802,14 +1017,7 @@ const Landing = () => {
                   >
                     Create Free Account
                   </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="border-2 border-white/30 text-white hover:bg-white/10 px-8 py-6 text-lg rounded-full"
-                    onClick={() => navigate("/demo")}
-                  >
-                    Watch Demo
-                  </Button>
+                
                 </div>
               </div>
             </div>
@@ -829,7 +1037,8 @@ const Landing = () => {
                   <span className="text-xl font-bold">GlobalConnect</span>
                 </div>
                 <p className="text-gray-400 text-sm leading-relaxed">
-                  Making international calls simple, affordable, and accessible from anywhere.
+                  Making international calls simple, affordable, and accessible
+                  from anywhere.
                 </p>
               </div>
 
@@ -837,29 +1046,79 @@ const Landing = () => {
               <div>
                 <h4 className="font-bold mb-4">Product</h4>
                 <ul className="space-y-2 text-gray-400 text-sm">
-                  <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
-                  <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
-                  <li><a href="#" className="hover:text-white transition-colors">Enterprise</a></li>
-                  <li><a href="#" className="hover:text-white transition-colors">API</a></li>
+                  <li>
+                    <a href="#" className="hover:text-white transition-colors">
+                      Features
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="#pricing"
+                      className="hover:text-white transition-colors"
+                    >
+                      Pricing
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="hover:text-white transition-colors">
+                      Enterprise
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="hover:text-white transition-colors">
+                      API
+                    </a>
+                  </li>
                 </ul>
               </div>
 
               <div>
                 <h4 className="font-bold mb-4">Company</h4>
                 <ul className="space-y-2 text-gray-400 text-sm">
-                  <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
-                  <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-                  <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                  <li><a href="#contact" className="hover:text-white transition-colors">Contact</a></li>
+                  <li>
+                    <a href="#" className="hover:text-white transition-colors">
+                      About Us
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="hover:text-white transition-colors">
+                      Careers
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="hover:text-white transition-colors">
+                      Blog
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="#contact"
+                      className="hover:text-white transition-colors"
+                    >
+                      Contact
+                    </a>
+                  </li>
                 </ul>
               </div>
 
               <div>
                 <h4 className="font-bold mb-4">Legal</h4>
                 <ul className="space-y-2 text-gray-400 text-sm">
-                  <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                  <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-                  <li><a href="#" className="hover:text-white transition-colors">Cookie Policy</a></li>
+                  <li>
+                    <a href="#" className="hover:text-white transition-colors">
+                      Privacy Policy
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="hover:text-white transition-colors">
+                      Terms of Service
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="hover:text-white transition-colors">
+                      Cookie Policy
+                    </a>
+                  </li>
                 </ul>
               </div>
             </div>
@@ -870,13 +1129,22 @@ const Landing = () => {
                 © 2024 GlobalConnect. All rights reserved.
               </p>
               <div className="flex gap-4">
-                <a href="#" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-orange-500 transition-colors">
+                <a
+                  href="#"
+                  className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-orange-500 transition-colors"
+                >
                   <Facebook className="w-5 h-5" />
                 </a>
-                <a href="#" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-orange-500 transition-colors">
+                <a
+                  href="#"
+                  className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-orange-500 transition-colors"
+                >
                   <Twitter className="w-5 h-5" />
                 </a>
-                <a href="#" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-orange-500 transition-colors">
+                <a
+                  href="#"
+                  className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-orange-500 transition-colors"
+                >
                   <Instagram className="w-5 h-5" />
                 </a>
               </div>
