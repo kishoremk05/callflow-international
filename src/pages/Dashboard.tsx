@@ -141,17 +141,17 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-blue-950 dark:to-purple-950">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100/50">
       <Header user={user} onSignOut={signOut} />
 
       <main className="container py-8 px-4 md:px-6 lg:px-8">
         {/* Hero Section */}
         <div className="mb-10 relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-purple-500/20 to-pink-500/20 blur-3xl opacity-30 -z-10" />
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+          <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 via-amber-500/20 to-orange-400/20 blur-3xl opacity-30 -z-10" />
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent mb-2">
             Dashboard
           </h1>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-lg text-gray-600">
             Welcome back, {user?.user_metadata?.full_name || "there"}! 👋
           </p>
         </div>
@@ -170,7 +170,7 @@ export default function Dashboard() {
               currency={wallet.currency}
               onAddFunds={handleAddFunds}
             />
-            
+
             <Dialer
               onCall={handleCall}
               disabled={!!currentCall || isInitializing}
@@ -214,11 +214,13 @@ export default function Dashboard() {
                         Call In Progress
                       </p>
                     </div>
-                    <p className="text-sm text-muted-foreground">Connected and active</p>
+                    <p className="text-sm text-muted-foreground">
+                      Connected and active
+                    </p>
                   </div>
                   <button
                     onClick={hangupCall}
-                    className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 active:scale-95 transition-all duration-200 shadow-lg font-medium"
+                    className="px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-full hover:from-orange-600 hover:to-amber-600 active:scale-95 transition-all duration-200 shadow-lg font-semibold"
                   >
                     End Call
                   </button>

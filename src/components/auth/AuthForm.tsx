@@ -45,17 +45,17 @@ export function AuthForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100/50 p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
-            <Phone className="w-8 h-8 text-primary" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 mb-4">
+            <Phone className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">CallFlow</h1>
-          <p className="text-muted-foreground mt-2">Global VoIP calling made simple</p>
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">CallFlow</h1>
+          <p className="text-gray-600 mt-2">Global VoIP calling made simple</p>
         </div>
 
-        <Card className="border-0 shadow-xl">
+        <Card className="border-2 border-orange-100 shadow-xl rounded-2xl">
           <CardHeader className="space-y-1 pb-4">
             <CardTitle className="text-2xl">
               {isLogin ? "Sign in" : "Create account"}
@@ -115,7 +115,7 @@ export function AuthForm() {
                   />
                 </div>
               </div>
-              <Button type="submit" className="w-full" size="lg" disabled={loading}>
+              <Button type="submit" className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-full font-semibold" size="lg" disabled={loading}>
                 {loading ? "Loading..." : isLogin ? "Sign In" : "Create Account"}
               </Button>
             </form>
@@ -123,7 +123,7 @@ export function AuthForm() {
               <button
                 type="button"
                 onClick={() => setIsLogin(!isLogin)}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                className="text-sm text-gray-600 hover:text-orange-600 transition-colors font-medium"
               >
                 {isLogin
                   ? "Don't have an account? Sign up"

@@ -10,11 +10,11 @@ interface WalletCardProps {
 
 export function WalletCard({ balance, currency, onAddFunds }: WalletCardProps) {
   return (
-    <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary/90 via-primary/80 to-primary/70 text-white shadow-2xl shadow-primary/20">
+    <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-orange-500 via-amber-500 to-orange-600 text-white shadow-2xl shadow-orange-500/20">
       {/* Decorative Elements */}
       <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
       <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2 blur-xl" />
-      
+
       <CardHeader className="relative flex flex-row items-center justify-between pb-2 space-y-0">
         <CardTitle className="text-sm font-medium text-white/80">
           Wallet Balance
@@ -30,7 +30,7 @@ export function WalletCard({ balance, currency, onAddFunds }: WalletCardProps) {
         <Button
           variant="secondary"
           size="lg"
-          className="w-full bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-sm shadow-lg font-medium"
+          className="w-full bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-sm shadow-lg font-semibold rounded-full"
           onClick={onAddFunds}
         >
           <Plus className="w-4 h-4 mr-2" />

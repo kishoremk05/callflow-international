@@ -193,65 +193,73 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100/50">
       <Header user={user} onSignOut={signOut} />
 
       <main className="container py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Shield className="w-8 h-8" />
+          <h1 className="text-3xl font-bold flex items-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
+            <Shield className="w-8 h-8 text-orange-500" />
             Admin Dashboard
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-gray-600">
             System management and analytics
           </p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <Card>
+          <Card className="border-2 border-orange-100 rounded-2xl">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-              <Users className="w-4 h-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-gray-600">Total Users</CardTitle>
+              <div className="p-2 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500">
+                <Users className="w-4 h-4 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalUsers || 0}</div>
+              <div className="text-2xl font-bold text-gray-800">{stats.totalUsers || 0}</div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-2 border-orange-100 rounded-2xl">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Calls</CardTitle>
-              <Phone className="w-4 h-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-gray-600">Total Calls</CardTitle>
+              <div className="p-2 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500">
+                <Phone className="w-4 h-4 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalCalls || 0}</div>
+              <div className="text-2xl font-bold text-gray-800">{stats.totalCalls || 0}</div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-2 border-orange-100 rounded-2xl">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-sm font-medium text-gray-600">
                 Total Revenue
               </CardTitle>
-              <DollarSign className="w-4 h-4 text-muted-foreground" />
+              <div className="p-2 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500">
+                <DollarSign className="w-4 h-4 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-bold text-gray-800">
                 ${stats.totalRevenue || 0}
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-2 border-orange-100 rounded-2xl">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-sm font-medium text-gray-600">
                 Total Profit
               </CardTitle>
-              <TrendingUp className="w-4 h-4 text-muted-foreground" />
+              <div className="p-2 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500">
+                <TrendingUp className="w-4 h-4 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-bold text-gray-800">
                 ${stats.totalProfit || 0}
               </div>
             </CardContent>

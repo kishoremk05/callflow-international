@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toast } from "sonner";
 
 interface HeaderProps {
   user: {
@@ -29,14 +30,22 @@ export function Header({ user, onSignOut }: HeaderProps) {
     .toUpperCase()
     .slice(0, 2);
 
+  const handleProfile = () => {
+    toast.info("Profile page coming soon!");
+  };
+
+  const handleSettings = () => {
+    toast.info("Settings page coming soon!");
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Phone className="w-5 h-5 text-primary" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center">
+            <Phone className="w-5 h-5 text-white" />
           </div>
-          <span className="text-xl font-bold">CallFlow</span>
+          <span className="text-xl font-bold bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">CallFlow</span>
         </div>
 
         <DropdownMenu>
@@ -44,7 +53,7 @@ export function Header({ user, onSignOut }: HeaderProps) {
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
               <Avatar className="h-10 w-10">
                 <AvatarImage src={user?.user_metadata?.avatar_url} />
-                <AvatarFallback className="bg-primary/10 text-primary">
+                <AvatarFallback className="bg-gradient-to-br from-orange-500 to-amber-500 text-white">
                   {initials}
                 </AvatarFallback>
               </Avatar>
@@ -54,7 +63,7 @@ export function Header({ user, onSignOut }: HeaderProps) {
             <div className="flex items-center gap-2 p-2">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={user?.user_metadata?.avatar_url} />
-                <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                <AvatarFallback className="bg-gradient-to-br from-orange-500 to-amber-500 text-white text-xs">
                   {initials}
                 </AvatarFallback>
               </Avatar>
@@ -66,16 +75,16 @@ export function Header({ user, onSignOut }: HeaderProps) {
               </div>
             </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleProfile}>
               <User className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleSettings}>
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onSignOut} className="text-destructive">
+            <DropdownMenuItem onClick={onSignOut} className="text-red-600">
               <LogOut className="mr-2 h-4 w-4" />
               Sign out
             </DropdownMenuItem>

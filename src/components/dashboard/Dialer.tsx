@@ -68,13 +68,13 @@ export function Dialer({ onCall, disabled }: DialerProps) {
   };
 
   return (
-    <Card className="border-0 bg-gradient-to-br from-white/80 to-white/50 dark:from-slate-900/80 dark:to-slate-900/50 backdrop-blur-sm shadow-xl">
+    <Card className="border-2 border-orange-100 bg-white rounded-2xl shadow-xl">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5">
-            <Phone className="w-5 h-5 text-primary" />
+          <div className="p-2 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500">
+            <Phone className="w-5 h-5 text-white" />
           </div>
-          <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
             Make a Call
           </span>
         </CardTitle>
@@ -82,7 +82,7 @@ export function Dialer({ onCall, disabled }: DialerProps) {
       <CardContent className="space-y-4">
         <div className="flex gap-2">
           <Select value={countryCode} onValueChange={setCountryCode}>
-            <SelectTrigger className="w-28 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+            <SelectTrigger className="w-28 border-orange-200 bg-gradient-to-br from-orange-50 to-transparent">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -97,13 +97,13 @@ export function Dialer({ onCall, disabled }: DialerProps) {
             </SelectContent>
           </Select>
           <div className="flex-1 relative">
-            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/60" />
+            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-orange-500/60" />
             <input
               type="text"
               value={formatPhoneNumber(phoneNumber)}
               readOnly
               placeholder="Enter number"
-              className="w-full h-10 pl-10 pr-10 text-lg font-mono bg-gradient-to-br from-secondary to-secondary/50 rounded-xl border border-primary/10 focus:ring-2 focus:ring-primary/30 transition-all"
+              className="w-full h-10 pl-10 pr-10 text-lg font-mono bg-orange-50 rounded-xl border border-orange-200 focus:ring-2 focus:ring-orange-300 transition-all"
             />
             {phoneNumber && (
               <button
@@ -121,11 +121,13 @@ export function Dialer({ onCall, disabled }: DialerProps) {
             <button
               key={digit}
               onClick={() => handleDigitPress(digit)}
-              className="group flex flex-col items-center justify-center h-16 rounded-2xl bg-gradient-to-br from-secondary to-secondary/50 hover:from-primary/20 hover:to-primary/10 border border-transparent hover:border-primary/20 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md"
+              className="group flex flex-col items-center justify-center h-16 rounded-2xl bg-orange-50 hover:bg-orange-100 border border-orange-200 hover:border-orange-300 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md"
             >
-              <span className="text-2xl font-bold group-hover:text-primary transition-colors">{digit}</span>
+              <span className="text-2xl font-bold text-gray-800 group-hover:text-orange-600 transition-colors">
+                {digit}
+              </span>
               {letters && (
-                <span className="text-[10px] text-muted-foreground tracking-widest">
+                <span className="text-[10px] text-gray-500 tracking-widest">
                   {letters}
                 </span>
               )}
@@ -136,7 +138,7 @@ export function Dialer({ onCall, disabled }: DialerProps) {
         <Button
           onClick={handleCall}
           disabled={phoneNumber.length < 7 || disabled}
-          className="w-full h-14 text-lg bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg hover:shadow-xl hover:shadow-primary/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full h-14 text-lg bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-lg hover:shadow-xl hover:shadow-green-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed rounded-full font-semibold"
           size="lg"
         >
           <Phone className="w-5 h-5 mr-2" />
