@@ -11,6 +11,7 @@ import {
   Twitter,
   Instagram,
 } from "lucide-react";
+import bgBrowserCalling from "@/assets/images/bg-browser-calling.jpg";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -159,7 +160,7 @@ const Landing = () => {
           <div
             className="absolute inset-0 opacity-25"
             style={{
-              backgroundImage: `url("/bg for browser based calling.jpg")`,
+              backgroundImage: `url(${bgBrowserCalling})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
               backgroundRepeat: "no-repeat",
@@ -1017,7 +1018,6 @@ const Landing = () => {
                   >
                     Create Free Account
                   </Button>
-                
                 </div>
               </div>
             </div>
