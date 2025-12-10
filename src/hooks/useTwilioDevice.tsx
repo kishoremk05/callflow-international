@@ -10,35 +10,41 @@ export function useTwilioDevice() {
   const [isConnected, setIsConnected] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
   const [currentCall, setCurrentCall] = useState<Call | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const callStartTimeRef = useRef<number | null>(null);
   const hasShownReadyToast = useRef(false);
+  const initAttempted = useRef(false);
 
   useEffect(() => {
     let isMounted = true;
 
-    // Check if user is authenticated before initializing
     const checkAndInitialize = async () => {
+      // Only attempt initialization once
+      if (initAttempted.current) return;
+
       const {
         data: { session },
       } = await supabase.auth.getSession();
 
       if (session && isMounted && !device) {
+        initAttempted.current = true;
         initializeDevice();
       }
     };
 
     checkAndInitialize();
 
-    // Subscribe to auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session && !device && isMounted) {
+      if (session && !device && isMounted && !initAttempted.current) {
+        initAttempted.current = true;
         initializeDevice();
       } else if (!session && device) {
         device.destroy();
         setDevice(null);
         setIsConnected(false);
+        initAttempted.current = false;
       }
     });
 
@@ -52,68 +58,78 @@ export function useTwilioDevice() {
   const initializeDevice = async () => {
     try {
       setIsInitializing(true);
+      setError(null);
 
       const {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) {
         console.log("No session found, skipping Twilio device initialization");
+        setIsInitializing(false);
         return;
       }
 
-      console.log("Fetching Twilio token from:", `${API_URL}/api/twilio/token`);
+      // Silent fetch - don't show error toast for connection issues
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
-      const response = await fetch(`${API_URL}/api/twilio/token`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      try {
+        const response = await fetch(`${API_URL}/api/twilio/token`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          signal: controller.signal,
+        });
 
-      const data = await response.json();
-      console.log("Twilio token response:", data);
+        clearTimeout(timeoutId);
 
-      if (!data.success) {
-        throw new Error(data.error || "Failed to get Twilio token");
-      }
+        const data = await response.json();
 
-      console.log("Creating Twilio Device...");
-      const newDevice = new Device(data.token, {
-        logLevel: 1,
-        codecPreferences: [Call.Codec.Opus, Call.Codec.PCMU],
-      });
-
-      newDevice.on("registered", () => {
-        console.log("✅ Twilio Device registered and ready");
-        setIsConnected(true);
-        // Only show toast once
-        if (!hasShownReadyToast.current) {
-          toast.success("Ready to make calls!");
-          hasShownReadyToast.current = true;
+        if (!data.success) {
+          throw new Error(data.error || "Failed to get Twilio token");
         }
-      });
 
-      newDevice.on("error", (error) => {
-        console.error("Twilio Device error:", error);
-        toast.error("Device error: " + error.message);
-      });
+        const newDevice = new Device(data.token, {
+          logLevel: 0, // Suppress Twilio SDK logs
+          codecPreferences: [Call.Codec.Opus, Call.Codec.PCMU],
+        });
 
-      newDevice.on("incoming", (call) => {
-        console.log("Incoming call:", call);
-        // Handle incoming call if needed
-      });
+        newDevice.on("registered", () => {
+          console.log("✅ Twilio Device registered and ready");
+          setIsConnected(true);
+          setError(null);
+          if (!hasShownReadyToast.current) {
+            toast.success("Ready to make calls!");
+            hasShownReadyToast.current = true;
+          }
+        });
 
-      console.log("Registering Twilio Device...");
-      await newDevice.register();
-      setDevice(newDevice);
-      console.log("Device registration initiated");
-    } catch (error: any) {
-      console.error("❌ Failed to initialize device:", error);
-      // Only show error toast if it's not a session issue
-      if (error.message !== "No session found") {
-        toast.error("Failed to initialize calling device: " + error.message);
+        newDevice.on("error", (error) => {
+          console.error("Twilio Device error:", error);
+          setError(error.message);
+        });
+
+        newDevice.on("incoming", (call) => {
+          console.log("Incoming call:", call);
+        });
+
+        await newDevice.register();
+        setDevice(newDevice);
+      } catch (fetchError: any) {
+        // Silently handle fetch errors (backend not running)
+        if (fetchError.name === "AbortError") {
+          setError("Backend server timeout");
+        } else if (fetchError.message?.includes("Failed to fetch")) {
+          setError("Backend server not available");
+        } else {
+          setError(fetchError.message);
+        }
+        setIsConnected(false);
       }
+    } catch (error: any) {
+      setError(error.message);
       setIsConnected(false);
     } finally {
       setIsInitializing(false);
@@ -128,7 +144,7 @@ export function useTwilioDevice() {
   ) => {
     try {
       if (!device) {
-        throw new Error("Device not initialized");
+        throw new Error("Device not initialized. Backend server may not be running.");
       }
 
       const {
@@ -138,7 +154,6 @@ export function useTwilioDevice() {
         throw new Error("No session found");
       }
 
-      // Initiate call on backend
       const response = await fetch(`${API_URL}/api/calls/initiate`, {
         method: "POST",
         headers: {
@@ -159,10 +174,8 @@ export function useTwilioDevice() {
         throw new Error(data.error || "Failed to initiate call");
       }
 
-      // Get caller ID to use
       const callerIdParam = callerIdNumber || (await getPublicNumber());
 
-      // Build params object, only include CallerId if it exists
       const params: any = {
         To: `${countryCode}${toNumber}`,
         CallId: data.callId,
@@ -173,8 +186,6 @@ export function useTwilioDevice() {
       }
 
       const call = await device.connect({ params });
-
-      console.log("Call initiated with params:", params);
 
       call.on("accept", () => {
         console.log("Call accepted");
@@ -188,7 +199,6 @@ export function useTwilioDevice() {
           ? Math.floor((Date.now() - callStartTimeRef.current) / 1000)
           : 0;
 
-        // End call on backend
         await endCallOnBackend(data.callId, duration);
 
         setCurrentCall(null);
@@ -263,13 +273,21 @@ export function useTwilioDevice() {
     }
   };
 
+  const retryConnection = () => {
+    initAttempted.current = false;
+    setError(null);
+    initializeDevice();
+  };
+
   return {
     device,
     isConnected,
     isInitializing,
     currentCall,
+    error,
     makeCall,
     hangupCall,
     getPublicNumber,
+    retryConnection,
   };
 }

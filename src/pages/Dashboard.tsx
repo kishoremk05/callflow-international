@@ -1,4 +1,4 @@
-import { useEffect, useState, useLayoutEffect, useRef } from "react";
+import { useEffect, useState, useLayoutEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTwilioDevice } from "@/hooks/useTwilioDevice";
@@ -9,7 +9,23 @@ import { RecentCalls } from "@/components/dashboard/RecentCalls";
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { toast } from "sonner";
 import { gsap } from "gsap";
-import { Users, PhoneCall, Clock, Globe } from "lucide-react";
+import {
+  Users,
+  PhoneCall,
+  Clock,
+  Globe,
+  Wifi,
+  WifiOff,
+  Calendar,
+  BarChart3,
+  ArrowUpRight,
+  Phone,
+  Video,
+  MessageSquare,
+  Settings
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 interface CallLog {
   id: string;
@@ -28,7 +44,7 @@ interface Wallet {
 
 export default function Dashboard() {
   const { user, signOut } = useAuth();
-  const { makeCall, isConnected, isInitializing, currentCall, hangupCall } =
+  const { makeCall, isConnected, isInitializing, currentCall, hangupCall, error: twilioError, retryConnection } =
     useTwilioDevice();
   const [wallet, setWallet] = useState<Wallet>({ balance: 0, currency: "USD" });
   const [calls, setCalls] = useState<CallLog[]>([]);
@@ -42,6 +58,7 @@ export default function Dashboard() {
   const [callDuration, setCallDuration] = useState(0);
   const [currentNumber, setCurrentNumber] = useState("");
   const [currentCountryCode, setCurrentCountryCode] = useState("");
+  const [activeView, setActiveView] = useState<"dialer" | "team" | "analytics">("dialer");
 
   const containerRef = useRef<HTMLDivElement>(null);
   const callTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -49,15 +66,6 @@ export default function Dashboard() {
   // Entrance animations
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
-      // Animate header
-      gsap.from('[data-animate="header"]', {
-        opacity: 0,
-        y: -20,
-        duration: 0.6,
-        ease: "power3.out",
-      });
-
-      // Animate hero section
       gsap.from('[data-animate="hero"]', {
         opacity: 0,
         y: 30,
@@ -66,7 +74,6 @@ export default function Dashboard() {
         delay: 0.1,
       });
 
-      // Animate stats cards
       gsap.from('[data-animate="stats"]', {
         opacity: 0,
         y: 40,
@@ -75,7 +82,6 @@ export default function Dashboard() {
         delay: 0.2,
       });
 
-      // Animate main content
       gsap.from('[data-animate="content"]', {
         opacity: 0,
         y: 40,
@@ -84,14 +90,13 @@ export default function Dashboard() {
         delay: 0.3,
       });
 
-      // Animate sidebar
       gsap.from('[data-animate="sidebar"]', {
         opacity: 0,
         x: 30,
         duration: 0.7,
         stagger: 0.1,
         ease: "power3.out",
-        delay: 0.4,
+        delay: 0.3,
       });
     }, containerRef);
 
@@ -138,7 +143,6 @@ export default function Dashboard() {
 
       if (walletError) {
         console.error("Wallet fetch error:", walletError);
-        // Create wallet if it doesn't exist
         const { data: newWallet } = await supabase
           .from("wallets")
           .insert({ user_id: user.id, balance: 0, currency: "USD" })
@@ -165,7 +169,6 @@ export default function Dashboard() {
       if (callsData) {
         setCalls(callsData);
 
-        // Calculate stats
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
@@ -198,7 +201,7 @@ export default function Dashboard() {
     }
 
     if (!isConnected && !isInitializing) {
-      toast.error("Calling device not ready. Please refresh the page.");
+      toast.error("Calling device not ready. Backend server may not be running.");
       return;
     }
 
@@ -209,7 +212,6 @@ export default function Dashboard() {
       toast.info(`Calling ${countryCode} ${number}...`);
       await makeCall(number, countryCode, "public");
 
-      // Refresh call history after call
       setTimeout(() => {
         fetchData();
       }, 2000);
@@ -224,7 +226,6 @@ export default function Dashboard() {
     setCurrentNumber("");
     setCurrentCountryCode("");
     toast.success("Call ended");
-    // Refresh data
     setTimeout(() => {
       fetchData();
     }, 1000);
@@ -234,57 +235,82 @@ export default function Dashboard() {
     handleCall(number, countryCode);
   };
 
-  // Quick stats for the header
-  const quickStats = [
-    { icon: Users, label: "Team Members", value: "12" },
-    { icon: PhoneCall, label: "Active Calls", value: currentCall ? "1" : "0" },
-    { icon: Clock, label: "Total Hours", value: Math.floor(stats.totalMinutes / 60).toString() },
-    { icon: Globe, label: "Countries", value: "15" },
+  // Quick actions for team communication
+  const quickActions = [
+    { icon: Phone, label: "Voice Call", color: "#0891b2", action: () => setActiveView("dialer") },
+    { icon: Video, label: "Video Call", color: "#8b5cf6", action: () => toast.info("Video calls coming soon!") },
+    { icon: MessageSquare, label: "Message", color: "#10b981", action: () => toast.info("Messaging coming soon!") },
+    { icon: Users, label: "Team", color: "#f97316", action: () => setActiveView("team") },
   ];
 
   return (
     <div ref={containerRef} className="min-h-screen bg-slate-50">
-      <div data-animate="header">
-        <Header user={user} onSignOut={signOut} />
-      </div>
+      <Header user={user} onSignOut={signOut} />
 
-      <main className="container py-8 px-4 md:px-6 lg:px-8">
+      <main className="container py-6 px-4 md:px-6 lg:px-8">
         {/* Hero Section */}
-        <div className="mb-8" data-animate="hero">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="mb-6" data-animate="hero">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <h1 className="text-4xl md:text-5xl font-bold text-[#1a365d] mb-2">
+              <h1 className="text-3xl md:text-4xl font-bold text-[#1a365d] mb-1">
                 Dashboard
               </h1>
-              <p className="text-lg text-gray-600">
+              <p className="text-gray-600">
                 Welcome back, {user?.user_metadata?.full_name || "there"}! 👋
               </p>
             </div>
 
-            {/* Quick Stats Bar */}
-            <div className="flex gap-4 flex-wrap">
-              {quickStats.map((stat, index) => (
-                <div
+            {/* Quick Actions */}
+            <div className="flex gap-2 flex-wrap">
+              {quickActions.map((action, index) => (
+                <button
                   key={index}
-                  className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl shadow-sm border border-gray-100"
+                  onClick={action.action}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all"
                 >
-                  <stat.icon className="w-4 h-4 text-[#0891b2]" />
-                  <span className="text-sm text-gray-500">{stat.label}:</span>
-                  <span className="font-bold text-[#1a365d]">{stat.value}</span>
-                </div>
+                  <action.icon className="w-4 h-4" style={{ color: action.color }} />
+                  <span className="text-sm font-medium text-gray-700">{action.label}</span>
+                </button>
               ))}
             </div>
           </div>
         </div>
 
+        {/* Connection Status Banner */}
+        {!isConnected && !isInitializing && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-3">
+            <WifiOff className="w-5 h-5 text-amber-600" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-amber-800">Backend server not connected</p>
+              <p className="text-xs text-amber-600">Start the backend server to enable calling features</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-amber-300 text-amber-700 hover:bg-amber-100"
+              onClick={retryConnection}
+            >
+              Retry
+            </Button>
+          </div>
+        )}
+
+        {isConnected && (
+          <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-xl flex items-center gap-3">
+            <Wifi className="w-4 h-4 text-green-600" />
+            <p className="text-sm font-medium text-green-700">Calling device ready</p>
+          </div>
+        )}
+
         {/* Stats Cards */}
-        <div data-animate="stats" className="mb-8">
+        <div data-animate="stats" className="mb-6">
           <StatsCards stats={stats} />
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Main Content Area */}
-          <div className="lg:col-span-2 space-y-6">
+        {/* Main Grid */}
+        <div className="grid gap-6 lg:grid-cols-12">
+          {/* Left Column - Recent Calls */}
+          <div className="lg:col-span-5 space-y-6">
             <div data-animate="content">
               <RecentCalls
                 calls={calls}
@@ -294,64 +320,127 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            <div data-animate="sidebar">
-              <WalletCard
-                balance={wallet.balance}
-                currency={wallet.currency}
-              />
-            </div>
+          {/* Middle Column - Dialer */}
+          <div className="lg:col-span-4 space-y-6" data-animate="sidebar">
+            <Dialer
+              onCall={handleCall}
+              onEndCall={handleEndCall}
+              disabled={isInitializing || (!isConnected && !currentCall)}
+              isInCall={!!currentCall}
+              callDuration={callDuration}
+              callerName={currentNumber ? `${currentCountryCode} ${currentNumber}` : "Unknown"}
+            />
+          </div>
 
-            <div data-animate="sidebar">
-              <Dialer
-                onCall={handleCall}
-                onEndCall={handleEndCall}
-                disabled={isInitializing}
-                isInCall={!!currentCall}
-                callDuration={callDuration}
-                callerName={currentNumber ? `${currentCountryCode} ${currentNumber}` : "Unknown"}
-              />
-            </div>
+          {/* Right Column - Wallet & Quick Stats */}
+          <div className="lg:col-span-3 space-y-6" data-animate="sidebar">
+            <WalletCard
+              balance={wallet.balance}
+              currency={wallet.currency}
+            />
 
-            {/* Connection Status */}
-            {isInitializing && (
-              <div data-animate="sidebar" className="p-4 bg-[#0891b2]/10 border border-[#0891b2]/20 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 bg-[#0891b2] rounded-full animate-ping" />
-                  <p className="text-sm font-medium text-[#0891b2]">
-                    Initializing calling device...
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {!isConnected && !isInitializing && !currentCall && (
-              <div data-animate="sidebar" className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <div className="text-2xl">⚠️</div>
-                  <div>
-                    <p className="text-sm font-medium text-amber-700">
-                      Device not connected
-                    </p>
-                    <p className="text-xs text-amber-600">
-                      Attempting to reconnect...
-                    </p>
+            {/* Team Activity Card */}
+            <Card className="border-gray-100 bg-white rounded-2xl shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-[#1a365d] text-base">
+                  <Users className="w-4 h-4 text-[#0891b2]" />
+                  Team Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                  <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                    <div className="w-2 h-2 bg-green-500 rounded-full" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-800">12 Online</p>
+                    <p className="text-xs text-gray-500">Team members</p>
                   </div>
                 </div>
-              </div>
-            )}
-
-            {isConnected && !currentCall && (
-              <div data-animate="sidebar" className="p-4 bg-green-50 border border-green-200 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 bg-green-500 rounded-full" />
-                  <p className="text-sm font-medium text-green-700">
-                    Ready to make calls
-                  </p>
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                  <div className="w-8 h-8 rounded-full bg-[#0891b2]/10 flex items-center justify-center">
+                    <PhoneCall className="w-4 h-4 text-[#0891b2]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-800">3 Active Calls</p>
+                    <p className="text-xs text-gray-500">Right now</p>
+                  </div>
                 </div>
-              </div>
-            )}
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                  <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                    <Globe className="w-4 h-4 text-purple-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-800">15 Countries</p>
+                    <p className="text-xs text-gray-500">Connected today</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Upcoming Meetings */}
+            <Card className="border-gray-100 bg-white rounded-2xl shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center justify-between text-[#1a365d] text-base">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-[#0891b2]" />
+                    Upcoming
+                  </div>
+                  <span className="text-xs text-gray-400 font-normal">Today</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="p-3 bg-[#0891b2]/5 border border-[#0891b2]/10 rounded-xl">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-[#1a365d]">Team Standup</span>
+                    <span className="text-xs text-[#0891b2] font-medium">2:30 PM</span>
+                  </div>
+                  <p className="text-xs text-gray-500">5 participants</p>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-xl">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-[#1a365d]">Client Call</span>
+                    <span className="text-xs text-gray-500">4:00 PM</span>
+                  </div>
+                  <p className="text-xs text-gray-500">External - USA</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Analytics Preview */}
+            <Card className="border-gray-100 bg-white rounded-2xl shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center justify-between text-[#1a365d] text-base">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4 text-[#0891b2]" />
+                    This Week
+                  </div>
+                  <button className="text-xs text-[#0891b2] font-medium flex items-center gap-1 hover:underline">
+                    View All <ArrowUpRight className="w-3 h-3" />
+                  </button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-end justify-between h-20 gap-1">
+                  {[40, 65, 45, 80, 55, 70, 90].map((height, i) => (
+                    <div
+                      key={i}
+                      className="flex-1 bg-[#0891b2]/20 rounded-t-sm hover:bg-[#0891b2]/40 transition-colors cursor-pointer"
+                      style={{ height: `${height}%` }}
+                    />
+                  ))}
+                </div>
+                <div className="flex justify-between mt-2 text-xs text-gray-400">
+                  <span>Mon</span>
+                  <span>Tue</span>
+                  <span>Wed</span>
+                  <span>Thu</span>
+                  <span>Fri</span>
+                  <span>Sat</span>
+                  <span>Sun</span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </main>
