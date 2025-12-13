@@ -1083,6 +1083,414 @@ app.get(
 );
 
 // ============================================================================
+// CONFERENCE ROUTES
+// ============================================================================
+
+// Create internal team conference
+app.post(
+  "/api/conference/create-internal",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { roomName, memberIds, enterpriseId } = req.body;
+
+      if (!roomName || !memberIds || memberIds.length === 0) {
+        return res.status(400).json({
+          error: "Room name and at least one member are required",
+        });
+      }
+
+      // Verify enterprise membership
+      if (enterpriseId) {
+        const { data: member } = await supabase
+          .from("enterprise_members")
+          .select("id")
+          .eq("enterprise_id", enterpriseId)
+          .eq("user_id", req.user.id)
+          .single();
+
+        if (!member) {
+          return res
+            .status(403)
+            .json({ error: "Not a member of this enterprise" });
+        }
+      }
+
+      // Create conference room in Twilio
+      let conferenceSid = null;
+      if (twilioClient) {
+        try {
+          const conference = await twilioClient.conferences.create({
+            friendlyName: roomName,
+            statusCallback: `${process.env.BACKEND_URL}/api/conference/status-callback`,
+            statusCallbackEvent: ["start", "end", "join", "leave"],
+          });
+          conferenceSid = conference.sid;
+        } catch (error) {
+          console.warn("Twilio conference creation failed:", error.message);
+        }
+      }
+
+      // Create conference room in database
+      const { data: conference, error: confError } = await supabase
+        .from("conference_rooms")
+        .insert({
+          name: roomName,
+          enterprise_id: enterpriseId || null,
+          created_by: req.user.id,
+          conference_sid: conferenceSid,
+          status: "active",
+          is_internal: true,
+        })
+        .select()
+        .single();
+
+      if (confError) throw confError;
+
+      // Add participants
+      const participants = memberIds.map((userId) => ({
+        conference_id: conference.id,
+        user_id: userId,
+        status: "invited",
+      }));
+
+      const { error: participantsError } = await supabase
+        .from("conference_participants")
+        .insert(participants);
+
+      if (participantsError) throw participantsError;
+
+      res.json({
+        success: true,
+        conference: {
+          id: conference.id,
+          name: conference.name,
+          conferenceSid,
+          participants: memberIds.length,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Create external conference
+app.post(
+  "/api/conference/create-external",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { title, participants } = req.body;
+
+      if (!title || !participants || participants.length === 0) {
+        return res.status(400).json({
+          error: "Conference title and at least one participant are required",
+        });
+      }
+
+      // Verify wallet balance
+      const { data: wallet } = await supabase
+        .from("wallets")
+        .select("balance")
+        .eq("user_id", req.user.id)
+        .single();
+
+      if (!wallet || wallet.balance <= 0) {
+        return res.status(400).json({ error: "Insufficient balance" });
+      }
+
+      // Create conference room in Twilio
+      let conferenceSid = null;
+      if (twilioClient) {
+        try {
+          const conference = await twilioClient.conferences.create({
+            friendlyName: title,
+            statusCallback: `${process.env.BACKEND_URL}/api/conference/status-callback`,
+            statusCallbackEvent: ["start", "end", "join", "leave"],
+          });
+          conferenceSid = conference.sid;
+        } catch (error) {
+          console.warn("Twilio conference creation failed:", error.message);
+        }
+      }
+
+      // Create conference room in database
+      const { data: conference, error: confError } = await supabase
+        .from("conference_rooms")
+        .insert({
+          name: title,
+          created_by: req.user.id,
+          conference_sid: conferenceSid,
+          status: "active",
+          is_internal: false,
+        })
+        .select()
+        .single();
+
+      if (confError) throw confError;
+
+      // Add participants and initiate calls
+      const participantRecords = participants.map((p) => ({
+        conference_id: conference.id,
+        phone_number: `${p.countryCode}${p.phone}`,
+        participant_name: p.name || "Unknown",
+        country_code: p.countryCode,
+        status: "invited",
+      }));
+
+      const { error: participantsError } = await supabase
+        .from("conference_participants")
+        .insert(participantRecords);
+
+      if (participantsError) throw participantsError;
+
+      // Dial participants into conference (if Twilio is configured)
+      if (twilioClient && conferenceSid) {
+        for (const participant of participants) {
+          try {
+            const call = await twilioClient.calls.create({
+              to: `${participant.countryCode}${participant.phone}`,
+              from: process.env.TWILIO_PHONE_NUMBER,
+              twiml: `<Response><Say>You are being added to a conference call.</Say><Dial><Conference>${title}</Conference></Dial></Response>`,
+            });
+
+            // Update participant with call SID
+            await supabase
+              .from("conference_participants")
+              .update({ call_sid: call.sid })
+              .eq("conference_id", conference.id)
+              .eq(
+                "phone_number",
+                `${participant.countryCode}${participant.phone}`
+              );
+          } catch (error) {
+            console.warn(`Failed to dial ${participant.phone}:`, error.message);
+          }
+        }
+      }
+
+      res.json({
+        success: true,
+        conference: {
+          id: conference.id,
+          name: conference.name,
+          conferenceSid,
+          participants: participants.length,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Get active conferences
+app.get("/api/conference/active", authenticate, async (req, res, next) => {
+  try {
+    const { data: conferences } = await supabase
+      .from("conference_rooms")
+      .select(
+        `
+        *,
+        conference_participants (
+          id, user_id, phone_number, participant_name, status, joined_at,
+          profiles:user_id (full_name, email)
+        )
+      `
+      )
+      .eq("created_by", req.user.id)
+      .eq("status", "active")
+      .order("started_at", { ascending: false });
+
+    res.json({ success: true, conferences });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// End conference
+app.post(
+  "/api/conference/end/:conferenceId",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { conferenceId } = req.params;
+
+      // Verify ownership
+      const { data: conference } = await supabase
+        .from("conference_rooms")
+        .select("*")
+        .eq("id", conferenceId)
+        .eq("created_by", req.user.id)
+        .single();
+
+      if (!conference) {
+        return res.status(404).json({ error: "Conference not found" });
+      }
+
+      // End conference in Twilio
+      if (twilioClient && conference.conference_sid) {
+        try {
+          await twilioClient
+            .conferences(conference.conference_sid)
+            .update({ status: "completed" });
+        } catch (error) {
+          console.warn("Failed to end Twilio conference:", error.message);
+        }
+      }
+
+      // Update conference status
+      await supabase
+        .from("conference_rooms")
+        .update({
+          status: "ended",
+          ended_at: new Date().toISOString(),
+        })
+        .eq("id", conferenceId);
+
+      // Update participant statuses
+      await supabase
+        .from("conference_participants")
+        .update({
+          status: "left",
+          left_at: new Date().toISOString(),
+        })
+        .eq("conference_id", conferenceId)
+        .eq("status", "joined");
+
+      res.json({ success: true, message: "Conference ended successfully" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Join conference (for internal participants)
+app.post(
+  "/api/conference/join/:conferenceId",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { conferenceId } = req.params;
+
+      // Verify participant
+      const { data: participant } = await supabase
+        .from("conference_participants")
+        .select("*, conference_rooms(*)")
+        .eq("conference_id", conferenceId)
+        .eq("user_id", req.user.id)
+        .single();
+
+      if (!participant) {
+        return res
+          .status(403)
+          .json({ error: "Not a participant of this conference" });
+      }
+
+      // Update participant status
+      await supabase
+        .from("conference_participants")
+        .update({
+          status: "joined",
+          joined_at: new Date().toISOString(),
+        })
+        .eq("id", participant.id);
+
+      res.json({
+        success: true,
+        conference: {
+          id: participant.conference_rooms.id,
+          name: participant.conference_rooms.name,
+          conferenceSid: participant.conference_rooms.conference_sid,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Leave conference
+app.post(
+  "/api/conference/leave/:conferenceId",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { conferenceId } = req.params;
+
+      await supabase
+        .from("conference_participants")
+        .update({
+          status: "left",
+          left_at: new Date().toISOString(),
+        })
+        .eq("conference_id", conferenceId)
+        .eq("user_id", req.user.id);
+
+      res.json({ success: true, message: "Left conference successfully" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Conference status callback (Twilio webhook)
+app.post(
+  "/api/conference/status-callback",
+  express.urlencoded({ extended: false }),
+  async (req, res) => {
+    try {
+      const { ConferenceSid, StatusCallbackEvent, CallSid, Timestamp } =
+        req.body;
+
+      console.log("Conference status callback:", {
+        ConferenceSid,
+        StatusCallbackEvent,
+        CallSid,
+      });
+
+      // Update database based on event
+      if (StatusCallbackEvent === "conference-start") {
+        await supabase
+          .from("conference_rooms")
+          .update({ started_at: new Date(Timestamp).toISOString() })
+          .eq("conference_sid", ConferenceSid);
+      } else if (StatusCallbackEvent === "conference-end") {
+        await supabase
+          .from("conference_rooms")
+          .update({
+            status: "ended",
+            ended_at: new Date(Timestamp).toISOString(),
+          })
+          .eq("conference_sid", ConferenceSid);
+      } else if (StatusCallbackEvent === "participant-join") {
+        await supabase
+          .from("conference_participants")
+          .update({
+            status: "joined",
+            joined_at: new Date(Timestamp).toISOString(),
+          })
+          .eq("call_sid", CallSid);
+      } else if (StatusCallbackEvent === "participant-leave") {
+        await supabase
+          .from("conference_participants")
+          .update({
+            status: "left",
+            left_at: new Date(Timestamp).toISOString(),
+          })
+          .eq("call_sid", CallSid);
+      }
+
+      res.status(200).send("OK");
+    } catch (error) {
+      console.error("Conference callback error:", error);
+      res.status(500).send("Error");
+    }
+  }
+);
+
+// ============================================================================
 // ADMIN ROUTES
 // ============================================================================
 

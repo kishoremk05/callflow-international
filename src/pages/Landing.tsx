@@ -57,7 +57,11 @@ const Landing = () => {
         .to('[data-hero="title"]', { opacity: 1, y: 0, duration: 0.7 }, 0.35)
         .to('[data-hero="subtitle"]', { opacity: 1, y: 0, duration: 0.6 }, 0.5)
         .to('[data-hero="ctas"]', { opacity: 1, y: 0, duration: 0.6 }, 0.65)
-        .to('[data-hero="illustration"]', { opacity: 1, scale: 1, x: 0, duration: 0.9, ease: "back.out(1.3)" }, 0.4)
+        .to(
+          '[data-hero="illustration"]',
+          { opacity: 1, scale: 1, x: 0, duration: 0.9, ease: "back.out(1.3)" },
+          0.4
+        )
         .to('[data-hero="trust"]', { opacity: 1, y: 0, duration: 0.5 }, 0.9);
     }, heroRef);
 
@@ -67,7 +71,7 @@ const Landing = () => {
   // Features Animation
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
-      const cards = gsap.utils.toArray('[data-feature]');
+      const cards = gsap.utils.toArray("[data-feature]") as Element[];
 
       gsap.set(cards, { opacity: 0, y: 60 });
 
@@ -91,7 +95,7 @@ const Landing = () => {
   // How It Works Animation
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
-      const steps = gsap.utils.toArray('[data-step]');
+      const steps = gsap.utils.toArray("[data-step]") as Element[];
 
       gsap.set(steps, { opacity: 0, y: 50 });
 
@@ -115,7 +119,7 @@ const Landing = () => {
   // Pricing Animation
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
-      const cards = gsap.utils.toArray('[data-pricing]');
+      const cards = gsap.utils.toArray("[data-pricing]") as Element[];
 
       gsap.set(cards, { opacity: 0, y: 60, scale: 0.95 });
 
@@ -140,14 +144,15 @@ const Landing = () => {
   // Stats Counter Animation
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
-      const counters = gsap.utils.toArray('[data-counter]') as HTMLElement[];
+      const counters = gsap.utils.toArray("[data-counter]") as HTMLElement[];
 
       counters.forEach((counter) => {
         const target = parseInt(counter.dataset.target || "0");
         const suffix = counter.dataset.suffix || "";
         const prefix = counter.dataset.prefix || "";
 
-        gsap.fromTo(counter,
+        gsap.fromTo(
+          counter,
           { innerText: 0 },
           {
             innerText: target,
@@ -159,8 +164,11 @@ const Landing = () => {
               start: "top 85%",
             },
             onUpdate: function () {
-              counter.innerText = prefix + Math.round(parseFloat(counter.innerText)).toLocaleString() + suffix;
-            }
+              counter.innerText =
+                prefix +
+                Math.round(parseFloat(counter.innerText)).toLocaleString() +
+                suffix;
+            },
           }
         );
       });
@@ -172,16 +180,16 @@ const Landing = () => {
   // CTA Animation
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.set('[data-cta]', { opacity: 0, y: 40, scale: 0.98 });
+      gsap.set("[data-cta]", { opacity: 0, y: 40, scale: 0.98 });
 
-      gsap.to('[data-cta]', {
+      gsap.to("[data-cta]", {
         opacity: 1,
         y: 0,
         scale: 1,
         duration: 0.8,
         ease: "power3.out",
         scrollTrigger: {
-          trigger: '[data-cta]',
+          trigger: "[data-cta]",
           start: "top 85%",
         },
       });
@@ -194,25 +202,29 @@ const Landing = () => {
     {
       icon: Wallet,
       title: "Secure Wallet",
-      description: "Manage your credits securely. Add funds instantly with multiple payment options.",
+      description:
+        "Manage your credits securely. Add funds instantly with multiple payment options.",
       color: "#0891b2",
     },
     {
       icon: Globe,
       title: "Browser Calling",
-      description: "Make HD calls directly from your browser. No apps or downloads required.",
+      description:
+        "Make HD calls directly from your browser. No apps or downloads required.",
       color: "#0891b2",
     },
     {
       icon: Users,
       title: "Team Collaboration",
-      description: "Host internal voice meetings and collaborate with your team seamlessly.",
+      description:
+        "Host internal voice meetings and collaborate with your team seamlessly.",
       color: "#0891b2",
     },
     {
       icon: Phone,
       title: "Virtual Numbers",
-      description: "Get local phone numbers from 50+ countries for your business.",
+      description:
+        "Get local phone numbers from 50+ countries for your business.",
       color: "#0891b2",
     },
   ];
@@ -254,13 +266,22 @@ const Landing = () => {
             </div>
 
             <div className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-gray-600 hover:text-[#0891b2] transition-colors font-medium">
+              <a
+                href="#features"
+                className="text-gray-600 hover:text-[#0891b2] transition-colors font-medium"
+              >
                 Features
               </a>
-              <a href="#pricing" className="text-gray-600 hover:text-[#0891b2] transition-colors font-medium">
+              <a
+                href="#pricing"
+                className="text-gray-600 hover:text-[#0891b2] transition-colors font-medium"
+              >
                 Pricing
               </a>
-              <a href="#how-it-works" className="text-gray-600 hover:text-[#0891b2] transition-colors font-medium">
+              <a
+                href="#how-it-works"
+                className="text-gray-600 hover:text-[#0891b2] transition-colors font-medium"
+              >
                 How It Works
               </a>
               <Button
@@ -282,7 +303,10 @@ const Landing = () => {
       </nav>
 
       {/* Hero Section */}
-      <section ref={heroRef} className="pt-28 md:pt-36 pb-16 md:pb-24 bg-gradient-to-b from-slate-50 to-white">
+      <section
+        ref={heroRef}
+        className="pt-28 md:pt-36 pb-16 md:pb-24 bg-gradient-to-b from-slate-50 to-white"
+      >
         <div className="container mx-auto px-4 md:px-6">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
@@ -378,8 +402,12 @@ const Landing = () => {
                       <Phone className="w-5 h-5 text-green-600" />
                     </div>
                     <div>
-                      <div className="text-lg font-bold text-gray-800">HD Quality</div>
-                      <div className="text-sm text-gray-500">Crystal Clear Audio</div>
+                      <div className="text-lg font-bold text-gray-800">
+                        HD Quality
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Crystal Clear Audio
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -390,7 +418,9 @@ const Landing = () => {
                       <Globe className="w-5 h-5 text-[#0891b2]" />
                     </div>
                     <div>
-                      <div className="text-lg font-bold text-gray-800">190+</div>
+                      <div className="text-lg font-bold text-gray-800">
+                        190+
+                      </div>
                       <div className="text-sm text-gray-500">Countries</div>
                     </div>
                   </div>
@@ -402,7 +432,11 @@ const Landing = () => {
       </section>
 
       {/* Features Section */}
-      <section ref={featuresRef} id="features" className="py-20 md:py-28 bg-white">
+      <section
+        ref={featuresRef}
+        id="features"
+        className="py-20 md:py-28 bg-white"
+      >
         <div className="container mx-auto px-4 md:px-6">
           <div className="text-center mb-16">
             <span className="inline-block px-4 py-2 bg-[#0891b2]/10 rounded-full text-[#0891b2] font-semibold text-sm mb-4">
@@ -412,7 +446,8 @@ const Landing = () => {
               Everything You Need for Global Calling
             </h2>
             <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-              Powerful features designed to make international communication seamless and affordable.
+              Powerful features designed to make international communication
+              seamless and affordable.
             </p>
           </div>
 
@@ -427,7 +462,10 @@ const Landing = () => {
                   className="w-14 h-14 rounded-xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110"
                   style={{ backgroundColor: `${feature.color}15` }}
                 >
-                  <feature.icon className="w-7 h-7" style={{ color: feature.color }} />
+                  <feature.icon
+                    className="w-7 h-7"
+                    style={{ color: feature.color }}
+                  />
                 </div>
                 <h3 className="text-xl font-bold text-[#1a365d] mb-3">
                   {feature.title}
@@ -442,7 +480,11 @@ const Landing = () => {
       </section>
 
       {/* How It Works Section */}
-      <section ref={howItWorksRef} id="how-it-works" className="py-20 md:py-28 bg-slate-50">
+      <section
+        ref={howItWorksRef}
+        id="how-it-works"
+        className="py-20 md:py-28 bg-slate-50"
+      >
         <div className="container mx-auto px-4 md:px-6">
           <div className="text-center mb-16">
             <span className="inline-block px-4 py-2 bg-[#0891b2]/10 rounded-full text-[#0891b2] font-semibold text-sm mb-4">
@@ -462,7 +504,11 @@ const Landing = () => {
               <div className="hidden md:block absolute top-16 left-[20%] right-[20%] h-0.5 bg-[#0891b2]/20"></div>
 
               {steps.map((item) => (
-                <div key={item.step} data-step className="text-center relative z-10">
+                <div
+                  key={item.step}
+                  data-step
+                  className="text-center relative z-10"
+                >
                   <div className="w-20 h-20 bg-white border-4 border-[#0891b2] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
                     <span className="text-3xl">{item.icon}</span>
                   </div>
@@ -483,7 +529,11 @@ const Landing = () => {
       </section>
 
       {/* Pricing Section */}
-      <section ref={pricingRef} id="pricing" className="py-20 md:py-28 bg-white">
+      <section
+        ref={pricingRef}
+        id="pricing"
+        className="py-20 md:py-28 bg-white"
+      >
         <div className="container mx-auto px-4 md:px-6">
           <div className="text-center mb-16">
             <span className="inline-block px-4 py-2 bg-[#0891b2]/10 rounded-full text-[#0891b2] font-semibold text-sm mb-4">
@@ -493,21 +543,35 @@ const Landing = () => {
               Pay Only for What You Use
             </h2>
             <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-              No monthly subscriptions. No hidden fees. Just simple credit-based pricing.
+              No monthly subscriptions. No hidden fees. Just simple credit-based
+              pricing.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-16">
             {/* Starter */}
-            <div data-pricing className="bg-white rounded-2xl border border-gray-200 p-8 hover:shadow-xl transition-all">
+            <div
+              data-pricing
+              className="bg-white rounded-2xl border border-gray-200 p-8 hover:shadow-xl transition-all"
+            >
               <div className="text-center mb-8">
-                <h3 className="text-xl font-bold text-[#1a365d] mb-2">Starter</h3>
+                <h3 className="text-xl font-bold text-[#1a365d] mb-2">
+                  Starter
+                </h3>
                 <div className="text-4xl font-bold text-[#1a365d] mb-1">$5</div>
                 <p className="text-gray-500 text-sm">One-time purchase</p>
               </div>
               <ul className="space-y-4 mb-8">
-                {["Call 50+ countries", "HD browser calling", "Basic support", "Call history"].map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-gray-600">
+                {[
+                  "Call 50+ countries",
+                  "HD browser calling",
+                  "Basic support",
+                  "Call history",
+                ].map((item) => (
+                  <li
+                    key={item}
+                    className="flex items-center gap-3 text-gray-600"
+                  >
                     <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
                     {item}
                   </li>
@@ -522,7 +586,10 @@ const Landing = () => {
             </div>
 
             {/* Business - Popular */}
-            <div data-pricing className="bg-[#0891b2] rounded-2xl p-8 text-white relative transform md:scale-105 shadow-2xl">
+            <div
+              data-pricing
+              className="bg-[#0891b2] rounded-2xl p-8 text-white relative transform md:scale-105 shadow-2xl"
+            >
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#f97316] text-white px-4 py-1 rounded-full text-sm font-bold shadow-lg">
                 Most Popular
               </div>
@@ -532,7 +599,13 @@ const Landing = () => {
                 <p className="text-white/80 text-sm">+10% bonus credits</p>
               </div>
               <ul className="space-y-4 mb-8">
-                {["All Starter features", "190+ countries", "Call recording", "Priority support", "Team features"].map((item) => (
+                {[
+                  "All Starter features",
+                  "190+ countries",
+                  "Call recording",
+                  "Priority support",
+                  "Team features",
+                ].map((item) => (
                   <li key={item} className="flex items-center gap-3">
                     <CheckCircle2 className="w-5 h-5 text-white/90 flex-shrink-0" />
                     {item}
@@ -548,15 +621,31 @@ const Landing = () => {
             </div>
 
             {/* Enterprise */}
-            <div data-pricing className="bg-white rounded-2xl border border-gray-200 p-8 hover:shadow-xl transition-all">
+            <div
+              data-pricing
+              className="bg-white rounded-2xl border border-gray-200 p-8 hover:shadow-xl transition-all"
+            >
               <div className="text-center mb-8">
-                <h3 className="text-xl font-bold text-[#1a365d] mb-2">Enterprise</h3>
-                <div className="text-4xl font-bold text-[#1a365d] mb-1">$200+</div>
+                <h3 className="text-xl font-bold text-[#1a365d] mb-2">
+                  Enterprise
+                </h3>
+                <div className="text-4xl font-bold text-[#1a365d] mb-1">
+                  $200+
+                </div>
                 <p className="text-gray-500 text-sm">Volume discounts</p>
               </div>
               <ul className="space-y-4 mb-8">
-                {["All Business features", "Dedicated manager", "Custom numbers", "API access", "SLA guarantee"].map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-gray-600">
+                {[
+                  "All Business features",
+                  "Dedicated manager",
+                  "Custom numbers",
+                  "API access",
+                  "SLA guarantee",
+                ].map((item) => (
+                  <li
+                    key={item}
+                    className="flex items-center gap-3 text-gray-600"
+                  >
                     <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
                     {item}
                   </li>
@@ -584,10 +673,17 @@ const Landing = () => {
                 { flag: "🇩🇪", country: "Germany", rate: "$0.03" },
                 { flag: "🇯🇵", country: "Japan", rate: "$0.04" },
               ].map((item) => (
-                <div key={item.country} className="text-center p-4 bg-white rounded-xl shadow-sm">
+                <div
+                  key={item.country}
+                  className="text-center p-4 bg-white rounded-xl shadow-sm"
+                >
                   <span className="text-3xl mb-2 block">{item.flag}</span>
-                  <div className="text-sm font-medium text-gray-600">{item.country}</div>
-                  <div className="text-lg font-bold text-[#0891b2]">{item.rate}/min</div>
+                  <div className="text-sm font-medium text-gray-600">
+                    {item.country}
+                  </div>
+                  <div className="text-lg font-bold text-[#0891b2]">
+                    {item.rate}/min
+                  </div>
                 </div>
               ))}
             </div>
@@ -614,7 +710,8 @@ const Landing = () => {
               Enterprise-Grade Security
             </h2>
             <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-              Your calls and data are protected with industry-leading security measures.
+              Your calls and data are protected with industry-leading security
+              measures.
             </p>
           </div>
 
@@ -623,7 +720,9 @@ const Landing = () => {
               <div className="w-16 h-16 bg-[#0891b2]/10 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Lock className="w-8 h-8 text-[#0891b2]" />
               </div>
-              <h3 className="text-lg font-bold text-[#1a365d] mb-2">256-bit Encryption</h3>
+              <h3 className="text-lg font-bold text-[#1a365d] mb-2">
+                256-bit Encryption
+              </h3>
               <p className="text-gray-600 text-sm">
                 All calls and data encrypted with bank-level security
               </p>
@@ -632,7 +731,9 @@ const Landing = () => {
               <div className="w-16 h-16 bg-[#0891b2]/10 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Award className="w-8 h-8 text-[#0891b2]" />
               </div>
-              <h3 className="text-lg font-bold text-[#1a365d] mb-2">SOC 2 Compliant</h3>
+              <h3 className="text-lg font-bold text-[#1a365d] mb-2">
+                SOC 2 Compliant
+              </h3>
               <p className="text-gray-600 text-sm">
                 Audited security controls and data protection
               </p>
@@ -641,7 +742,9 @@ const Landing = () => {
               <div className="w-16 h-16 bg-[#0891b2]/10 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Headphones className="w-8 h-8 text-[#0891b2]" />
               </div>
-              <h3 className="text-lg font-bold text-[#1a365d] mb-2">24/7 Support</h3>
+              <h3 className="text-lg font-bold text-[#1a365d] mb-2">
+                24/7 Support
+              </h3>
               <p className="text-gray-600 text-sm">
                 Expert assistance whenever you need it
               </p>
@@ -705,7 +808,10 @@ const Landing = () => {
       {/* CTA Section */}
       <section ref={ctaRef} className="py-24 bg-white">
         <div className="container mx-auto px-4 md:px-6">
-          <div data-cta className="max-w-4xl mx-auto text-center bg-[#1a365d] rounded-3xl p-12 relative overflow-hidden">
+          <div
+            data-cta
+            className="max-w-4xl mx-auto text-center bg-[#1a365d] rounded-3xl p-12 relative overflow-hidden"
+          >
             {/* Decorative elements */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-[#0891b2]/20 rounded-full blur-3xl"></div>
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#f97316]/20 rounded-full blur-3xl"></div>
@@ -715,8 +821,8 @@ const Landing = () => {
                 Ready to Start Calling?
               </h2>
               <p className="text-gray-300 text-lg mb-8 max-w-2xl mx-auto">
-                Join thousands of users making crystal-clear international calls.
-                Start your free account today.
+                Join thousands of users making crystal-clear international
+                calls. Start your free account today.
               </p>
               <Button
                 size="lg"
@@ -744,7 +850,8 @@ const Landing = () => {
                 <span className="text-xl font-bold">GlobalConnect</span>
               </div>
               <p className="text-gray-400 text-sm leading-relaxed">
-                Making international calls simple, affordable, and accessible from anywhere.
+                Making international calls simple, affordable, and accessible
+                from anywhere.
               </p>
             </div>
 
@@ -752,29 +859,79 @@ const Landing = () => {
             <div>
               <h4 className="font-bold mb-4">Product</h4>
               <ul className="space-y-2 text-gray-400 text-sm">
-                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Enterprise</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">API</a></li>
+                <li>
+                  <a
+                    href="#features"
+                    className="hover:text-white transition-colors"
+                  >
+                    Features
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#pricing"
+                    className="hover:text-white transition-colors"
+                  >
+                    Pricing
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Enterprise
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    API
+                  </a>
+                </li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-bold mb-4">Company</h4>
               <ul className="space-y-2 text-gray-400 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    About Us
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Careers
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Blog
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Contact
+                  </a>
+                </li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-bold mb-4">Legal</h4>
               <ul className="space-y-2 text-gray-400 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Cookie Policy</a></li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Terms of Service
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Cookie Policy
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
@@ -785,13 +942,22 @@ const Landing = () => {
               © 2024 GlobalConnect. All rights reserved.
             </p>
             <div className="flex gap-4">
-              <a href="#" className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#0891b2] transition-colors">
+              <a
+                href="#"
+                className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#0891b2] transition-colors"
+              >
                 <Facebook className="w-5 h-5" />
               </a>
-              <a href="#" className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#0891b2] transition-colors">
+              <a
+                href="#"
+                className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#0891b2] transition-colors"
+              >
                 <Twitter className="w-5 h-5" />
               </a>
-              <a href="#" className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#0891b2] transition-colors">
+              <a
+                href="#"
+                className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#0891b2] transition-colors"
+              >
                 <Linkedin className="w-5 h-5" />
               </a>
             </div>

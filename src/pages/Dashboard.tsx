@@ -1,4 +1,11 @@
-import { useEffect, useState, useLayoutEffect, useRef, useCallback } from "react";
+import {
+  useEffect,
+  useState,
+  useLayoutEffect,
+  useRef,
+  useCallback,
+} from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTwilioDevice } from "@/hooks/useTwilioDevice";
@@ -22,7 +29,7 @@ import {
   Phone,
   Video,
   MessageSquare,
-  Settings
+  Settings,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,9 +50,17 @@ interface Wallet {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { makeCall, isConnected, isInitializing, currentCall, hangupCall, error: twilioError, retryConnection } =
-    useTwilioDevice();
+  const {
+    makeCall,
+    isConnected,
+    isInitializing,
+    currentCall,
+    hangupCall,
+    error: twilioError,
+    retryConnection,
+  } = useTwilioDevice();
   const [wallet, setWallet] = useState<Wallet>({ balance: 0, currency: "USD" });
   const [calls, setCalls] = useState<CallLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,7 +73,9 @@ export default function Dashboard() {
   const [callDuration, setCallDuration] = useState(0);
   const [currentNumber, setCurrentNumber] = useState("");
   const [currentCountryCode, setCurrentCountryCode] = useState("");
-  const [activeView, setActiveView] = useState<"dialer" | "team" | "analytics">("dialer");
+  const [activeView, setActiveView] = useState<"dialer" | "team" | "analytics">(
+    "dialer"
+  );
 
   const containerRef = useRef<HTMLDivElement>(null);
   const callTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -107,7 +124,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (currentCall) {
       callTimerRef.current = setInterval(() => {
-        setCallDuration(prev => prev + 1);
+        setCallDuration((prev) => prev + 1);
       }, 1000);
     } else {
       if (callTimerRef.current) {
@@ -201,7 +218,9 @@ export default function Dashboard() {
     }
 
     if (!isConnected && !isInitializing) {
-      toast.error("Calling device not ready. Backend server may not be running.");
+      toast.error(
+        "Calling device not ready. Backend server may not be running."
+      );
       return;
     }
 
@@ -237,10 +256,30 @@ export default function Dashboard() {
 
   // Quick actions for team communication
   const quickActions = [
-    { icon: Phone, label: "Voice Call", color: "#0891b2", action: () => setActiveView("dialer") },
-    { icon: Video, label: "Video Call", color: "#8b5cf6", action: () => toast.info("Video calls coming soon!") },
-    { icon: MessageSquare, label: "Message", color: "#10b981", action: () => toast.info("Messaging coming soon!") },
-    { icon: Users, label: "Team", color: "#f97316", action: () => setActiveView("team") },
+    {
+      icon: Phone,
+      label: "Voice Call",
+      color: "#0891b2",
+      action: () => navigate("/voice-call"),
+    },
+    {
+      icon: Video,
+      label: "Video Call",
+      color: "#8b5cf6",
+      action: () => toast.info("Video calls coming soon!"),
+    },
+    {
+      icon: MessageSquare,
+      label: "Message",
+      color: "#10b981",
+      action: () => toast.info("Messaging coming soon!"),
+    },
+    {
+      icon: Users,
+      label: "Team",
+      color: "#f97316",
+      action: () => setActiveView("team"),
+    },
   ];
 
   return (
@@ -268,8 +307,13 @@ export default function Dashboard() {
                   onClick={action.action}
                   className="flex items-center gap-2 px-4 py-2.5 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all"
                 >
-                  <action.icon className="w-4 h-4" style={{ color: action.color }} />
-                  <span className="text-sm font-medium text-gray-700">{action.label}</span>
+                  <action.icon
+                    className="w-4 h-4"
+                    style={{ color: action.color }}
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    {action.label}
+                  </span>
                 </button>
               ))}
             </div>
@@ -281,8 +325,12 @@ export default function Dashboard() {
           <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-3">
             <WifiOff className="w-5 h-5 text-amber-600" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-amber-800">Backend server not connected</p>
-              <p className="text-xs text-amber-600">Start the backend server to enable calling features</p>
+              <p className="text-sm font-medium text-amber-800">
+                Backend server not connected
+              </p>
+              <p className="text-xs text-amber-600">
+                Start the backend server to enable calling features
+              </p>
             </div>
             <Button
               variant="outline"
@@ -298,7 +346,9 @@ export default function Dashboard() {
         {isConnected && (
           <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-xl flex items-center gap-3">
             <Wifi className="w-4 h-4 text-green-600" />
-            <p className="text-sm font-medium text-green-700">Calling device ready</p>
+            <p className="text-sm font-medium text-green-700">
+              Calling device ready
+            </p>
           </div>
         )}
 
@@ -328,16 +378,17 @@ export default function Dashboard() {
               disabled={isInitializing || (!isConnected && !currentCall)}
               isInCall={!!currentCall}
               callDuration={callDuration}
-              callerName={currentNumber ? `${currentCountryCode} ${currentNumber}` : "Unknown"}
+              callerName={
+                currentNumber
+                  ? `${currentCountryCode} ${currentNumber}`
+                  : "Unknown"
+              }
             />
           </div>
 
           {/* Right Column - Wallet & Quick Stats */}
           <div className="lg:col-span-3 space-y-6" data-animate="sidebar">
-            <WalletCard
-              balance={wallet.balance}
-              currency={wallet.currency}
-            />
+            <WalletCard balance={wallet.balance} currency={wallet.currency} />
 
             {/* Team Activity Card */}
             <Card className="border-gray-100 bg-white rounded-2xl shadow-sm">
@@ -353,7 +404,9 @@ export default function Dashboard() {
                     <div className="w-2 h-2 bg-green-500 rounded-full" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-800">12 Online</p>
+                    <p className="text-sm font-medium text-gray-800">
+                      12 Online
+                    </p>
                     <p className="text-xs text-gray-500">Team members</p>
                   </div>
                 </div>
@@ -362,7 +415,9 @@ export default function Dashboard() {
                     <PhoneCall className="w-4 h-4 text-[#0891b2]" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-800">3 Active Calls</p>
+                    <p className="text-sm font-medium text-gray-800">
+                      3 Active Calls
+                    </p>
                     <p className="text-xs text-gray-500">Right now</p>
                   </div>
                 </div>
@@ -371,7 +426,9 @@ export default function Dashboard() {
                     <Globe className="w-4 h-4 text-purple-600" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-800">15 Countries</p>
+                    <p className="text-sm font-medium text-gray-800">
+                      15 Countries
+                    </p>
                     <p className="text-xs text-gray-500">Connected today</p>
                   </div>
                 </div>
@@ -386,20 +443,28 @@ export default function Dashboard() {
                     <Calendar className="w-4 h-4 text-[#0891b2]" />
                     Upcoming
                   </div>
-                  <span className="text-xs text-gray-400 font-normal">Today</span>
+                  <span className="text-xs text-gray-400 font-normal">
+                    Today
+                  </span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="p-3 bg-[#0891b2]/5 border border-[#0891b2]/10 rounded-xl">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-[#1a365d]">Team Standup</span>
-                    <span className="text-xs text-[#0891b2] font-medium">2:30 PM</span>
+                    <span className="text-sm font-medium text-[#1a365d]">
+                      Team Standup
+                    </span>
+                    <span className="text-xs text-[#0891b2] font-medium">
+                      2:30 PM
+                    </span>
                   </div>
                   <p className="text-xs text-gray-500">5 participants</p>
                 </div>
                 <div className="p-3 bg-gray-50 rounded-xl">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-[#1a365d]">Client Call</span>
+                    <span className="text-sm font-medium text-[#1a365d]">
+                      Client Call
+                    </span>
                     <span className="text-xs text-gray-500">4:00 PM</span>
                   </div>
                   <p className="text-xs text-gray-500">External - USA</p>
