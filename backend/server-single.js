@@ -120,11 +120,12 @@ app.use(
       if (!origin) return callback(null, true);
 
       // Allow all Vercel preview and production deployments
-      if (origin && (
-        origin.includes('.vercel.app') || 
-        origin.includes('vercel.app') ||
-        allowedOrigins.includes(origin)
-      )) {
+      if (
+        origin &&
+        (origin.includes(".vercel.app") ||
+          origin.includes("vercel.app") ||
+          allowedOrigins.includes(origin))
+      ) {
         callback(null, true);
       } else {
         console.warn(`CORS blocked origin: ${origin}`);
@@ -141,6 +142,37 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ============================================================================
+// HEALTH CHECK & ROOT ROUTES
+// ============================================================================
+
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || "development",
+    services: {
+      twilio: !!twilioClient,
+      livekit: livekitEnabled,
+    },
+  });
+});
+
+// Root endpoint
+app.get("/", (req, res) => {
+  res.json({
+    message: "CallFlow International API Server",
+    version: "1.0.0",
+    status: "running",
+    endpoints: {
+      health: "/health",
+      api: "/api",
+    },
+  });
+});
 
 // ============================================================================
 // MIDDLEWARE FUNCTIONS
