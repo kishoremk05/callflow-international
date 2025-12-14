@@ -1306,7 +1306,10 @@ app.post("/api/internal-call/token", authenticate, async (req, res, next) => {
         return res.json({
           success: true,
           status: existingParticipant.status,
-          message: existingParticipant.status === "approved" ? "Already approved" : "Already in waiting room",
+          message:
+            existingParticipant.status === "approved"
+              ? "Already approved"
+              : "Already in waiting room",
           callId: existingCall.id,
         });
       }
@@ -1328,10 +1331,10 @@ app.post("/api/internal-call/token", authenticate, async (req, res, next) => {
 
       if (participantError) {
         console.error("Failed to add to waiting room:", participantError);
-        return res.status(500).json({ 
+        return res.status(500).json({
           error: "Failed to join waiting room",
           details: participantError.message || "Database error",
-          hint: "Please ensure the database migration has been applied"
+          hint: "Please ensure the database migration has been applied",
         });
       }
 
@@ -1602,7 +1605,9 @@ app.get(
       // Get participant status
       const { data: participant } = await supabase
         .from("internal_call_participants")
-        .select("id, status, approved_at, participant_name, internal_calls(room_id, enterprise_id)")
+        .select(
+          "id, status, approved_at, participant_name, internal_calls(room_id, enterprise_id)"
+        )
         .eq("call_id", callId)
         .eq("user_id", req.user.id)
         .order("created_at", { ascending: false })
@@ -2301,6 +2306,149 @@ app.post(
 // ============================================================================
 // ADMIN ROUTES
 // ============================================================================
+
+// TEMPORARY ADMIN ROUTES (NO AUTH REQUIRED - FOR TESTING ONLY)
+// Get all users with their enterprise status
+app.get("/api/admin/temp/users", async (req, res, next) => {
+  try {
+    const { data: users, error } = await supabase
+      .from("profiles")
+      .select(`
+        id,
+        email,
+        full_name,
+        created_at,
+        enterprise_members (
+          id,
+          enterprise_id,
+          role,
+          enterprise_accounts (
+            id,
+            name,
+            business_type
+          )
+        )
+      `)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    // Format the response
+    const formattedUsers = users.map(user => ({
+      id: user.id,
+      email: user.email,
+      full_name: user.full_name,
+      created_at: user.created_at,
+      is_enterprise: user.enterprise_members && user.enterprise_members.length > 0,
+      enterprise_info: user.enterprise_members && user.enterprise_members.length > 0 
+        ? user.enterprise_members[0].enterprise_accounts 
+        : null
+    }));
+
+    res.json({ success: true, users: formattedUsers });
+  } catch (error) {
+    console.error("Failed to fetch users:", error);
+    next(error);
+  }
+});
+
+// Convert user to enterprise account
+app.post("/api/admin/temp/make-enterprise/:userId", async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const { enterpriseName, businessType } = req.body;
+
+    // Check if user exists
+    const { data: user } = await supabase
+      .from("profiles")
+      .select("id, email, full_name")
+      .eq("id", userId)
+      .single();
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Check if user is already in an enterprise
+    const { data: existingMember } = await supabase
+      .from("enterprise_members")
+      .select("id")
+      .eq("user_id", userId)
+      .single();
+
+    if (existingMember) {
+      return res.status(400).json({ error: "User is already in an enterprise" });
+    }
+
+    // Create enterprise account
+    const { data: enterprise, error: enterpriseError } = await supabase
+      .from("enterprise_accounts")
+      .insert({
+        name: enterpriseName || `${user.full_name || user.email}'s Enterprise`,
+        business_type: businessType || "technology",
+        admin_id: userId,
+        status: "active"
+      })
+      .select()
+      .single();
+
+    if (enterpriseError) throw enterpriseError;
+
+    // Add user as enterprise member
+    const { error: memberError } = await supabase
+      .from("enterprise_members")
+      .insert({
+        enterprise_id: enterprise.id,
+        user_id: userId,
+        role: "admin"
+      });
+
+    if (memberError) throw memberError;
+
+    res.json({
+      success: true,
+      message: "User converted to enterprise account",
+      enterprise
+    });
+  } catch (error) {
+    console.error("Failed to convert user:", error);
+    next(error);
+  }
+});
+
+// Remove user from enterprise
+app.post("/api/admin/temp/remove-enterprise/:userId", async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+
+    // Get user's enterprise membership
+    const { data: membership } = await supabase
+      .from("enterprise_members")
+      .select("enterprise_id")
+      .eq("user_id", userId)
+      .single();
+
+    if (!membership) {
+      return res.status(404).json({ error: "User is not in any enterprise" });
+    }
+
+    // Remove from enterprise_members
+    const { error: deleteError } = await supabase
+      .from("enterprise_members")
+      .delete()
+      .eq("user_id", userId);
+
+    if (deleteError) throw deleteError;
+
+    res.json({
+      success: true,
+      message: "User removed from enterprise"
+    });
+  } catch (error) {
+    console.error("Failed to remove user:", error);
+    next(error);
+  }
+});
 
 app.get(
   "/api/admin/users",
