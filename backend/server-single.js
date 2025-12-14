@@ -1269,16 +1269,74 @@ app.post("/api/internal-call/token", authenticate, async (req, res, next) => {
       });
     }
 
-    // Verify user is part of an enterprise
+    // Check if user is part of an enterprise
     const { data: enterpriseMember } = await supabase
       .from("enterprise_members")
       .select("enterprise_id, enterprise_accounts(name)")
       .eq("user_id", req.user.id)
       .single();
 
+    // If not enterprise user, add to waiting room
     if (!enterpriseMember) {
-      return res.status(403).json({
-        error: "Internal calls are only available for enterprise users",
+      // Find the call by room code (search in room_name column, not room_id)
+      const { data: existingCall } = await supabase
+        .from("internal_calls")
+        .select("id, created_by, enterprise_id, room_id")
+        .eq("room_name", roomName) // Search by room_name (the 6-digit code)
+        .eq("status", "active")
+        .single();
+
+      if (!existingCall) {
+        return res.status(404).json({
+          error: "Room not found or inactive",
+        });
+      }
+
+      // Check if user is already waiting or approved for this call
+      const { data: existingParticipant } = await supabase
+        .from("internal_call_participants")
+        .select("id, status")
+        .eq("call_id", existingCall.id)
+        .eq("user_id", req.user.id)
+        .in("status", ["waiting", "approved"])
+        .single();
+
+      if (existingParticipant) {
+        // User already requested access, return existing status
+        return res.json({
+          success: true,
+          status: existingParticipant.status,
+          message: existingParticipant.status === "approved" ? "Already approved" : "Already in waiting room",
+          callId: existingCall.id,
+        });
+      }
+
+      // Add user to waiting list
+      const tempUserId = `temp_${Date.now()}_${Math.random()
+        .toString(36)
+        .substr(2, 9)}`;
+
+      const { error: participantError } = await supabase
+        .from("internal_call_participants")
+        .insert({
+          call_id: existingCall.id,
+          user_id: req.user.id,
+          temporary_user_id: tempUserId,
+          participant_name: participantName,
+          status: "waiting",
+        });
+
+      if (participantError) {
+        console.error("Failed to add to waiting room:", participantError);
+        return res.status(500).json({ error: "Failed to join waiting room" });
+      }
+
+      // Return waiting status
+      return res.json({
+        success: true,
+        status: "waiting",
+        message: "Waiting for host approval",
+        callId: existingCall.id,
       });
     }
 
@@ -1310,12 +1368,13 @@ app.post("/api/internal-call/token", authenticate, async (req, res, next) => {
     // Record the call in database
     const { data: existingCall } = await supabase
       .from("internal_calls")
-      .select("id")
+      .select("id, created_by")
       .eq("room_id", roomId)
       .eq("status", "active")
       .single();
 
     let callId = existingCall?.id;
+    let isHost = false;
 
     if (!existingCall) {
       // Create new call record
@@ -1336,7 +1395,11 @@ app.post("/api/internal-call/token", authenticate, async (req, res, next) => {
         console.error("Failed to create call record:", callError);
       } else {
         callId = newCall.id;
+        isHost = true; // User created the room, so they're the host
       }
+    } else {
+      // Check if this user is the host
+      isHost = existingCall.created_by === req.user.id;
     }
 
     // Add user as participant
@@ -1360,6 +1423,8 @@ app.post("/api/internal-call/token", authenticate, async (req, res, next) => {
       token,
       roomId,
       wsUrl: process.env.LIVEKIT_URL,
+      callId,
+      isHost,
       enterpriseName: enterpriseMember.enterprise_accounts?.name,
     });
   } catch (error) {
@@ -1367,6 +1432,232 @@ app.post("/api/internal-call/token", authenticate, async (req, res, next) => {
     next(error);
   }
 });
+
+// Get waiting participants for a call (host only)
+app.get(
+  "/api/internal-call/waiting/:callId",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { callId } = req.params;
+
+      // Verify user is the call creator
+      const { data: call } = await supabase
+        .from("internal_calls")
+        .select("created_by")
+        .eq("id", callId)
+        .single();
+
+      if (!call || call.created_by !== req.user.id) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
+
+      // Get waiting participants
+      const { data: waitingUsers, error } = await supabase
+        .from("internal_call_participants")
+        .select("*")
+        .eq("call_id", callId)
+        .eq("status", "waiting")
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+
+      res.json({ success: true, waiting: waitingUsers || [] });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Approve participant (host only)
+app.post(
+  "/api/internal-call/approve/:participantId",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { participantId } = req.params;
+
+      // Get participant details
+      const { data: participant } = await supabase
+        .from("internal_call_participants")
+        .select("*, internal_calls(created_by, enterprise_id, room_id)")
+        .eq("id", participantId)
+        .single();
+
+      if (!participant) {
+        return res.status(404).json({ error: "Participant not found" });
+      }
+
+      // Verify user is the call creator
+      if (participant.internal_calls.created_by !== req.user.id) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
+
+      // Update status to approved
+      const { error } = await supabase
+        .from("internal_call_participants")
+        .update({
+          status: "approved",
+          approved_by: req.user.id,
+          approved_at: new Date().toISOString(),
+        })
+        .eq("id", participantId);
+
+      if (error) throw error;
+
+      // Generate LiveKit token for approved user
+      if (livekitEnabled && participant.user_id) {
+        // room_id already contains the full enterprise-scoped ID
+        const roomId = participant.internal_calls.room_id;
+
+        const at = new LiveKitAccessToken(
+          process.env.LIVEKIT_API_KEY,
+          process.env.LIVEKIT_API_SECRET,
+          {
+            identity: participant.user_id,
+            name: participant.participant_name,
+            ttl: "24h",
+          }
+        );
+
+        at.addGrant({
+          roomJoin: true,
+          room: roomId,
+          canPublish: true,
+          canSubscribe: true,
+          canPublishData: true,
+        });
+
+        const token = await at.toJwt();
+
+        res.json({
+          success: true,
+          message: "Participant approved",
+          token,
+          roomId,
+          wsUrl: process.env.LIVEKIT_URL,
+        });
+      } else {
+        res.json({ success: true, message: "Participant approved" });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Reject participant (host only)
+app.post(
+  "/api/internal-call/reject/:participantId",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { participantId } = req.params;
+
+      // Get participant details
+      const { data: participant } = await supabase
+        .from("internal_call_participants")
+        .select("*, internal_calls(created_by)")
+        .eq("id", participantId)
+        .single();
+
+      if (!participant) {
+        return res.status(404).json({ error: "Participant not found" });
+      }
+
+      // Verify user is the call creator
+      if (participant.internal_calls.created_by !== req.user.id) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
+
+      // Update status to rejected
+      const { error } = await supabase
+        .from("internal_call_participants")
+        .update({
+          status: "rejected",
+        })
+        .eq("id", participantId);
+
+      if (error) throw error;
+
+      res.json({ success: true, message: "Participant rejected" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Check approval status (for waiting users)
+app.get(
+  "/api/internal-call/status/:callId",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { callId } = req.params;
+
+      // Get participant status
+      const { data: participant } = await supabase
+        .from("internal_call_participants")
+        .select("id, status, approved_at, participant_name, internal_calls(room_id, enterprise_id)")
+        .eq("call_id", callId)
+        .eq("user_id", req.user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (!participant) {
+        return res.status(404).json({ error: "Not found" });
+      }
+
+      // If approved, generate token
+      if (participant.status === "approved" && livekitEnabled) {
+        // room_id already contains the full enterprise-scoped ID
+        const roomId = participant.internal_calls.room_id;
+
+        const at = new LiveKitAccessToken(
+          process.env.LIVEKIT_API_KEY,
+          process.env.LIVEKIT_API_SECRET,
+          {
+            identity: req.user.id,
+            name: participant.participant_name || req.user.email || "User",
+            ttl: "24h",
+          }
+        );
+
+        // Update status to joined
+        await supabase
+          .from("internal_call_participants")
+          .update({ status: "joined" })
+          .eq("id", participant.id);
+
+        at.addGrant({
+          roomJoin: true,
+          room: roomId,
+          canPublish: true,
+          canSubscribe: true,
+          canPublishData: true,
+        });
+
+        const token = await at.toJwt();
+
+        res.json({
+          success: true,
+          status: participant.status,
+          token,
+          roomId,
+          wsUrl: process.env.LIVEKIT_URL,
+        });
+      } else {
+        res.json({
+          success: true,
+          status: participant.status,
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 // Get active internal calls for user's enterprise
 app.get("/api/internal-call/active", authenticate, async (req, res, next) => {

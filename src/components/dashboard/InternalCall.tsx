@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { WaitingRoom, WaitingList } from "./WaitingRoom";
 
 interface InternalCallProps {
   roomName: string;
@@ -173,6 +174,8 @@ function CallRoom({ roomName, userName, onLeave }: InternalCallProps) {
   const [wsUrl, setWsUrl] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [callId, setCallId] = useState<string>("");
+  const [callStatus, setCallStatus] = useState<string>("connecting");
+  const [isHost, setIsHost] = useState(false);
 
   useEffect(() => {
     const fetchToken = async () => {
@@ -204,9 +207,17 @@ function CallRoom({ roomName, userName, onLeave }: InternalCallProps) {
         const data = await response.json();
 
         if (response.ok) {
-          setToken(data.token);
-          setWsUrl(data.wsUrl);
-          toast.success(`Joined ${roomName}`);
+          if (data.status === "waiting") {
+            setCallStatus("waiting");
+            setCallId(data.callId);
+          } else {
+            setToken(data.token);
+            setWsUrl(data.wsUrl);
+            setCallId(data.callId);
+            setIsHost(data.isHost || false);
+            setCallStatus("approved");
+            toast.success(`Joined ${roomName}`);
+          }
         } else {
           toast.error(data.error || "Failed to join call");
           onLeave();
@@ -248,6 +259,21 @@ function CallRoom({ roomName, userName, onLeave }: InternalCallProps) {
     }
   };
 
+  const handleApproved = (
+    approvedToken: string,
+    roomId: string,
+    serverUrl: string
+  ) => {
+    setToken(approvedToken);
+    setWsUrl(serverUrl);
+    setCallStatus("approved");
+  };
+
+  const handleRejected = () => {
+    toast.error("Access denied");
+    onLeave();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -256,6 +282,17 @@ function CallRoom({ roomName, userName, onLeave }: InternalCallProps) {
           Connecting to call...
         </span>
       </div>
+    );
+  }
+
+  if (callStatus === "waiting") {
+    return (
+      <WaitingRoom
+        callId={callId}
+        participantName={userName}
+        onApproved={handleApproved}
+        onRejected={handleRejected}
+      />
     );
   }
 
@@ -310,6 +347,9 @@ function CallRoom({ roomName, userName, onLeave }: InternalCallProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Waiting Room Panel for Host */}
+      {isHost && <WaitingList callId={callId} />}
 
       <ParticipantsList />
       <RoomAudioRenderer />
