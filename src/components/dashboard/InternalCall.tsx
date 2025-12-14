@@ -20,6 +20,7 @@ import {
   Clock,
   Loader2,
   Phone,
+  Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,9 +75,16 @@ function ParticipantsList() {
   );
 }
 
-function CallControls({ onLeave }: { onLeave: () => void }) {
+function CallControls({
+  onLeave,
+  roomCode,
+}: {
+  onLeave: () => void;
+  roomCode: string;
+}) {
   const [isMuted, setIsMuted] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
+  const [copied, setCopied] = useState(false);
   const participants = useParticipants();
   const { localParticipant } = useLocalParticipant();
 
@@ -100,6 +108,13 @@ function CallControls({ onLeave }: { onLeave: () => void }) {
     setIsMuted(!isMuted);
     // LiveKit handles muting through the local participant
     localParticipant.setMicrophoneEnabled(isMuted);
+  };
+
+  const copyRoomCode = () => {
+    navigator.clipboard.writeText(roomCode);
+    setCopied(true);
+    toast.success("Room code copied to clipboard!");
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -265,7 +280,37 @@ function CallRoom({ roomName, userName, onLeave }: InternalCallProps) {
       onDisconnected={handleDisconnect}
       className="space-y-6"
     >
-      <CallControls onLeave={handleDisconnect} />
+      <CallControls onLeave={handleDisconnect} roomCode={roomName} />
+
+      {/* Room Code Display */}
+      <Card className="border-2 border-[#0891b2]/30 bg-gradient-to-r from-[#0891b2]/5 to-blue-50">
+        <CardContent className="p-4">
+          <div className="text-center">
+            <p className="text-sm text-gray-600 mb-2">
+              Room Code - Share with teammates
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              <div className="bg-white px-6 py-3 rounded-lg border-2 border-[#0891b2]/20">
+                <span className="text-3xl font-bold text-[#0891b2] tracking-widest">
+                  {roomName}
+                </span>
+              </div>
+              <Button
+                onClick={() => {
+                  navigator.clipboard.writeText(roomName);
+                  toast.success("Room code copied!");
+                }}
+                variant="outline"
+                size="sm"
+                className="border-[#0891b2] text-[#0891b2] hover:bg-[#0891b2] hover:text-white"
+              >
+                Copy
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <ParticipantsList />
       <RoomAudioRenderer />
     </LiveKitRoom>

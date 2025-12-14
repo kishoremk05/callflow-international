@@ -64,6 +64,9 @@ export default function VoiceCall() {
   const [showInternalCall, setShowInternalCall] = useState(false);
   const [internalCallRoom, setInternalCallRoom] = useState("");
   const [internalCallName, setInternalCallName] = useState("");
+  const [callMode, setCallMode] = useState<"create" | "join">("create");
+  const [roomCode, setRoomCode] = useState("");
+  const [generatedRoomCode, setGeneratedRoomCode] = useState("");
 
   // Internal Team Conference State
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -593,46 +596,140 @@ export default function VoiceCall() {
                       </ul>
                     </div>
 
-                    <div>
-                      <Label htmlFor="callRoomName">Room Name</Label>
-                      <Input
-                        id="callRoomName"
-                        placeholder="e.g., Team Standup, Project Discussion"
-                        value={internalCallRoom}
-                        onChange={(e) => setInternalCallRoom(e.target.value)}
-                      />
+                    {/* Toggle between Create and Join */}
+                    <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-lg">
+                      <button
+                        onClick={() => setCallMode("create")}
+                        className={`py-2 px-4 rounded-md font-medium transition-colors ${
+                          callMode === "create"
+                            ? "bg-white text-[#0891b2] shadow-sm"
+                            : "text-gray-600 hover:text-gray-900"
+                        }`}
+                      >
+                        Create Room
+                      </button>
+                      <button
+                        onClick={() => setCallMode("join")}
+                        className={`py-2 px-4 rounded-md font-medium transition-colors ${
+                          callMode === "join"
+                            ? "bg-white text-[#0891b2] shadow-sm"
+                            : "text-gray-600 hover:text-gray-900"
+                        }`}
+                      >
+                        Join Room
+                      </button>
                     </div>
 
-                    <div>
-                      <Label htmlFor="displayName">Your Name</Label>
-                      <Input
-                        id="displayName"
-                        placeholder="Enter your display name"
-                        value={internalCallName}
-                        onChange={(e) => setInternalCallName(e.target.value)}
-                      />
-                    </div>
+                    {callMode === "create" ? (
+                      <>
+                        <div>
+                          <Label htmlFor="callRoomName">Room Name</Label>
+                          <Input
+                            id="callRoomName"
+                            placeholder="e.g., Team Standup, Project Discussion"
+                            value={internalCallRoom}
+                            onChange={(e) =>
+                              setInternalCallRoom(e.target.value)
+                            }
+                          />
+                        </div>
 
-                    <Button
-                      onClick={() => {
-                        if (
-                          !internalCallRoom.trim() ||
-                          !internalCallName.trim()
-                        ) {
-                          toast.error("Please enter room name and your name");
-                          return;
-                        }
-                        setShowInternalCall(true);
-                      }}
-                      className="w-full bg-[#0891b2] hover:bg-[#0e7490] text-white h-12 text-lg"
-                    >
-                      <Phone className="w-5 h-5 mr-2" />
-                      Join / Create Room
-                    </Button>
+                        <div>
+                          <Label htmlFor="displayName">Your Name</Label>
+                          <Input
+                            id="displayName"
+                            placeholder="Enter your display name"
+                            value={internalCallName}
+                            onChange={(e) =>
+                              setInternalCallName(e.target.value)
+                            }
+                          />
+                        </div>
 
-                    <p className="text-xs text-gray-500 text-center">
-                      Share the room name with teammates to join the same call
-                    </p>
+                        <Button
+                          onClick={() => {
+                            if (
+                              !internalCallRoom.trim() ||
+                              !internalCallName.trim()
+                            ) {
+                              toast.error(
+                                "Please enter room name and your name"
+                              );
+                              return;
+                            }
+                            // Generate a unique 6-digit room code
+                            const code = Math.floor(
+                              100000 + Math.random() * 900000
+                            ).toString();
+                            setGeneratedRoomCode(code);
+                            setInternalCallRoom(code);
+                            setShowInternalCall(true);
+                            toast.success(`Room created! Code: ${code}`, {
+                              duration: 5000,
+                            });
+                          }}
+                          className="w-full bg-[#0891b2] hover:bg-[#0e7490] text-white h-12 text-lg"
+                        >
+                          <Plus className="w-5 h-5 mr-2" />
+                          Create Room
+                        </Button>
+
+                        <p className="text-xs text-gray-500 text-center">
+                          Share the generated code with teammates to join
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <div>
+                          <Label htmlFor="roomCode">Room Code</Label>
+                          <Input
+                            id="roomCode"
+                            placeholder="Enter 6-digit room code"
+                            value={roomCode}
+                            onChange={(e) => setRoomCode(e.target.value)}
+                            maxLength={6}
+                            className="text-center text-2xl font-bold tracking-widest"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="displayNameJoin">Your Name</Label>
+                          <Input
+                            id="displayNameJoin"
+                            placeholder="Enter your display name"
+                            value={internalCallName}
+                            onChange={(e) =>
+                              setInternalCallName(e.target.value)
+                            }
+                          />
+                        </div>
+
+                        <Button
+                          onClick={() => {
+                            if (!roomCode.trim() || !internalCallName.trim()) {
+                              toast.error(
+                                "Please enter room code and your name"
+                              );
+                              return;
+                            }
+                            if (roomCode.length !== 6) {
+                              toast.error("Room code must be 6 digits");
+                              return;
+                            }
+                            setInternalCallRoom(roomCode);
+                            setShowInternalCall(true);
+                          }}
+                          className="w-full bg-green-600 hover:bg-green-700 text-white h-12 text-lg"
+                        >
+                          <Phone className="w-5 h-5 mr-2" />
+                          Join Room
+                        </Button>
+
+                        <p className="text-xs text-gray-500 text-center">
+                          Ask the room creator for the 6-digit code
+                        </p>
+                      </>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -650,9 +747,9 @@ export default function VoiceCall() {
                           1
                         </div>
                         <div>
-                          <p className="font-medium">Create or Join Room</p>
+                          <p className="font-medium">Create a Room</p>
                           <p className="text-sm text-gray-600">
-                            Enter a room name and your display name
+                            Click "Create Room" and get a 6-digit code
                           </p>
                         </div>
                       </div>
@@ -662,9 +759,9 @@ export default function VoiceCall() {
                           2
                         </div>
                         <div>
-                          <p className="font-medium">Share Room Name</p>
+                          <p className="font-medium">Share the Code</p>
                           <p className="text-sm text-gray-600">
-                            Tell your teammates the room name to join
+                            Send the 6-digit code to your teammates
                           </p>
                         </div>
                       </div>
@@ -674,9 +771,9 @@ export default function VoiceCall() {
                           3
                         </div>
                         <div>
-                          <p className="font-medium">Talk Freely</p>
+                          <p className="font-medium">Join with Code</p>
                           <p className="text-sm text-gray-600">
-                            Use mute/unmute controls • Leave anytime
+                            Others click "Join Room" and enter the code
                           </p>
                         </div>
                       </div>
