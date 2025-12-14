@@ -1328,7 +1328,11 @@ app.post("/api/internal-call/token", authenticate, async (req, res, next) => {
 
       if (participantError) {
         console.error("Failed to add to waiting room:", participantError);
-        return res.status(500).json({ error: "Failed to join waiting room" });
+        return res.status(500).json({ 
+          error: "Failed to join waiting room",
+          details: participantError.message || "Database error",
+          hint: "Please ensure the database migration has been applied"
+        });
       }
 
       // Return waiting status
