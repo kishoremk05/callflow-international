@@ -1083,6 +1083,119 @@ app.get(
 );
 
 // ============================================================================
+// CONTACTS ROUTES
+// ============================================================================
+
+// Get all contacts for user
+app.get("/api/contacts", authenticate, async (req, res, next) => {
+  try {
+    const { data: contacts, error } = await supabase
+      .from("contacts")
+      .select("*")
+      .eq("user_id", req.user.id)
+      .order("name");
+
+    if (error) throw error;
+
+    res.json({ success: true, contacts: contacts || [] });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Create new contact
+app.post("/api/contacts", authenticate, async (req, res, next) => {
+  try {
+    const { name, phone_number, country_code, email, company, notes } =
+      req.body;
+
+    if (!name || !phone_number || !country_code) {
+      return res.status(400).json({
+        error: "Name, phone number, and country code are required",
+      });
+    }
+
+    const { data: contact, error } = await supabase
+      .from("contacts")
+      .insert({
+        user_id: req.user.id,
+        name,
+        phone_number,
+        country_code,
+        email: email || null,
+        company: company || null,
+        notes: notes || null,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({ success: true, contact });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update contact
+app.put("/api/contacts/:contactId", authenticate, async (req, res, next) => {
+  try {
+    const { contactId } = req.params;
+    const {
+      name,
+      phone_number,
+      country_code,
+      email,
+      company,
+      notes,
+      is_favorite,
+    } = req.body;
+
+    const updates = { updated_at: new Date().toISOString() };
+    if (name !== undefined) updates.name = name;
+    if (phone_number !== undefined) updates.phone_number = phone_number;
+    if (country_code !== undefined) updates.country_code = country_code;
+    if (email !== undefined) updates.email = email;
+    if (company !== undefined) updates.company = company;
+    if (notes !== undefined) updates.notes = notes;
+    if (is_favorite !== undefined) updates.is_favorite = is_favorite;
+
+    const { data: contact, error } = await supabase
+      .from("contacts")
+      .update(updates)
+      .eq("id", contactId)
+      .eq("user_id", req.user.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({ success: true, contact });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Delete contact
+app.delete("/api/contacts/:contactId", authenticate, async (req, res, next) => {
+  try {
+    const { contactId } = req.params;
+
+    const { error } = await supabase
+      .from("contacts")
+      .delete()
+      .eq("id", contactId)
+      .eq("user_id", req.user.id);
+
+    if (error) throw error;
+
+    res.json({ success: true, message: "Contact deleted successfully" });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ============================================================================
 // CONFERENCE ROUTES
 // ============================================================================
 
@@ -1092,11 +1205,11 @@ app.post(
   authenticate,
   async (req, res, next) => {
     try {
-      const { roomName, memberIds, enterpriseId } = req.body;
+      const { roomName, memberIds, contacts, enterpriseId } = req.body;
 
-      if (!roomName || !memberIds || memberIds.length === 0) {
+      if (!roomName || (!memberIds?.length && !contacts?.length)) {
         return res.status(400).json({
-          error: "Room name and at least one member are required",
+          error: "Room name and at least one member or contact are required",
         });
       }
 
@@ -1116,20 +1229,9 @@ app.post(
         }
       }
 
-      // Create conference room in Twilio
+      // Twilio conferences are created automatically when participants join
+      // The conference name will be used in the TwiML when dialing participants
       let conferenceSid = null;
-      if (twilioClient) {
-        try {
-          const conference = await twilioClient.conferences.create({
-            friendlyName: roomName,
-            statusCallback: `${process.env.BACKEND_URL}/api/conference/status-callback`,
-            statusCallbackEvent: ["start", "end", "join", "leave"],
-          });
-          conferenceSid = conference.sid;
-        } catch (error) {
-          console.warn("Twilio conference creation failed:", error.message);
-        }
-      }
 
       // Create conference room in database
       const { data: conference, error: confError } = await supabase
@@ -1147,18 +1249,71 @@ app.post(
 
       if (confError) throw confError;
 
-      // Add participants
-      const participants = memberIds.map((userId) => ({
-        conference_id: conference.id,
-        user_id: userId,
-        status: "invited",
-      }));
+      // Add participants (enterprise members and contacts)
+      const participants = [];
 
-      const { error: participantsError } = await supabase
-        .from("conference_participants")
-        .insert(participants);
+      // Add enterprise members with user_id
+      if (memberIds && memberIds.length > 0) {
+        memberIds.forEach((userId) => {
+          if (userId) {
+            participants.push({
+              conference_id: conference.id,
+              user_id: userId,
+              status: "invited",
+            });
+          }
+        });
+      }
 
-      if (participantsError) throw participantsError;
+      // Add contacts with phone numbers (no user_id)
+      if (contacts && contacts.length > 0) {
+        contacts.forEach((contact) => {
+          participants.push({
+            conference_id: conference.id,
+            user_id: null,
+            phone_number: contact.phone_number,
+            country_code: contact.country_code,
+            participant_name: contact.name,
+            status: "invited",
+          });
+        });
+      }
+
+      if (participants.length > 0) {
+        const { error: participantsError } = await supabase
+          .from("conference_participants")
+          .insert(participants);
+
+        if (participantsError) throw participantsError;
+      }
+
+      // Make actual phone calls to participants if Twilio is configured
+      if (twilioClient) {
+        // Call contacts with phone numbers
+        if (contacts && contacts.length > 0) {
+          for (const contact of contacts) {
+            try {
+              const fullPhoneNumber = `${contact.country_code}${contact.phone_number}`;
+              
+              await twilioClient.calls.create({
+                url: `${process.env.API_URL || 'http://localhost:5000'}/api/conference/twiml/${conference.id}`,
+                to: fullPhoneNumber,
+                from: process.env.TWILIO_PHONE_NUMBER,
+                statusCallback: `${process.env.API_URL || 'http://localhost:5000'}/api/conference/status-callback`,
+                statusCallbackEvent: ['initiated', 'answered', 'completed'],
+              });
+              
+              console.log(`📞 Calling contact: ${contact.name} at ${fullPhoneNumber}`);
+            } catch (callError) {
+              console.error(`Failed to call ${contact.name}:`, callError.message);
+            }
+          }
+        }
+
+        // For enterprise members, you would need to have their phone numbers
+        // This would require updating the enterprise_members table or profiles table
+        // to include phone numbers for each team member
+      }
 
       res.json({
         success: true,
@@ -1166,7 +1321,7 @@ app.post(
           id: conference.id,
           name: conference.name,
           conferenceSid,
-          participants: memberIds.length,
+          participants: participants.length,
         },
       });
     } catch (error) {
@@ -1200,20 +1355,9 @@ app.post(
         return res.status(400).json({ error: "Insufficient balance" });
       }
 
-      // Create conference room in Twilio
+      // Twilio conferences are created automatically when participants join
+      // The conference name will be used in the TwiML when dialing participants
       let conferenceSid = null;
-      if (twilioClient) {
-        try {
-          const conference = await twilioClient.conferences.create({
-            friendlyName: title,
-            statusCallback: `${process.env.BACKEND_URL}/api/conference/status-callback`,
-            statusCallbackEvent: ["start", "end", "join", "leave"],
-          });
-          conferenceSid = conference.sid;
-        } catch (error) {
-          console.warn("Twilio conference creation failed:", error.message);
-        }
-      }
 
       // Create conference room in database
       const { data: conference, error: confError } = await supabase
@@ -1245,14 +1389,18 @@ app.post(
 
       if (participantsError) throw participantsError;
 
-      // Dial participants into conference (if Twilio is configured)
-      if (twilioClient && conferenceSid) {
+      // Make actual phone calls to participants if Twilio is configured
+      if (twilioClient) {
         for (const participant of participants) {
           try {
+            const fullPhoneNumber = `${participant.countryCode}${participant.phone}`;
+            
             const call = await twilioClient.calls.create({
-              to: `${participant.countryCode}${participant.phone}`,
+              url: `${process.env.API_URL || 'http://localhost:5000'}/api/conference/twiml/${conference.id}`,
+              to: fullPhoneNumber,
               from: process.env.TWILIO_PHONE_NUMBER,
-              twiml: `<Response><Say>You are being added to a conference call.</Say><Dial><Conference>${title}</Conference></Dial></Response>`,
+              statusCallback: `${process.env.API_URL || 'http://localhost:5000'}/api/conference/status-callback`,
+              statusCallbackEvent: ['initiated', 'answered', 'completed'],
             });
 
             // Update participant with call SID
@@ -1260,10 +1408,9 @@ app.post(
               .from("conference_participants")
               .update({ call_sid: call.sid })
               .eq("conference_id", conference.id)
-              .eq(
-                "phone_number",
-                `${participant.countryCode}${participant.phone}`
-              );
+              .eq("phone_number", fullPhoneNumber);
+
+            console.log(`📞 Calling ${participant.name || 'participant'} at ${fullPhoneNumber}`);
           } catch (error) {
             console.warn(`Failed to dial ${participant.phone}:`, error.message);
           }
@@ -1434,6 +1581,44 @@ app.post(
     }
   }
 );
+
+// TwiML endpoint to connect participants to conference
+app.post("/api/conference/twiml/:conferenceId", async (req, res) => {
+  try {
+    const { conferenceId } = req.params;
+
+    // Get conference details
+    const { data: conference } = await supabase
+      .from("conference_rooms")
+      .select("*")
+      .eq("id", conferenceId)
+      .single();
+
+    if (!conference) {
+      return res.status(404).send("Conference not found");
+    }
+
+    // Generate TwiML to connect participant to conference
+    const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Say>Welcome to ${conference.name}. You are being connected to the conference.</Say>
+  <Dial>
+    <Conference 
+      statusCallback="${process.env.API_URL || 'http://localhost:5000'}/api/conference/status-callback"
+      statusCallbackEvent="start end join leave"
+      startConferenceOnEnter="true"
+      endConferenceOnExit="false"
+    >${conference.id}</Conference>
+  </Dial>
+</Response>`;
+
+    res.type("text/xml");
+    res.send(twiml);
+  } catch (error) {
+    console.error("TwiML generation error:", error);
+    res.status(500).send("Error");
+  }
+});
 
 // Conference status callback (Twilio webhook)
 app.post(

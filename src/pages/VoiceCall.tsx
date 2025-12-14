@@ -31,6 +31,9 @@ interface TeamMember {
   full_name: string;
   email: string;
   avatar_url?: string;
+  phone_number?: string;
+  country_code?: string;
+  is_contact?: boolean;
 }
 
 interface ConferenceRoom {
@@ -99,46 +102,84 @@ export default function VoiceCall() {
   const fetchTeamMembers = async () => {
     try {
       setLoadingTeam(true);
-      // Check if user has enterprise account
+
+      const token = (await supabase.auth.getSession()).data.session
+        ?.access_token;
+      if (!token) {
+        setLoadingTeam(false);
+        return;
+      }
+
+      // Fetch contacts from API
+      const contactsResponse = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/contacts`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const allMembers: TeamMember[] = [];
+
+      // Add contacts as team members
+      if (contactsResponse.ok) {
+        const contactsData = await contactsResponse.json();
+        const contactMembers = contactsData.contacts.map((contact: any) => ({
+          id: contact.id,
+          user_id: contact.id,
+          full_name: contact.name,
+          email:
+            contact.email || `${contact.country_code}${contact.phone_number}`,
+          avatar_url: null,
+          phone_number: contact.phone_number,
+          country_code: contact.country_code,
+          is_contact: true,
+        }));
+        allMembers.push(...contactMembers);
+      }
+
+      // Check if user has enterprise account and fetch enterprise members
       const { data: enterpriseData } = await supabase
         .from("enterprise_members")
         .select("enterprise_id")
         .eq("user_id", user?.id)
         .single();
 
-      if (!enterpriseData) {
-        setTeamMembers([]);
-        setLoadingTeam(false);
-        return;
+      if (enterpriseData) {
+        // Fetch all team members
+        const { data: members, error: membersError } = await supabase
+          .from("enterprise_members")
+          .select("id, user_id")
+          .eq("enterprise_id", enterpriseData.enterprise_id)
+          .neq("user_id", user?.id);
+
+        if (membersError) {
+          console.error("Error fetching enterprise members:", membersError);
+        } else if (members && members.length > 0) {
+          // Fetch profiles separately for each member
+          const userIds = members.map((m) => m.user_id);
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("id, full_name, email, avatar_url")
+            .in("id", userIds);
+
+          const enterpriseMembers = members.map((m: any) => {
+            const profile = profiles?.find((p) => p.id === m.user_id);
+            return {
+              id: m.id,
+              user_id: m.user_id,
+              full_name: profile?.full_name || "Team Member",
+              email: profile?.email || "",
+              avatar_url: profile?.avatar_url,
+              is_contact: false,
+            };
+          });
+          allMembers.push(...enterpriseMembers);
+        }
       }
 
-      // Fetch all team members
-      const { data: members } = await supabase
-        .from("enterprise_members")
-        .select(
-          `
-          id,
-          user_id,
-          profiles:user_id (
-            full_name,
-            email,
-            avatar_url
-          )
-        `
-        )
-        .eq("enterprise_id", enterpriseData.enterprise_id)
-        .neq("user_id", user?.id);
-
-      if (members) {
-        const formattedMembers = members.map((m: any) => ({
-          id: m.id,
-          user_id: m.user_id,
-          full_name: m.profiles?.full_name || "Unknown",
-          email: m.profiles?.email || "",
-          avatar_url: m.profiles?.avatar_url,
-        }));
-        setTeamMembers(formattedMembers);
-      }
+      setTeamMembers(allMembers);
     } catch (error) {
       console.error("Error fetching team members:", error);
       toast.error("Failed to load team members");
@@ -216,6 +257,22 @@ export default function VoiceCall() {
 
       toast.loading("Creating conference room...");
 
+      // Separate contacts from enterprise members
+      const selectedMembersList = Array.from(selectedMembers)
+        .map((id) => teamMembers.find((m) => m.id === id))
+        .filter(Boolean);
+
+      const enterpriseMembers = selectedMembersList
+        .filter((m) => !m.is_contact)
+        .map((m) => m.user_id);
+      const contactMembers = selectedMembersList
+        .filter((m) => m.is_contact)
+        .map((m) => ({
+          name: m.full_name,
+          phone_number: m.phone_number,
+          country_code: m.country_code,
+        }));
+
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/conference/create-internal`,
         {
@@ -226,10 +283,8 @@ export default function VoiceCall() {
           },
           body: JSON.stringify({
             roomName,
-            memberIds: Array.from(selectedMembers).map((id) => {
-              const member = teamMembers.find((m) => m.id === id);
-              return member?.user_id;
-            }),
+            memberIds: enterpriseMembers,
+            contacts: contactMembers,
             enterpriseId: enterpriseData?.enterprise_id,
           }),
         }
@@ -537,16 +592,30 @@ export default function VoiceCall() {
                               }
                               disabled={isInCall}
                             />
-                            <div className="flex-1">
-                              <label
-                                htmlFor={`member-${member.id}`}
-                                className="text-sm font-medium cursor-pointer"
-                              >
-                                {member.full_name}
-                              </label>
-                              <p className="text-xs text-gray-500">
-                                {member.email}
-                              </p>
+                            <div className="flex items-center gap-2 flex-1">
+                              <div className="w-10 h-10 rounded-full bg-[#0891b2]/10 flex items-center justify-center flex-shrink-0">
+                                <span className="text-[#0891b2] font-bold text-sm">
+                                  {member.full_name.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <label
+                                  htmlFor={`member-${member.id}`}
+                                  className="text-sm font-medium cursor-pointer flex items-center gap-2"
+                                >
+                                  {member.full_name}
+                                  {member.is_contact && (
+                                    <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full">
+                                      Contact
+                                    </span>
+                                  )}
+                                </label>
+                                <p className="text-xs text-gray-500 truncate">
+                                  {member.is_contact && member.phone_number
+                                    ? `${member.country_code} ${member.phone_number}`
+                                    : member.email}
+                                </p>
+                              </div>
                             </div>
                           </div>
                         ))}
