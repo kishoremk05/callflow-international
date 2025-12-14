@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import InternalCall from "@/components/dashboard/InternalCall";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -23,6 +24,7 @@ import {
   Globe,
   Clock,
   ArrowLeft,
+  Headphones,
 } from "lucide-react";
 
 interface TeamMember {
@@ -54,9 +56,14 @@ interface ExternalParticipant {
 export default function VoiceCall() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<"internal" | "external">(
-    "internal"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "browser-call" | "internal" | "external"
+  >("browser-call");
+
+  // Internal Browser Call State
+  const [showInternalCall, setShowInternalCall] = useState(false);
+  const [internalCallRoom, setInternalCallRoom] = useState("");
+  const [internalCallName, setInternalCallName] = useState("");
 
   // Internal Team Conference State
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -529,16 +536,176 @@ export default function VoiceCall() {
           onValueChange={(v) => setActiveTab(v as any)}
           className="space-y-6"
         >
-          <TabsList className="grid w-full max-w-md grid-cols-2 h-12">
+          <TabsList className="grid w-full max-w-[48rem] grid-cols-3 h-12">
+            <TabsTrigger
+              value="browser-call"
+              className="flex items-center gap-2"
+            >
+              <Headphones className="w-4 h-4" />
+              Browser Call (Free)
+            </TabsTrigger>
             <TabsTrigger value="internal" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
-              Inside Team
+              Phone Conference
             </TabsTrigger>
             <TabsTrigger value="external" className="flex items-center gap-2">
               <Globe className="w-4 h-4" />
-              Outside Team
+              External
             </TabsTrigger>
           </TabsList>
+
+          {/* Browser-Based Internal Call Tab (Free for Enterprise) */}
+          <TabsContent value="browser-call" className="space-y-6">
+            {showInternalCall ? (
+              <InternalCall
+                roomName={internalCallRoom}
+                userName={internalCallName}
+                onLeave={() => {
+                  setShowInternalCall(false);
+                  setInternalCallRoom("");
+                }}
+              />
+            ) : (
+              <div className="grid gap-6 lg:grid-cols-2">
+                {/* Join/Create Internal Call */}
+                <Card className="border-2 border-[#0891b2]/20 bg-gradient-to-br from-[#0891b2]/5 to-transparent">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-[#1a365d]">
+                      <Headphones className="w-6 h-6 text-[#0891b2]" />
+                      Internal Team Call
+                    </CardTitle>
+                    <p className="text-sm text-gray-600">
+                      ✨ Free browser-based calling with your team • No phone
+                      numbers needed
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+                      <div className="flex items-center gap-2 text-green-700 mb-2">
+                        <Users className="w-5 h-5" />
+                        <span className="font-semibold">Unlimited & Free</span>
+                      </div>
+                      <ul className="text-sm text-green-600 space-y-1">
+                        <li>✓ No billing or wallet deduction</li>
+                        <li>✓ WebRTC audio (browser-based)</li>
+                        <li>✓ Enterprise users only</li>
+                        <li>✓ One-to-one or group calls</li>
+                      </ul>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="callRoomName">Room Name</Label>
+                      <Input
+                        id="callRoomName"
+                        placeholder="e.g., Team Standup, Project Discussion"
+                        value={internalCallRoom}
+                        onChange={(e) => setInternalCallRoom(e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="displayName">Your Name</Label>
+                      <Input
+                        id="displayName"
+                        placeholder="Enter your display name"
+                        value={internalCallName}
+                        onChange={(e) => setInternalCallName(e.target.value)}
+                      />
+                    </div>
+
+                    <Button
+                      onClick={() => {
+                        if (
+                          !internalCallRoom.trim() ||
+                          !internalCallName.trim()
+                        ) {
+                          toast.error("Please enter room name and your name");
+                          return;
+                        }
+                        setShowInternalCall(true);
+                      }}
+                      className="w-full bg-[#0891b2] hover:bg-[#0e7490] text-white h-12 text-lg"
+                    >
+                      <Phone className="w-5 h-5 mr-2" />
+                      Join / Create Room
+                    </Button>
+
+                    <p className="text-xs text-gray-500 text-center">
+                      Share the room name with teammates to join the same call
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Instructions */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-[#1a365d]">
+                      How It Works
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-3">
+                      <div className="flex gap-3">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0891b2]/10 flex items-center justify-center text-[#0891b2] font-bold">
+                          1
+                        </div>
+                        <div>
+                          <p className="font-medium">Create or Join Room</p>
+                          <p className="text-sm text-gray-600">
+                            Enter a room name and your display name
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0891b2]/10 flex items-center justify-center text-[#0891b2] font-bold">
+                          2
+                        </div>
+                        <div>
+                          <p className="font-medium">Share Room Name</p>
+                          <p className="text-sm text-gray-600">
+                            Tell your teammates the room name to join
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0891b2]/10 flex items-center justify-center text-[#0891b2] font-bold">
+                          3
+                        </div>
+                        <div>
+                          <p className="font-medium">Talk Freely</p>
+                          <p className="text-sm text-gray-600">
+                            Use mute/unmute controls • Leave anytime
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t">
+                      <p className="text-sm font-medium text-gray-700 mb-2">
+                        Best For:
+                      </p>
+                      <ul className="text-sm text-gray-600 space-y-1">
+                        <li>• Quick team discussions</li>
+                        <li>• Daily standups & meetings</li>
+                        <li>• Project collaboration</li>
+                        <li>• Internal support calls</li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
+                      <p className="text-sm text-blue-700">
+                        <strong>Note:</strong> Only team members from your
+                        enterprise can join. External participants should use
+                        the "External" tab.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </TabsContent>
 
           {/* Internal Team Conference Tab */}
           <TabsContent value="internal" className="space-y-6">

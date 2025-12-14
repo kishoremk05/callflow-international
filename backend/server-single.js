@@ -8,6 +8,7 @@ import twilio from "twilio";
 import Stripe from "stripe";
 import Razorpay from "razorpay";
 import crypto from "crypto";
+import { AccessToken as LiveKitAccessToken } from "livekit-server-sdk";
 
 dotenv.config();
 
@@ -20,7 +21,7 @@ const supabase = createClient(
 
 // Initialize Twilio (optional for development)
 let twilioClient = null;
-let AccessToken = null;
+let TwilioAccessToken = null;
 let VoiceGrant = null;
 
 // Only initialize Twilio if credentials start with correct prefixes
@@ -34,8 +35,8 @@ if (
       process.env.TWILIO_ACCOUNT_SID,
       process.env.TWILIO_AUTH_TOKEN
     );
-    AccessToken = twilio.jwt.AccessToken;
-    VoiceGrant = AccessToken.VoiceGrant;
+    TwilioAccessToken = twilio.jwt.AccessToken;
+    VoiceGrant = TwilioAccessToken.VoiceGrant;
     console.log("✅ Twilio initialized successfully");
   } catch (error) {
     console.warn("⚠️ Twilio initialization failed:", error.message);
@@ -78,6 +79,20 @@ if (
   }
 } else {
   console.log("ℹ️ Razorpay not configured - payment features limited");
+}
+
+// Initialize LiveKit (for internal calls)
+let livekitEnabled = false;
+if (
+  process.env.LIVEKIT_API_KEY &&
+  process.env.LIVEKIT_API_SECRET &&
+  process.env.LIVEKIT_URL &&
+  process.env.LIVEKIT_API_KEY !== "your_livekit_api_key"
+) {
+  livekitEnabled = true;
+  console.log("✅ LiveKit configured for internal calls");
+} else {
+  console.log("ℹ️ LiveKit not configured - internal calls disabled");
 }
 
 // Express app setup
@@ -260,11 +275,11 @@ app.get("/api/wallet/transactions", authenticate, async (req, res, next) => {
 
 app.post("/api/twilio/token", authenticate, async (req, res, next) => {
   try {
-    if (!twilioClient || !AccessToken) {
+    if (!twilioClient || !TwilioAccessToken) {
       return res.status(503).json({ error: "Twilio not configured" });
     }
     const identity = req.user.id;
-    const token = new AccessToken(
+    const token = new TwilioAccessToken(
       process.env.TWILIO_ACCOUNT_SID,
       process.env.TWILIO_API_KEY,
       process.env.TWILIO_API_SECRET,
@@ -1196,6 +1211,260 @@ app.delete("/api/contacts/:contactId", authenticate, async (req, res, next) => {
 });
 
 // ============================================================================
+// INTERNAL CALL ROUTES (LiveKit - Free for Enterprise Users)
+// ============================================================================
+
+// Generate LiveKit token for internal calls
+app.post("/api/internal-call/token", authenticate, async (req, res, next) => {
+  try {
+    const { roomName, participantName } = req.body;
+
+    if (!roomName || !participantName) {
+      return res.status(400).json({
+        error: "Room name and participant name are required",
+      });
+    }
+
+    if (!livekitEnabled) {
+      return res.status(503).json({
+        error: "Internal calling is not configured. Please contact support.",
+      });
+    }
+
+    // Verify user is part of an enterprise
+    const { data: enterpriseMember } = await supabase
+      .from("enterprise_members")
+      .select("enterprise_id, enterprise_accounts(name)")
+      .eq("user_id", req.user.id)
+      .single();
+
+    if (!enterpriseMember) {
+      return res.status(403).json({
+        error: "Internal calls are only available for enterprise users",
+      });
+    }
+
+    // Create room ID scoped to enterprise
+    const roomId = `${enterpriseMember.enterprise_id}-${roomName}`;
+
+    // Generate LiveKit access token
+    const at = new LiveKitAccessToken(
+      process.env.LIVEKIT_API_KEY,
+      process.env.LIVEKIT_API_SECRET,
+      {
+        identity: req.user.id,
+        name: participantName,
+        ttl: "24h", // Token valid for 24 hours
+      }
+    );
+
+    // Grant permissions for this room
+    at.addGrant({
+      roomJoin: true,
+      room: roomId,
+      canPublish: true,
+      canSubscribe: true,
+      canPublishData: true,
+    });
+
+    const token = await at.toJwt();
+
+    // Record the call in database
+    const { data: existingCall } = await supabase
+      .from("internal_calls")
+      .select("id")
+      .eq("room_id", roomId)
+      .eq("status", "active")
+      .single();
+
+    let callId = existingCall?.id;
+
+    if (!existingCall) {
+      // Create new call record
+      const { data: newCall, error: callError } = await supabase
+        .from("internal_calls")
+        .insert({
+          room_id: roomId,
+          room_name: roomName,
+          enterprise_id: enterpriseMember.enterprise_id,
+          created_by: req.user.id,
+          call_type: "group", // Assume group call by default
+          status: "active",
+        })
+        .select()
+        .single();
+
+      if (callError) {
+        console.error("Failed to create call record:", callError);
+      } else {
+        callId = newCall.id;
+      }
+    }
+
+    // Add user as participant
+    if (callId) {
+      const { error: participantError } = await supabase
+        .from("internal_call_participants")
+        .insert({
+          call_id: callId,
+          user_id: req.user.id,
+          participant_name: participantName,
+          status: "joined",
+        });
+
+      if (participantError) {
+        console.error("Failed to record participant:", participantError);
+      }
+    }
+
+    res.json({
+      success: true,
+      token,
+      roomId,
+      wsUrl: process.env.LIVEKIT_URL,
+      enterpriseName: enterpriseMember.enterprise_accounts?.name,
+    });
+  } catch (error) {
+    console.error("Token generation error:", error);
+    next(error);
+  }
+});
+
+// Get active internal calls for user's enterprise
+app.get("/api/internal-call/active", authenticate, async (req, res, next) => {
+  try {
+    // Get user's enterprise
+    const { data: enterpriseMember } = await supabase
+      .from("enterprise_members")
+      .select("enterprise_id")
+      .eq("user_id", req.user.id)
+      .single();
+
+    if (!enterpriseMember) {
+      return res.json({ success: true, calls: [] });
+    }
+
+    // Get active calls
+    const { data: calls, error } = await supabase
+      .from("internal_calls")
+      .select(
+        `
+        *,
+        internal_call_participants (
+          id,
+          user_id,
+          participant_name,
+          joined_at,
+          left_at,
+          status
+        )
+      `
+      )
+      .eq("enterprise_id", enterpriseMember.enterprise_id)
+      .eq("status", "active")
+      .order("started_at", { ascending: false });
+
+    if (error) throw error;
+
+    res.json({ success: true, calls: calls || [] });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Leave internal call
+app.post(
+  "/api/internal-call/leave/:callId",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { callId } = req.params;
+
+      // Update participant status
+      const { error: participantError } = await supabase
+        .from("internal_call_participants")
+        .update({
+          status: "left",
+          left_at: new Date().toISOString(),
+        })
+        .eq("call_id", callId)
+        .eq("user_id", req.user.id);
+
+      if (participantError) throw participantError;
+
+      // Check if all participants have left
+      const { data: activeParticipants } = await supabase
+        .from("internal_call_participants")
+        .select("id")
+        .eq("call_id", callId)
+        .eq("status", "joined");
+
+      // If no active participants, end the call
+      if (!activeParticipants || activeParticipants.length === 0) {
+        await supabase
+          .from("internal_calls")
+          .update({
+            status: "ended",
+            ended_at: new Date().toISOString(),
+          })
+          .eq("id", callId);
+      }
+
+      res.json({ success: true, message: "Left call successfully" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// End internal call (creator only)
+app.post(
+  "/api/internal-call/end/:callId",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { callId } = req.params;
+
+      // Verify user is the creator
+      const { data: call } = await supabase
+        .from("internal_calls")
+        .select("created_by")
+        .eq("id", callId)
+        .single();
+
+      if (!call || call.created_by !== req.user.id) {
+        return res
+          .status(403)
+          .json({ error: "Only the call creator can end the call" });
+      }
+
+      // Update call status
+      await supabase
+        .from("internal_calls")
+        .update({
+          status: "ended",
+          ended_at: new Date().toISOString(),
+        })
+        .eq("id", callId);
+
+      // Update all participants
+      await supabase
+        .from("internal_call_participants")
+        .update({
+          status: "left",
+          left_at: new Date().toISOString(),
+        })
+        .eq("call_id", callId)
+        .eq("status", "joined");
+
+      res.json({ success: true, message: "Call ended successfully" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// ============================================================================
 // CONFERENCE ROUTES
 // ============================================================================
 
@@ -1294,18 +1563,27 @@ app.post(
           for (const contact of contacts) {
             try {
               const fullPhoneNumber = `${contact.country_code}${contact.phone_number}`;
-              
+
               await twilioClient.calls.create({
-                url: `${process.env.API_URL || 'http://localhost:5000'}/api/conference/twiml/${conference.id}`,
+                url: `${
+                  process.env.API_URL || "http://localhost:5000"
+                }/api/conference/twiml/${conference.id}`,
                 to: fullPhoneNumber,
                 from: process.env.TWILIO_PHONE_NUMBER,
-                statusCallback: `${process.env.API_URL || 'http://localhost:5000'}/api/conference/status-callback`,
-                statusCallbackEvent: ['initiated', 'answered', 'completed'],
+                statusCallback: `${
+                  process.env.API_URL || "http://localhost:5000"
+                }/api/conference/status-callback`,
+                statusCallbackEvent: ["initiated", "answered", "completed"],
               });
-              
-              console.log(`📞 Calling contact: ${contact.name} at ${fullPhoneNumber}`);
+
+              console.log(
+                `📞 Calling contact: ${contact.name} at ${fullPhoneNumber}`
+              );
             } catch (callError) {
-              console.error(`Failed to call ${contact.name}:`, callError.message);
+              console.error(
+                `Failed to call ${contact.name}:`,
+                callError.message
+              );
             }
           }
         }
@@ -1394,13 +1672,17 @@ app.post(
         for (const participant of participants) {
           try {
             const fullPhoneNumber = `${participant.countryCode}${participant.phone}`;
-            
+
             const call = await twilioClient.calls.create({
-              url: `${process.env.API_URL || 'http://localhost:5000'}/api/conference/twiml/${conference.id}`,
+              url: `${
+                process.env.API_URL || "http://localhost:5000"
+              }/api/conference/twiml/${conference.id}`,
               to: fullPhoneNumber,
               from: process.env.TWILIO_PHONE_NUMBER,
-              statusCallback: `${process.env.API_URL || 'http://localhost:5000'}/api/conference/status-callback`,
-              statusCallbackEvent: ['initiated', 'answered', 'completed'],
+              statusCallback: `${
+                process.env.API_URL || "http://localhost:5000"
+              }/api/conference/status-callback`,
+              statusCallbackEvent: ["initiated", "answered", "completed"],
             });
 
             // Update participant with call SID
@@ -1410,7 +1692,11 @@ app.post(
               .eq("conference_id", conference.id)
               .eq("phone_number", fullPhoneNumber);
 
-            console.log(`📞 Calling ${participant.name || 'participant'} at ${fullPhoneNumber}`);
+            console.log(
+              `📞 Calling ${
+                participant.name || "participant"
+              } at ${fullPhoneNumber}`
+            );
           } catch (error) {
             console.warn(`Failed to dial ${participant.phone}:`, error.message);
           }
@@ -1601,10 +1887,14 @@ app.post("/api/conference/twiml/:conferenceId", async (req, res) => {
     // Generate TwiML to connect participant to conference
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say>Welcome to ${conference.name}. You are being connected to the conference.</Say>
+  <Say>Welcome to ${
+    conference.name
+  }. You are being connected to the conference.</Say>
   <Dial>
     <Conference 
-      statusCallback="${process.env.API_URL || 'http://localhost:5000'}/api/conference/status-callback"
+      statusCallback="${
+        process.env.API_URL || "http://localhost:5000"
+      }/api/conference/status-callback"
       statusCallbackEvent="start end join leave"
       startConferenceOnEnter="true"
       endConferenceOnExit="false"
