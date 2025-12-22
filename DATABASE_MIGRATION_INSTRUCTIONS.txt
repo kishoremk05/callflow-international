@@ -1,0 +1,91 @@
+╔═══════════════════════════════════════════════════════════════╗
+║                  🔴 DATABASE MIGRATION REQUIRED 🔴             ║
+╚═══════════════════════════════════════════════════════════════╝
+
+The organization tables don't exist in your Supabase database yet!
+That's why you're seeing these errors:
+
+❌ "Could not find a relationship between 'organization_invites' and 'invited_by'"
+❌ "Could not find a relationship between 'organization_members' and 'user_id'"
+
+╔═══════════════════════════════════════════════════════════════╗
+║                     HOW TO FIX THIS                            ║
+╚═══════════════════════════════════════════════════════════════╝
+
+STEP 1: Open Supabase Dashboard
+   → Go to: https://supabase.com/dashboard
+   → Select your project
+
+STEP 2: Go to SQL Editor
+   → Click "SQL Editor" in the left sidebar
+   → Click "New Query"
+
+STEP 3: Copy and Paste the SQL
+   → Open file: RUN_THIS_IN_SUPABASE.sql
+   → Copy ALL the content
+   → Paste it into the Supabase SQL Editor
+
+STEP 4: Run the Migration
+   → Click "Run" button (or press Ctrl+Enter)
+   → Wait for "Success. No rows returned"
+
+STEP 5: Verify Tables Created
+   → Click "Table Editor" in left sidebar
+   → You should see 3 new tables:
+     ✅ organizations
+     ✅ organization_members
+     ✅ organization_invites
+
+STEP 6: Restart Your Backend Server
+   → Press Ctrl+C in the terminal running the server
+   → Run: node server-single.js
+   → Errors should be gone!
+
+╔═══════════════════════════════════════════════════════════════╗
+║                   ALTERNATIVE METHOD                           ║
+╚═══════════════════════════════════════════════════════════════╝
+
+If you have Supabase CLI installed:
+
+1. Run: supabase migration new create_organizations
+2. Copy content from RUN_THIS_IN_SUPABASE.sql to the new migration file
+3. Run: supabase db push
+
+╔═══════════════════════════════════════════════════════════════╗
+║                      WHAT THIS CREATES                         ║
+╚═══════════════════════════════════════════════════════════════╝
+
+✅ organizations table - Stores company organizations
+✅ organization_members table - Tracks who's in each organization
+✅ organization_invites table - Manages email invitations
+✅ Row Level Security (RLS) - Protects data access
+✅ Indexes - For fast queries
+
+╔═══════════════════════════════════════════════════════════════╗
+║                    AFTER MIGRATION                             ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Once migration is complete, you can:
+
+✅ Create organizations (company users)
+✅ Invite members by email
+✅ Normal users receive and accept invites
+✅ No more 500 errors!
+
+The current errors will change from:
+  ❌ GET /api/organizations/invites/pending 500
+  
+To:
+  ✅ GET /api/organizations/invites/pending 200
+
+╔═══════════════════════════════════════════════════════════════╗
+║                         QUICK TEST                             ║
+╚═══════════════════════════════════════════════════════════════╝
+
+After running the migration, test by:
+
+1. Login as company user
+2. Click "Create Organization"
+3. Enter name → Submit
+4. Should see success message!
+5. No 500 errors in terminal

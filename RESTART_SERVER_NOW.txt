@@ -1,0 +1,92 @@
+╔═══════════════════════════════════════════════════════════════╗
+║                  🔴 SERVER RESTART REQUIRED 🔴                 ║
+╚═══════════════════════════════════════════════════════════════╝
+
+⚠️  ALL ORGANIZATION ROUTES ARE RETURNING 404 ERRORS
+
+This is because the server is still running with old code.
+The new organization routes have been added but the server
+needs to be restarted to load them.
+
+╔═══════════════════════════════════════════════════════════════╗
+║                     HOW TO FIX - METHOD 1                      ║
+╚═══════════════════════════════════════════════════════════════╝
+
+1. Find the terminal window running the backend server
+   (Look for: "🚀 Server running on http://localhost:5000")
+
+2. Press: Ctrl + C
+   (This will stop the server)
+
+3. Run again: node server-single.js
+   (This restarts the server with new routes)
+
+4. Wait for: "✅ Server is ready to accept connections"
+
+5. Refresh your browser
+
+╔═══════════════════════════════════════════════════════════════╗
+║                     HOW TO FIX - METHOD 2                      ║
+╚═══════════════════════════════════════════════════════════════╝
+
+If you can't find the running server:
+
+1. Kill all Node processes:
+   
+   PowerShell:
+   Get-Process node | Stop-Process -Force
+
+   CMD:
+   taskkill /F /IM node.exe
+
+2. Navigate to backend folder:
+   cd backend
+
+3. Start fresh:
+   node server-single.js
+
+   OR double-click:
+   start-server.bat
+
+╔═══════════════════════════════════════════════════════════════╗
+║                         VERIFICATION                           ║
+╚═══════════════════════════════════════════════════════════════╝
+
+After restart, you should see in browser console:
+✅ Creating organization with API URL: http://localhost:5000
+✅ Response status: 200 OK
+
+Instead of:
+❌ Response status: 404 Not Found
+
+╔═══════════════════════════════════════════════════════════════╗
+║                      QUICK TEST                                ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Open browser and go to:
+http://localhost:5000/health
+
+You should see:
+{
+  "status": "ok",
+  "timestamp": "...",
+  ...
+}
+
+If you see "Can't reach this page", the server is not running.
+
+╔═══════════════════════════════════════════════════════════════╗
+║                    WHAT WENT WRONG?                            ║
+╚═══════════════════════════════════════════════════════════════╝
+
+The organization routes were added to server-single.js AFTER
+the server was already running. Node.js doesn't automatically
+reload code changes - you must restart the server manually.
+
+Your logs show:
+✅ POST /api/twilio/token 200 - Working (old routes)
+✅ GET /api/contacts 200 - Working (old routes)
+❌ POST /api/organizations/create 404 - NOT WORKING (new routes)
+❌ GET /api/organizations/invites/pending 404 - NOT WORKING (new routes)
+
+This confirms the server is running old code.

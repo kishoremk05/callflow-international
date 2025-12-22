@@ -307,6 +307,88 @@ app.get("/api/wallet/transactions", authenticate, async (req, res, next) => {
   }
 });
 
+// Share credit with organization member
+app.post("/api/wallet/share-credit", authenticate, async (req, res, next) => {
+  try {
+    const { recipient_user_id, amount } = req.body;
+
+    if (!recipient_user_id || !amount || amount <= 0) {
+      return res.status(400).json({ error: "Invalid request" });
+    }
+
+    // Get sender's wallet
+    const { data: senderWallet } = await supabase
+      .from("wallets")
+      .select("balance")
+      .eq("user_id", req.user.id)
+      .single();
+
+    if (!senderWallet || senderWallet.balance < amount) {
+      return res.status(400).json({ error: "Insufficient balance" });
+    }
+
+    // Deduct from sender
+    const { error: deductError } = await supabase
+      .from("wallets")
+      .update({ balance: senderWallet.balance - amount })
+      .eq("user_id", req.user.id);
+
+    if (deductError) throw deductError;
+
+    // Get or create recipient wallet
+    let { data: recipientWallet } = await supabase
+      .from("wallets")
+      .select("balance")
+      .eq("user_id", recipient_user_id)
+      .single();
+
+    if (!recipientWallet) {
+      const { data: newWallet } = await supabase
+        .from("wallets")
+        .insert({ user_id: recipient_user_id, balance: 0, currency: "USD" })
+        .select()
+        .single();
+      recipientWallet = newWallet;
+    }
+
+    // Add to recipient
+    const { error: addError } = await supabase
+      .from("wallets")
+      .update({ balance: recipientWallet.balance + amount })
+      .eq("user_id", recipient_user_id);
+
+    if (addError) throw addError;
+
+    // Log transaction for sender
+    await supabase.from("payments").insert({
+      user_id: req.user.id,
+      amount: -amount,
+      currency: "USD",
+      payment_method: "transfer_out",
+      status: "completed",
+      description: `Shared credit with user`,
+    });
+
+    // Log transaction for recipient
+    await supabase.from("payments").insert({
+      user_id: recipient_user_id,
+      amount: amount,
+      currency: "USD",
+      payment_method: "transfer_in",
+      status: "completed",
+      description: `Received credit from organization member`,
+    });
+
+    res.json({
+      success: true,
+      message: `Successfully shared $${amount} credit`,
+      new_balance: senderWallet.balance - amount,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // ============================================================================
 // TWILIO ROUTES
 // ============================================================================
@@ -2304,6 +2386,589 @@ app.post(
 );
 
 // ============================================================================
+// ORGANIZATION ROUTES
+// ============================================================================
+
+// Create organization
+app.post("/api/organizations/create", authenticate, async (req, res, next) => {
+  try {
+    const { name, description } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: "Organization name is required" });
+    }
+
+    // Check if user is a company user
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("user_type")
+      .eq("id", req.user.id)
+      .single();
+
+    if (!profile || profile.user_type !== "company") {
+      return res
+        .status(403)
+        .json({ error: "Only company users can create organizations" });
+    }
+
+    // Create organization
+    const { data: organization, error: orgError } = await supabase
+      .from("organizations")
+      .insert({
+        name,
+        description: description || null,
+        owner_id: req.user.id,
+      })
+      .select()
+      .single();
+
+    if (orgError) throw orgError;
+
+    // Add owner as member
+    const { error: memberError } = await supabase
+      .from("organization_members")
+      .insert({
+        organization_id: organization.id,
+        user_id: req.user.id,
+        role: "owner",
+      });
+
+    if (memberError) throw memberError;
+
+    res.json({ success: true, organization });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get user's organizations
+app.get(
+  "/api/organizations/my-organizations",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      // Get organizations where user is owner
+      const { data: organizations, error } = await supabase
+        .from("organizations")
+        .select("*")
+        .eq("owner_id", req.user.id)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      res.json({ success: true, organizations: organizations || [] });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Get user's organization memberships (for normal users)
+app.get(
+  "/api/organizations/my-memberships",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      // Get organization memberships
+      const { data: memberships, error } = await supabase
+        .from("organization_members")
+        .select("organization_id, role, joined_at")
+        .eq("user_id", req.user.id);
+
+      if (error) throw error;
+
+      // Fetch organization details and member count
+      const organizationsWithDetails = await Promise.all(
+        (memberships || []).map(async (membership) => {
+          const { data: org } = await supabase
+            .from("organizations")
+            .select("id, name, owner_id, created_at")
+            .eq("id", membership.organization_id)
+            .eq("is_active", true)
+            .single();
+
+          if (!org) return null;
+
+          // Get owner details
+          const { data: owner } = await supabase
+            .from("profiles")
+            .select("full_name, email")
+            .eq("id", org.owner_id)
+            .single();
+
+          // Get member count
+          const { count } = await supabase
+            .from("organization_members")
+            .select("*", { count: "exact", head: true })
+            .eq("organization_id", org.id);
+
+          return {
+            id: org.id,
+            name: org.name,
+            owner_name: owner?.full_name || "Unknown",
+            owner_email: owner?.email || "",
+            member_count: count || 0,
+            joined_at: membership.joined_at,
+            role: membership.role,
+          };
+        })
+      );
+
+      const organizations = organizationsWithDetails.filter(
+        (org) => org !== null
+      );
+
+      res.json({ success: true, organizations });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Get organization details
+app.get(
+  "/api/organizations/:organizationId",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { organizationId } = req.params;
+
+      const { data: organization, error } = await supabase
+        .from("organizations")
+        .select(
+          `
+        *,
+        organization_members (
+          id,
+          user_id,
+          role,
+          joined_at,
+          profiles:user_id (
+            full_name,
+            email,
+            user_type
+          )
+        )
+      `
+        )
+        .eq("id", organizationId)
+        .single();
+
+      if (error) throw error;
+
+      // Check if user has access
+      const isMember = organization.organization_members.some(
+        (m) => m.user_id === req.user.id
+      );
+      const isOwner = organization.owner_id === req.user.id;
+
+      if (!isMember && !isOwner) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      res.json({ success: true, organization, isOwner });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Send organization invite
+app.post(
+  "/api/organizations/:organizationId/invite",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { organizationId } = req.params;
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+
+      // Verify user owns the organization
+      const { data: organization } = await supabase
+        .from("organizations")
+        .select("owner_id, name")
+        .eq("id", organizationId)
+        .single();
+
+      if (!organization || organization.owner_id !== req.user.id) {
+        return res
+          .status(403)
+          .json({ error: "Only organization owner can send invites" });
+      }
+
+      // Check if user exists
+      const { data: invitedUser } = await supabase
+        .from("profiles")
+        .select("id, email, full_name, user_type")
+        .eq("email", email)
+        .single();
+
+      if (!invitedUser) {
+        return res
+          .status(404)
+          .json({ error: "User not found with this email" });
+      }
+
+      // Check if user is normal user
+      if (invitedUser.user_type !== "normal") {
+        return res
+          .status(400)
+          .json({ error: "Can only invite normal users to organization" });
+      }
+
+      // Check if already a member
+      const { data: existingMember } = await supabase
+        .from("organization_members")
+        .select("id")
+        .eq("organization_id", organizationId)
+        .eq("user_id", invitedUser.id)
+        .single();
+
+      if (existingMember) {
+        return res
+          .status(400)
+          .json({ error: "User is already a member of this organization" });
+      }
+
+      // Check for pending invite
+      const { data: existingInvite } = await supabase
+        .from("organization_invites")
+        .select("id")
+        .eq("organization_id", organizationId)
+        .eq("invited_email", email)
+        .eq("status", "pending")
+        .single();
+
+      if (existingInvite) {
+        return res
+          .status(400)
+          .json({ error: "Invite already sent to this user" });
+      }
+
+      // Create invite
+      const { data: invite, error: inviteError } = await supabase
+        .from("organization_invites")
+        .insert({
+          organization_id: organizationId,
+          invited_email: email,
+          invited_by: req.user.id,
+          status: "pending",
+        })
+        .select()
+        .single();
+
+      if (inviteError) throw inviteError;
+
+      res.json({
+        success: true,
+        invite,
+        message: `Invitation sent to ${email}`,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Get organization members
+app.get(
+  "/api/organizations/:organizationId/members",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { organizationId } = req.params;
+
+      // Verify user owns the organization
+      const { data: organization } = await supabase
+        .from("organizations")
+        .select("owner_id")
+        .eq("id", organizationId)
+        .single();
+
+      if (!organization || organization.owner_id !== req.user.id) {
+        return res
+          .status(403)
+          .json({ error: "Only organization owner can view members" });
+      }
+
+      // Get organization members
+      const { data: members, error } = await supabase
+        .from("organization_members")
+        .select("id, user_id, role, joined_at")
+        .eq("organization_id", organizationId)
+        .order("joined_at", { ascending: false });
+
+      if (error) throw error;
+
+      // Manually fetch profile details for each member
+      const membersWithDetails = await Promise.all(
+        (members || []).map(async (member) => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("full_name, email")
+            .eq("id", member.user_id)
+            .single();
+
+          return {
+            ...member,
+            full_name: profile?.full_name || "Unknown User",
+            email: profile?.email || "",
+          };
+        })
+      );
+
+      res.json({ success: true, members: membersWithDetails });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Get pending invites for current user
+app.get(
+  "/api/organizations/invites/pending",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      // Get user's email
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("id", req.user.id)
+        .single();
+
+      if (!profile) {
+        return res.status(404).json({ error: "Profile not found" });
+      }
+
+      // Get pending invites
+      const { data: invites, error } = await supabase
+        .from("organization_invites")
+        .select("*")
+        .eq("invited_email", profile.email)
+        .eq("status", "pending")
+        .order("invited_at", { ascending: false });
+
+      if (error) throw error;
+
+      // Fetch organization details for each invite
+      const invitesWithDetails = await Promise.all(
+        (invites || []).map(async (invite) => {
+          const { data: org } = await supabase
+            .from("organizations")
+            .select("id, name, description")
+            .eq("id", invite.organization_id)
+            .single();
+
+          const { data: inviter } = await supabase
+            .from("profiles")
+            .select("full_name, email")
+            .eq("id", invite.invited_by)
+            .single();
+
+          return {
+            ...invite,
+            organizations: org,
+            invited_by_profile: inviter,
+          };
+        })
+      );
+
+      res.json({ success: true, invites: invitesWithDetails });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Accept organization invite
+app.post(
+  "/api/organizations/invites/:inviteId/accept",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { inviteId } = req.params;
+
+      // Get user's email
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("email, user_type")
+        .eq("id", req.user.id)
+        .single();
+
+      if (!profile) {
+        return res.status(404).json({ error: "Profile not found" });
+      }
+
+      // Get invite
+      const { data: invite } = await supabase
+        .from("organization_invites")
+        .select("*")
+        .eq("id", inviteId)
+        .eq("invited_email", profile.email)
+        .eq("status", "pending")
+        .single();
+
+      if (!invite) {
+        return res
+          .status(404)
+          .json({ error: "Invite not found or already processed" });
+      }
+
+      // Update invite status
+      const { error: updateError } = await supabase
+        .from("organization_invites")
+        .update({
+          status: "accepted",
+          responded_at: new Date().toISOString(),
+        })
+        .eq("id", inviteId);
+
+      if (updateError) throw updateError;
+
+      // Add user to organization
+      const { error: memberError } = await supabase
+        .from("organization_members")
+        .insert({
+          organization_id: invite.organization_id,
+          user_id: req.user.id,
+          role: "member",
+        });
+
+      if (memberError) throw memberError;
+
+      res.json({
+        success: true,
+        message: "Successfully joined organization",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Reject organization invite
+app.post(
+  "/api/organizations/invites/:inviteId/reject",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { inviteId } = req.params;
+
+      // Get user's email
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("id", req.user.id)
+        .single();
+
+      if (!profile) {
+        return res.status(404).json({ error: "Profile not found" });
+      }
+
+      // Update invite status
+      const { error } = await supabase
+        .from("organization_invites")
+        .update({
+          status: "rejected",
+          responded_at: new Date().toISOString(),
+        })
+        .eq("id", inviteId)
+        .eq("invited_email", profile.email)
+        .eq("status", "pending");
+
+      if (error) throw error;
+
+      res.json({
+        success: true,
+        message: "Invite rejected",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Remove member from organization
+app.delete(
+  "/api/organizations/:organizationId/members/:memberId",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { organizationId, memberId } = req.params;
+
+      // Verify user owns the organization
+      const { data: organization } = await supabase
+        .from("organizations")
+        .select("owner_id")
+        .eq("id", organizationId)
+        .single();
+
+      if (!organization || organization.owner_id !== req.user.id) {
+        return res
+          .status(403)
+          .json({ error: "Only organization owner can remove members" });
+      }
+
+      // Delete member
+      const { error } = await supabase
+        .from("organization_members")
+        .delete()
+        .eq("id", memberId)
+        .eq("organization_id", organizationId);
+
+      if (error) throw error;
+
+      res.json({ success: true, message: "Member removed successfully" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Leave organization
+app.post(
+  "/api/organizations/:organizationId/leave",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { organizationId } = req.params;
+
+      // Check if user is owner
+      const { data: organization } = await supabase
+        .from("organizations")
+        .select("owner_id")
+        .eq("id", organizationId)
+        .single();
+
+      if (organization && organization.owner_id === req.user.id) {
+        return res.status(400).json({
+          error:
+            "Organization owner cannot leave. Transfer ownership or delete organization first.",
+        });
+      }
+
+      // Remove membership
+      const { error } = await supabase
+        .from("organization_members")
+        .delete()
+        .eq("organization_id", organizationId)
+        .eq("user_id", req.user.id);
+
+      if (error) throw error;
+
+      res.json({ success: true, message: "Left organization successfully" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// ============================================================================
 // ADMIN ROUTES
 // ============================================================================
 
@@ -2313,7 +2978,8 @@ app.get("/api/admin/temp/users", async (req, res, next) => {
   try {
     const { data: users, error } = await supabase
       .from("profiles")
-      .select(`
+      .select(
+        `
         id,
         email,
         full_name,
@@ -2328,21 +2994,24 @@ app.get("/api/admin/temp/users", async (req, res, next) => {
             business_type
           )
         )
-      `)
+      `
+      )
       .order("created_at", { ascending: false });
 
     if (error) throw error;
 
     // Format the response
-    const formattedUsers = users.map(user => ({
+    const formattedUsers = users.map((user) => ({
       id: user.id,
       email: user.email,
       full_name: user.full_name,
       created_at: user.created_at,
-      is_enterprise: user.enterprise_members && user.enterprise_members.length > 0,
-      enterprise_info: user.enterprise_members && user.enterprise_members.length > 0 
-        ? user.enterprise_members[0].enterprise_accounts 
-        : null
+      is_enterprise:
+        user.enterprise_members && user.enterprise_members.length > 0,
+      enterprise_info:
+        user.enterprise_members && user.enterprise_members.length > 0
+          ? user.enterprise_members[0].enterprise_accounts
+          : null,
     }));
 
     res.json({ success: true, users: formattedUsers });
@@ -2377,7 +3046,9 @@ app.post("/api/admin/temp/make-enterprise/:userId", async (req, res, next) => {
       .single();
 
     if (existingMember) {
-      return res.status(400).json({ error: "User is already in an enterprise" });
+      return res
+        .status(400)
+        .json({ error: "User is already in an enterprise" });
     }
 
     // Create enterprise account
@@ -2387,7 +3058,7 @@ app.post("/api/admin/temp/make-enterprise/:userId", async (req, res, next) => {
         name: enterpriseName || `${user.full_name || user.email}'s Enterprise`,
         business_type: businessType || "technology",
         admin_id: userId,
-        status: "active"
+        status: "active",
       })
       .select()
       .single();
@@ -2400,7 +3071,7 @@ app.post("/api/admin/temp/make-enterprise/:userId", async (req, res, next) => {
       .insert({
         enterprise_id: enterprise.id,
         user_id: userId,
-        role: "admin"
+        role: "admin",
       });
 
     if (memberError) throw memberError;
@@ -2408,7 +3079,7 @@ app.post("/api/admin/temp/make-enterprise/:userId", async (req, res, next) => {
     res.json({
       success: true,
       message: "User converted to enterprise account",
-      enterprise
+      enterprise,
     });
   } catch (error) {
     console.error("Failed to convert user:", error);
@@ -2417,38 +3088,41 @@ app.post("/api/admin/temp/make-enterprise/:userId", async (req, res, next) => {
 });
 
 // Remove user from enterprise
-app.post("/api/admin/temp/remove-enterprise/:userId", async (req, res, next) => {
-  try {
-    const { userId } = req.params;
+app.post(
+  "/api/admin/temp/remove-enterprise/:userId",
+  async (req, res, next) => {
+    try {
+      const { userId } = req.params;
 
-    // Get user's enterprise membership
-    const { data: membership } = await supabase
-      .from("enterprise_members")
-      .select("enterprise_id")
-      .eq("user_id", userId)
-      .single();
+      // Get user's enterprise membership
+      const { data: membership } = await supabase
+        .from("enterprise_members")
+        .select("enterprise_id")
+        .eq("user_id", userId)
+        .single();
 
-    if (!membership) {
-      return res.status(404).json({ error: "User is not in any enterprise" });
+      if (!membership) {
+        return res.status(404).json({ error: "User is not in any enterprise" });
+      }
+
+      // Remove from enterprise_members
+      const { error: deleteError } = await supabase
+        .from("enterprise_members")
+        .delete()
+        .eq("user_id", userId);
+
+      if (deleteError) throw deleteError;
+
+      res.json({
+        success: true,
+        message: "User removed from enterprise",
+      });
+    } catch (error) {
+      console.error("Failed to remove user:", error);
+      next(error);
     }
-
-    // Remove from enterprise_members
-    const { error: deleteError } = await supabase
-      .from("enterprise_members")
-      .delete()
-      .eq("user_id", userId);
-
-    if (deleteError) throw deleteError;
-
-    res.json({
-      success: true,
-      message: "User removed from enterprise"
-    });
-  } catch (error) {
-    console.error("Failed to remove user:", error);
-    next(error);
   }
-});
+);
 
 app.get(
   "/api/admin/users",

@@ -81,7 +81,9 @@ export default function AdminPanel() {
     try {
       setActionLoading(selectedUser.id);
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/admin/temp/make-enterprise/${selectedUser.id}`,
+        `${import.meta.env.VITE_API_URL}/api/admin/temp/make-enterprise/${
+          selectedUser.id
+        }`,
         {
           method: "POST",
           headers: {
@@ -118,7 +120,9 @@ export default function AdminPanel() {
     try {
       setActionLoading(user.id);
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/admin/temp/remove-enterprise/${user.id}`,
+        `${import.meta.env.VITE_API_URL}/api/admin/temp/remove-enterprise/${
+          user.id
+        }`,
         {
           method: "POST",
         }
@@ -150,15 +154,16 @@ export default function AdminPanel() {
               <Shield className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-[#1a365d]">
-                Admin Panel
-              </h1>
-              <p className="text-gray-600">Manage users and enterprise accounts</p>
+              <h1 className="text-3xl font-bold text-[#1a365d]">Admin Panel</h1>
+              <p className="text-gray-600">
+                Manage users and enterprise accounts
+              </p>
             </div>
           </div>
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-center gap-2 mt-4">
             <span className="text-yellow-800 text-sm">
-              ⚠️ <strong>Temporary Admin Panel</strong> - No authentication required (for testing only)
+              ⚠️ <strong>Temporary Admin Panel</strong> - No authentication
+              required (for testing only)
             </span>
           </div>
         </div>
