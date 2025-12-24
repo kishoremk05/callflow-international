@@ -78,6 +78,7 @@ interface DialerProps {
   isInCall?: boolean;
   callDuration?: number;
   callerName?: string;
+  onUploadCSV?: () => void;
 }
 
 export function Dialer({
@@ -87,6 +88,7 @@ export function Dialer({
   isInCall = false,
   callDuration = 0,
   callerName = "Unknown",
+  onUploadCSV,
 }: DialerProps) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [countryCode, setCountryCode] = useState("+1");
@@ -510,38 +512,6 @@ export function Dialer({
             </div>
             <span className="text-[#1a365d] font-bold">Make a Call</span>
           </div>
-
-          {/* Quick Actions */}
-          <div className="flex gap-2">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={toggleBluetooth}
-                    className={`p-2 rounded-lg transition-colors ${
-                      isBluetoothConnected
-                        ? "bg-blue-100 text-blue-600"
-                        : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                    }`}
-                  >
-                    <Bluetooth className="w-4 h-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>Bluetooth Audio</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button className="p-2 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors">
-                    <Settings className="w-4 h-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>Audio Settings</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
         </CardTitle>
       </CardHeader>
 
@@ -566,6 +536,31 @@ export function Dialer({
             </button>
           ))}
         </div>
+
+        {/* Upload XLSX Button - For organization members */}
+        {onUploadCSV && (
+          <button
+            onClick={onUploadCSV}
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-medium transition-all bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:from-purple-600 hover:to-purple-700 shadow-sm hover:shadow-md"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            Upload Call Queue (XLSX)
+          </button>
+        )}
 
         {/* Country Code & Number Input */}
         <div className="flex gap-2">

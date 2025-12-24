@@ -390,6 +390,186 @@ app.post("/api/wallet/share-credit", authenticate, async (req, res, next) => {
 });
 
 // ============================================================================
+// CALL QUEUE ROUTES (Company Users)
+// ============================================================================
+
+// Upload call queue CSV
+app.post("/api/call-queue/upload", authenticate, async (req, res, next) => {
+  try {
+    const { contacts } = req.body;
+
+    console.log("Call queue upload request:", {
+      userId: req.user.id,
+      contactsCount: contacts?.length,
+    });
+
+    if (!contacts || !Array.isArray(contacts) || contacts.length === 0) {
+      return res.status(400).json({ error: "Invalid contacts data" });
+    }
+
+    // Create queue
+    const { data: queue, error: queueError } = await supabase
+      .from("call_queues")
+      .insert({
+        user_id: req.user.id,
+        total_contacts: contacts.length,
+        completed_contacts: 0,
+      })
+      .select()
+      .single();
+
+    if (queueError) {
+      console.error("Queue creation error:", queueError);
+      throw queueError;
+    }
+
+    console.log("Queue created:", queue.id);
+
+    // Add contacts
+    const contactsToInsert = contacts.map((contact, index) => ({
+      queue_id: queue.id,
+      name: contact.name,
+      number: contact.number,
+      position: index + 1,
+      status: "pending",
+    }));
+
+    const { error: contactsError } = await supabase
+      .from("call_queue_contacts")
+      .insert(contactsToInsert);
+
+    if (contactsError) {
+      console.error("Contacts insertion error:", contactsError);
+      throw contactsError;
+    }
+
+    console.log("Contacts inserted successfully");
+
+    res.json({
+      success: true,
+      queueId: queue.id,
+      message: `Queue created with ${contacts.length} contacts`,
+    });
+  } catch (error) {
+    console.error("Call queue upload error:", error);
+    next(error);
+  }
+});
+
+// Get call queue
+app.get("/api/call-queue/:queueId", authenticate, async (req, res, next) => {
+  try {
+    const { queueId } = req.params;
+
+    // Verify ownership
+    const { data: queue } = await supabase
+      .from("call_queues")
+      .select("*")
+      .eq("id", queueId)
+      .eq("user_id", req.user.id)
+      .single();
+
+    if (!queue) {
+      return res.status(404).json({ error: "Queue not found" });
+    }
+
+    // Get contacts
+    const { data: contacts } = await supabase
+      .from("call_queue_contacts")
+      .select("*")
+      .eq("queue_id", queueId)
+      .order("position", { ascending: true });
+
+    res.json({
+      success: true,
+      queue: contacts || [],
+      info: queue,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update contact status in queue
+app.post(
+  "/api/call-queue/:queueId/update",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { queueId } = req.params;
+      const { contactId, status } = req.body;
+
+      // Verify ownership
+      const { data: queue } = await supabase
+        .from("call_queues")
+        .select("*")
+        .eq("id", queueId)
+        .eq("user_id", req.user.id)
+        .single();
+
+      if (!queue) {
+        return res.status(404).json({ error: "Queue not found" });
+      }
+
+      // Update contact
+      const updateData = {
+        status,
+        ...(status === "calling"
+          ? { called_at: new Date().toISOString() }
+          : {}),
+      };
+
+      const { error } = await supabase
+        .from("call_queue_contacts")
+        .update(updateData)
+        .eq("id", contactId)
+        .eq("queue_id", queueId);
+
+      if (error) throw error;
+
+      // Update queue stats
+      const { data: contacts } = await supabase
+        .from("call_queue_contacts")
+        .select("status")
+        .eq("queue_id", queueId);
+
+      const completed =
+        contacts?.filter(
+          (c) => c.status === "answered" || c.status === "skipped"
+        ).length || 0;
+
+      await supabase
+        .from("call_queues")
+        .update({
+          completed_contacts: completed,
+          status: completed === queue.total_contacts ? "completed" : "active",
+        })
+        .eq("id", queueId);
+
+      res.json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Get active queues for user
+app.get("/api/call-queue/active", authenticate, async (req, res, next) => {
+  try {
+    const { data: queues } = await supabase
+      .from("call_queues")
+      .select("*")
+      .eq("user_id", req.user.id)
+      .eq("status", "active")
+      .order("created_at", { ascending: false });
+
+    res.json({ success: true, queues: queues || [] });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ============================================================================
 // TWILIO ROUTES
 // ============================================================================
 

@@ -18,6 +18,8 @@ import { CreateOrganizationModal } from "@/components/dashboard/CreateOrganizati
 import { OrganizationManagement } from "@/components/dashboard/OrganizationManagement";
 import { InviteNotifications } from "@/components/dashboard/InviteNotifications";
 import { JoinedOrganizations } from "@/components/dashboard/JoinedOrganizations";
+import { CallQueueUpload } from "@/components/dashboard/CallQueueUpload";
+import { CallQueueManager } from "@/components/dashboard/CallQueueManager";
 import { toast } from "sonner";
 import { gsap } from "gsap";
 import {
@@ -36,6 +38,7 @@ import {
   Settings,
   Building2,
   Bell,
+  Upload,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -90,8 +93,16 @@ export default function Dashboard() {
   const [showInviteNotifications, setShowInviteNotifications] = useState(false);
   const [showJoinedOrgs, setShowJoinedOrgs] = useState(false);
   const [organizations, setOrganizations] = useState<any[]>([]);
+  const [joinedOrganizations, setJoinedOrganizations] = useState<any[]>([]);
   const [selectedOrg, setSelectedOrg] = useState<any>(null);
   const [pendingInvitesCount, setPendingInvitesCount] = useState(0);
+
+  // Call Queue state (Company users only)
+  const [showCallQueueUpload, setShowCallQueueUpload] = useState(false);
+  const [activeQueueId, setActiveQueueId] = useState<string | null>(null);
+  const [callStatus, setCallStatus] = useState<
+    "ringing" | "answered" | "busy" | "no-answer" | "idle"
+  >("idle");
 
   const containerRef = useRef<HTMLDivElement>(null);
   const callTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -164,6 +175,7 @@ export default function Dashboard() {
       }
       if (userType === "normal") {
         fetchPendingInvites();
+        fetchJoinedOrganizations();
       }
     }
   }, [user, userType]);
@@ -219,6 +231,34 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error("Error fetching pending invites:", error);
+    }
+  };
+
+  const fetchJoinedOrganizations = async () => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch(
+        `${
+          import.meta.env.VITE_API_URL || "http://localhost:5000"
+        }/api/organizations/my-memberships`,
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+      if (response.ok) {
+        setJoinedOrganizations(data.organizations || []);
+        console.log("Joined organizations:", data.organizations);
+      }
+    } catch (error) {
+      console.error("Error fetching joined organizations:", error);
     }
   };
 
@@ -302,16 +342,28 @@ export default function Dashboard() {
 
     setCurrentNumber(number);
     setCurrentCountryCode(countryCode);
+    setCallStatus("ringing");
 
     try {
       toast.info(`Calling ${countryCode} ${number}...`);
       await makeCall(number, countryCode, "public");
+
+      // Set as answered when call connects
+      setCallStatus("answered");
 
       setTimeout(() => {
         fetchData();
       }, 2000);
     } catch (error: any) {
       console.error("Call failed:", error);
+
+      // Determine call failure reason
+      if (error.message.includes("busy")) {
+        setCallStatus("busy");
+      } else {
+        setCallStatus("no-answer");
+      }
+
       toast.error(error.message || "Call failed");
     }
   };
@@ -339,31 +391,6 @@ export default function Dashboard() {
       action: () => navigate("/voice-call"),
       showFor: ["normal", "company"], // Show for all users
     },
-    ...(userType === "company"
-      ? [
-          {
-            icon: Video,
-            label: "Video Call",
-            color: "#8b5cf6",
-            action: () => toast.info("Video calls coming soon!"),
-            showFor: ["company"], // Only for company users
-          },
-          {
-            icon: MessageSquare,
-            label: "Message",
-            color: "#10b981",
-            action: () => toast.info("Messaging coming soon!"),
-            showFor: ["company"], // Only for company users
-          },
-          {
-            icon: Users,
-            label: "Team",
-            color: "#f97316",
-            action: () => setActiveView("team"),
-            showFor: ["company"], // Only for company users
-          },
-        ]
-      : []),
   ];
 
   return (
@@ -420,22 +447,33 @@ export default function Dashboard() {
 
               {/* Organization Button for Company Users */}
               {userType === "company" && (
-                <Button
-                  onClick={() => {
-                    if (organizations.length === 0) {
-                      setShowCreateOrgModal(true);
-                    } else {
-                      setSelectedOrg(organizations[0]);
-                      setShowOrgManagement(true);
-                    }
-                  }}
-                  className="flex items-center gap-2 bg-gradient-to-r from-[#0891b2] to-[#06b6d4] hover:from-[#0e7490] hover:to-[#0891b2] text-white"
-                >
-                  <Building2 className="w-4 h-4" />
-                  {organizations.length === 0
-                    ? "Create Organization"
-                    : "Manage Organization"}
-                </Button>
+                <>
+                  <Button
+                    onClick={() => {
+                      if (organizations.length === 0) {
+                        setShowCreateOrgModal(true);
+                      } else {
+                        setSelectedOrg(organizations[0]);
+                        setShowOrgManagement(true);
+                      }
+                    }}
+                    className="flex items-center gap-2 bg-gradient-to-r from-[#0891b2] to-[#06b6d4] hover:from-[#0e7490] hover:to-[#0891b2] text-white"
+                  >
+                    <Building2 className="w-4 h-4" />
+                    {organizations.length === 0
+                      ? "Create Organization"
+                      : "Manage Organization"}
+                  </Button>
+
+                  <Button
+                    onClick={() => setShowCallQueueUpload(true)}
+                    variant="outline"
+                    className="flex items-center gap-2 border-purple-300 text-purple-600 hover:bg-purple-50"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Upload Call Queue
+                  </Button>
+                </>
               )}
 
               {quickActions.map((action, index) => (
@@ -545,12 +583,132 @@ export default function Dashboard() {
                   ? `${currentCountryCode} ${currentNumber}`
                   : "Unknown"
               }
+              onUploadCSV={
+                userType === "company" || joinedOrganizations.length > 0
+                  ? () => setShowCallQueueUpload(true)
+                  : undefined
+              }
             />
           </div>
 
           {/* Right Column - Wallet & Quick Stats */}
           <div className="lg:col-span-3 space-y-6" data-animate="sidebar">
             <WalletCard balance={wallet.balance} currency={wallet.currency} />
+
+            {/* Call Queue Manager */}
+            {activeQueueId && (
+              <CallQueueManager
+                queueId={activeQueueId}
+                onCall={(number, name) => {
+                  // Extract country code from number (first 2-3 digits)
+                  let countryCode = "+91"; // Default to India
+                  let cleanNumber = number;
+
+                  // Remove any spaces first
+                  const rawNumber = number.replace(/\s/g, "");
+
+                  console.log(
+                    "Original number from queue:",
+                    number,
+                    "Raw:",
+                    rawNumber,
+                    "Length:",
+                    rawNumber.length
+                  );
+
+                  // If number already has + symbol (like +91 9080222066)
+                  if (rawNumber.startsWith("+")) {
+                    // Try to match known country codes first
+                    if (rawNumber.startsWith("+91")) {
+                      countryCode = "+91";
+                      cleanNumber = rawNumber.substring(3); // Remove +91
+                      console.log("Detected +91 India");
+                    } else if (rawNumber.startsWith("+1")) {
+                      countryCode = "+1";
+                      cleanNumber = rawNumber.substring(2); // Remove +1
+                      console.log("Detected +1 US/Canada");
+                    } else if (rawNumber.startsWith("+44")) {
+                      countryCode = "+44";
+                      cleanNumber = rawNumber.substring(3); // Remove +44
+                      console.log("Detected +44 UK");
+                    } else if (rawNumber.startsWith("+971")) {
+                      countryCode = "+971";
+                      cleanNumber = rawNumber.substring(4); // Remove +971
+                      console.log("Detected +971 UAE");
+                    } else {
+                      // Generic extraction for other country codes
+                      const match = rawNumber.match(/^\+(\d{1,3})(\d+)$/);
+                      if (match) {
+                        countryCode = "+" + match[1];
+                        cleanNumber = match[2];
+                        console.log("Generic country code extraction");
+                      }
+                    }
+                  }
+                  // Check for Indian numbers (91 + 10 digits = 12 total)
+                  else if (
+                    rawNumber.startsWith("91") &&
+                    rawNumber.length === 12
+                  ) {
+                    countryCode = "+91";
+                    cleanNumber = rawNumber.substring(2); // Remove first 2 digits (91)
+                    console.log("Detected India number");
+                  }
+                  // Check for US/Canada numbers (1 + 10 digits = 11 total)
+                  else if (
+                    rawNumber.startsWith("1") &&
+                    rawNumber.length === 11
+                  ) {
+                    countryCode = "+1";
+                    cleanNumber = rawNumber.substring(1); // Remove first digit (1)
+                    console.log("Detected US/Canada number");
+                  }
+                  // Check for UK numbers (44 + 10 digits = 12 total)
+                  else if (
+                    rawNumber.startsWith("44") &&
+                    rawNumber.length === 12
+                  ) {
+                    countryCode = "+44";
+                    cleanNumber = rawNumber.substring(2);
+                    console.log("Detected UK number");
+                  }
+                  // Check for UAE numbers (971 + 9 digits = 12 total)
+                  else if (
+                    rawNumber.startsWith("971") &&
+                    rawNumber.length === 12
+                  ) {
+                    countryCode = "+971";
+                    cleanNumber = rawNumber.substring(3);
+                    console.log("Detected UAE number");
+                  }
+                  // If it's just 10 digits, assume India
+                  else if (rawNumber.length === 10) {
+                    countryCode = "+91";
+                    cleanNumber = rawNumber;
+                    console.log("10 digits, assuming India");
+                  }
+                  // Default: assume first 2 digits are country code
+                  else if (rawNumber.length > 10) {
+                    countryCode = "+" + rawNumber.substring(0, 2);
+                    cleanNumber = rawNumber.substring(2);
+                    console.log("Using first 2 digits as country code");
+                  }
+
+                  console.log(
+                    "Final: Country Code:",
+                    countryCode,
+                    "Clean Number:",
+                    cleanNumber
+                  );
+                  handleCall(cleanNumber, countryCode);
+                }}
+                onComplete={() => {
+                  setActiveQueueId(null);
+                  toast.success("Call queue completed!");
+                }}
+                currentCallStatus={callStatus}
+              />
+            )}
 
             {/* Team Activity Card - Only for company users */}
             {userType === "company" && (
@@ -594,82 +752,6 @@ export default function Dashboard() {
                       </p>
                       <p className="text-xs text-gray-500">Connected today</p>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Upcoming Meetings - Only for company users */}
-            {userType === "company" && (
-              <Card className="border-gray-100 bg-white rounded-2xl shadow-sm">
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center justify-between text-[#1a365d] text-base">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-[#0891b2]" />
-                      Upcoming
-                    </div>
-                    <span className="text-xs text-gray-400 font-normal">
-                      Today
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="p-3 bg-[#0891b2]/5 border border-[#0891b2]/10 rounded-xl">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium text-[#1a365d]">
-                        Team Standup
-                      </span>
-                      <span className="text-xs text-[#0891b2] font-medium">
-                        2:30 PM
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500">5 participants</p>
-                  </div>
-                  <div className="p-3 bg-gray-50 rounded-xl">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium text-[#1a365d]">
-                        Client Call
-                      </span>
-                      <span className="text-xs text-gray-500">4:00 PM</span>
-                    </div>
-                    <p className="text-xs text-gray-500">External - USA</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Analytics Preview - Only for company users */}
-            {userType === "company" && (
-              <Card className="border-gray-100 bg-white rounded-2xl shadow-sm">
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center justify-between text-[#1a365d] text-base">
-                    <div className="flex items-center gap-2">
-                      <BarChart3 className="w-4 h-4 text-[#0891b2]" />
-                      This Week
-                    </div>
-                    <button className="text-xs text-[#0891b2] font-medium flex items-center gap-1 hover:underline">
-                      View All <ArrowUpRight className="w-3 h-3" />
-                    </button>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-end justify-between h-20 gap-1">
-                    {[40, 65, 45, 80, 55, 70, 90].map((height, i) => (
-                      <div
-                        key={i}
-                        className="flex-1 bg-[#0891b2]/20 rounded-t-sm hover:bg-[#0891b2]/40 transition-colors cursor-pointer"
-                        style={{ height: `${height}%` }}
-                      />
-                    ))}
-                  </div>
-                  <div className="flex justify-between mt-2 text-xs text-gray-400">
-                    <span>Mon</span>
-                    <span>Tue</span>
-                    <span>Wed</span>
-                    <span>Thu</span>
-                    <span>Fri</span>
-                    <span>Sat</span>
-                    <span>Sun</span>
                   </div>
                 </CardContent>
               </Card>
@@ -728,6 +810,15 @@ export default function Dashboard() {
           />
         </>
       )}
+
+      <CallQueueUpload
+        open={showCallQueueUpload}
+        onClose={() => setShowCallQueueUpload(false)}
+        onSuccess={(queueId) => {
+          setActiveQueueId(queueId);
+          setShowCallQueueUpload(false);
+        }}
+      />
     </div>
   );
 }
