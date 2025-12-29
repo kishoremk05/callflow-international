@@ -48,20 +48,16 @@ export function CallQueueUpload({
 
       if (row.length >= 2) {
         const name = String(row[0] || "").trim();
-        const number = String(row[1] || "")
-          .trim()
-          .replace(/\s+/g, "");
+        const number = String(row[1] || "").trim();
 
-        // Validate phone number (basic validation)
-        if (name && number.match(/^\+?[0-9]{10,15}$/)) {
+        // Validate phone number (allows format: +91 6381179497 or +916381179497)
+        if (name && number.match(/^\+?[0-9]{2,3}\s?[0-9]{8,12}$/)) {
           contacts.push({ name, number });
         }
       } else if (row.length === 1) {
         // Just number, no name
-        const number = String(row[0] || "")
-          .trim()
-          .replace(/\s+/g, "");
-        if (number.match(/^\+?[0-9]{10,15}$/)) {
+        const number = String(row[0] || "").trim();
+        if (number.match(/^\+?[0-9]{2,3}\s?[0-9]{8,12}$/)) {
           contacts.push({ name: "Unknown", number });
         }
       }

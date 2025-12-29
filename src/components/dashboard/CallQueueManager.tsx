@@ -136,18 +136,21 @@ export function CallQueueManager({
     if (!contact) return;
 
     // Extract country code and number
-    const number = contact.number.replace(/^\+/, "");
-    let countryCode = "+1";
+    // Format can be: "+91 6381179497" or "+916381179497"
+    let phoneNumber = contact.number;
 
-    if (contact.number.startsWith("+91")) {
-      countryCode = "+91";
-    } else if (contact.number.startsWith("+1")) {
-      countryCode = "+1";
-    } else if (contact.number.startsWith("+44")) {
-      countryCode = "+44";
+    // Check if there's a space (format: +91 6381179497)
+    if (contact.number.includes(" ")) {
+      const parts = contact.number.split(" ");
+      const countryCode = parts[0]; // +91
+      const localNumber = parts.slice(1).join(""); // 6381179497
+
+      // Remove the + and combine for Twilio
+      phoneNumber = countryCode.replace("+", "") + localNumber;
+    } else {
+      // Format without space: +916381179497
+      phoneNumber = contact.number.replace(/^\+/, "");
     }
-
-    const phoneNumber = number.replace(countryCode.substring(1), "");
 
     onCall(phoneNumber, contact.name);
     updateCallStatus("calling");
