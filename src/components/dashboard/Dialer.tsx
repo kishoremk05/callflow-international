@@ -59,16 +59,85 @@ const dialPad = [
 ];
 
 const countryCodes = [
+  // North America
   { code: "+1", country: "US/CA", flag: "🇺🇸" },
+
+  // Europe
   { code: "+44", country: "UK", flag: "🇬🇧" },
-  { code: "+91", country: "India", flag: "🇮🇳" },
-  { code: "+61", country: "Australia", flag: "🇦🇺" },
-  { code: "+49", country: "Germany", flag: "🇩🇪" },
   { code: "+33", country: "France", flag: "🇫🇷" },
-  { code: "+81", country: "Japan", flag: "🇯🇵" },
+  { code: "+49", country: "Germany", flag: "🇩🇪" },
+  { code: "+39", country: "Italy", flag: "🇮🇹" },
+  { code: "+34", country: "Spain", flag: "🇪🇸" },
+  { code: "+31", country: "Netherlands", flag: "🇳🇱" },
+  { code: "+41", country: "Switzerland", flag: "🇨🇭" },
+  { code: "+43", country: "Austria", flag: "🇦🇹" },
+  { code: "+32", country: "Belgium", flag: "🇧🇪" },
+  { code: "+45", country: "Denmark", flag: "🇩🇰" },
+  { code: "+46", country: "Sweden", flag: "🇸🇪" },
+  { code: "+47", country: "Norway", flag: "🇳🇴" },
+  { code: "+358", country: "Finland", flag: "🇫🇮" },
+  { code: "+48", country: "Poland", flag: "🇵🇱" },
+  { code: "+420", country: "Czech Rep", flag: "🇨🇿" },
+  { code: "+351", country: "Portugal", flag: "🇵🇹" },
+  { code: "+30", country: "Greece", flag: "🇬🇷" },
+  { code: "+353", country: "Ireland", flag: "🇮🇪" },
+  { code: "+7", country: "Russia", flag: "🇷🇺" },
+  { code: "+380", country: "Ukraine", flag: "🇺🇦" },
+  { code: "+40", country: "Romania", flag: "🇷🇴" },
+
+  // Asia Pacific
+  { code: "+91", country: "India", flag: "🇮🇳" },
   { code: "+86", country: "China", flag: "🇨🇳" },
-  { code: "+971", country: "UAE", flag: "🇦🇪" },
+  { code: "+81", country: "Japan", flag: "🇯🇵" },
+  { code: "+82", country: "South Korea", flag: "🇰🇷" },
   { code: "+65", country: "Singapore", flag: "🇸🇬" },
+  { code: "+60", country: "Malaysia", flag: "🇲🇾" },
+  { code: "+66", country: "Thailand", flag: "🇹🇭" },
+  { code: "+63", country: "Philippines", flag: "🇵🇭" },
+  { code: "+84", country: "Vietnam", flag: "🇻🇳" },
+  { code: "+62", country: "Indonesia", flag: "🇮🇩" },
+  { code: "+61", country: "Australia", flag: "🇦🇺" },
+  { code: "+64", country: "New Zealand", flag: "🇳🇿" },
+  { code: "+92", country: "Pakistan", flag: "🇵🇰" },
+  { code: "+880", country: "Bangladesh", flag: "🇧🇩" },
+  { code: "+94", country: "Sri Lanka", flag: "🇱🇰" },
+  { code: "+977", country: "Nepal", flag: "🇳🇵" },
+  { code: "+852", country: "Hong Kong", flag: "🇭🇰" },
+  { code: "+886", country: "Taiwan", flag: "🇹🇼" },
+
+  // Middle East & Africa
+  { code: "+971", country: "UAE", flag: "🇦🇪" },
+  { code: "+966", country: "Saudi Arabia", flag: "🇸🇦" },
+  { code: "+974", country: "Qatar", flag: "🇶🇦" },
+  { code: "+965", country: "Kuwait", flag: "🇰🇼" },
+  { code: "+973", country: "Bahrain", flag: "🇧🇭" },
+  { code: "+968", country: "Oman", flag: "🇴🇲" },
+  { code: "+962", country: "Jordan", flag: "🇯🇴" },
+  { code: "+972", country: "Israel", flag: "🇮🇱" },
+  { code: "+20", country: "Egypt", flag: "🇪🇬" },
+  { code: "+27", country: "South Africa", flag: "🇿🇦" },
+  { code: "+234", country: "Nigeria", flag: "🇳🇬" },
+  { code: "+254", country: "Kenya", flag: "🇰🇪" },
+  { code: "+212", country: "Morocco", flag: "🇲🇦" },
+  { code: "+213", country: "Algeria", flag: "🇩🇿" },
+  { code: "+216", country: "Tunisia", flag: "🇹🇳" },
+
+  // Latin America
+  { code: "+52", country: "Mexico", flag: "🇲🇽" },
+  { code: "+55", country: "Brazil", flag: "🇧🇷" },
+  { code: "+54", country: "Argentina", flag: "🇦🇷" },
+  { code: "+56", country: "Chile", flag: "🇨🇱" },
+  { code: "+57", country: "Colombia", flag: "🇨🇴" },
+  { code: "+51", country: "Peru", flag: "🇵🇪" },
+  { code: "+58", country: "Venezuela", flag: "🇻🇪" },
+  { code: "+593", country: "Ecuador", flag: "🇪🇨" },
+  { code: "+506", country: "Costa Rica", flag: "🇨🇷" },
+  { code: "+507", country: "Panama", flag: "🇵🇦" },
+
+  // Caribbean
+  { code: "+1876", country: "Jamaica", flag: "🇯🇲" },
+  { code: "+1868", country: "Trinidad", flag: "🇹🇹" },
+  { code: "+1809", country: "Dom. Rep.", flag: "🇩🇴" },
 ];
 
 interface DialerProps {
@@ -99,6 +168,10 @@ export function Dialer({
   const [activeTab, setActiveTab] = useState<"keypad" | "contacts" | "recents">(
     "keypad"
   );
+
+  // Country code search state
+  const [countrySearchOpen, setCountrySearchOpen] = useState(false);
+  const [countrySearchQuery, setCountrySearchQuery] = useState("");
 
   // Contacts state
   const [contacts, setContacts] = useState<any[]>([]);
@@ -564,19 +637,70 @@ export function Dialer({
 
         {/* Country Code & Number Input */}
         <div className="flex gap-2">
-          <Select value={countryCode} onValueChange={setCountryCode}>
-            <SelectTrigger className="w-28 border-gray-200 bg-gray-50 hover:bg-gray-100">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {countryCodes.map((c) => (
-                <SelectItem key={c.code} value={c.code}>
-                  <span className="flex items-center gap-2">
-                    <span>{c.flag}</span>
-                    <span>{c.code}</span>
+          <Select
+            value={countryCode}
+            onValueChange={setCountryCode}
+            open={countrySearchOpen}
+            onOpenChange={setCountrySearchOpen}
+          >
+            <SelectTrigger className="w-32 border-gray-200 bg-gray-50 hover:bg-gray-100">
+              <SelectValue>
+                <span className="flex items-center gap-2">
+                  <span>
+                    {countryCodes.find((c) => c.code === countryCode)?.flag}
                   </span>
-                </SelectItem>
-              ))}
+                  <span>{countryCode}</span>
+                </span>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent className="max-h-72">
+              <div className="sticky top-0 z-10 bg-white p-2 border-b">
+                <input
+                  type="text"
+                  placeholder="Search country..."
+                  value={countrySearchQuery}
+                  onChange={(e) => setCountrySearchQuery(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0891b2]/30 focus:border-[#0891b2]"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+              <div className="max-h-60 overflow-y-auto">
+                {countryCodes
+                  .filter(
+                    (c) =>
+                      countrySearchQuery === "" ||
+                      c.country
+                        .toLowerCase()
+                        .includes(countrySearchQuery.toLowerCase()) ||
+                      c.code
+                        .toLowerCase()
+                        .includes(countrySearchQuery.toLowerCase())
+                  )
+                  .map((c) => (
+                    <SelectItem key={c.code} value={c.code}>
+                      <span className="flex items-center gap-2">
+                        <span className="text-lg">{c.flag}</span>
+                        <span className="font-mono">{c.code}</span>
+                        <span className="text-gray-600">-</span>
+                        <span className="text-sm">{c.country}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                {countryCodes.filter(
+                  (c) =>
+                    countrySearchQuery === "" ||
+                    c.country
+                      .toLowerCase()
+                      .includes(countrySearchQuery.toLowerCase()) ||
+                    c.code
+                      .toLowerCase()
+                      .includes(countrySearchQuery.toLowerCase())
+                ).length === 0 && (
+                  <div className="p-4 text-center text-gray-500 text-sm">
+                    No countries found
+                  </div>
+                )}
+              </div>
             </SelectContent>
           </Select>
           <div className="flex-1 relative">
