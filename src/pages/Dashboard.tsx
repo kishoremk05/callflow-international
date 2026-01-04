@@ -67,7 +67,9 @@ export default function Dashboard() {
     isConnected,
     isInitializing,
     currentCall,
+    callState,
     hangupCall,
+    markCallAnswered,
     error: twilioError,
     retryConnection,
   } = useTwilioDevice();
@@ -100,9 +102,6 @@ export default function Dashboard() {
   // Call Queue state (Company users only)
   const [showCallQueueUpload, setShowCallQueueUpload] = useState(false);
   const [activeQueueId, setActiveQueueId] = useState<string | null>(null);
-  const [callStatus, setCallStatus] = useState<
-    "ringing" | "answered" | "busy" | "no-answer" | "idle"
-  >("idle");
 
   const containerRef = useRef<HTMLDivElement>(null);
   const callTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -149,7 +148,7 @@ export default function Dashboard() {
 
   // Call duration timer
   useEffect(() => {
-    if (currentCall) {
+    if (callState === "answered") {
       callTimerRef.current = setInterval(() => {
         setCallDuration((prev) => prev + 1);
       }, 1000);
@@ -157,7 +156,9 @@ export default function Dashboard() {
       if (callTimerRef.current) {
         clearInterval(callTimerRef.current);
       }
-      setCallDuration(0);
+      if (callState === "idle") {
+        setCallDuration(0);
+      }
     }
 
     return () => {
@@ -165,7 +166,7 @@ export default function Dashboard() {
         clearInterval(callTimerRef.current);
       }
     };
-  }, [currentCall]);
+  }, [callState]);
 
   useEffect(() => {
     if (user) {
@@ -342,28 +343,16 @@ export default function Dashboard() {
 
     setCurrentNumber(number);
     setCurrentCountryCode(countryCode);
-    setCallStatus("ringing");
 
     try {
       toast.info(`Calling ${countryCode} ${number}...`);
       await makeCall(number, countryCode, "public");
-
-      // Set as answered when call connects
-      setCallStatus("answered");
 
       setTimeout(() => {
         fetchData();
       }, 2000);
     } catch (error: any) {
       console.error("Call failed:", error);
-
-      // Determine call failure reason
-      if (error.message.includes("busy")) {
-        setCallStatus("busy");
-      } else {
-        setCallStatus("no-answer");
-      }
-
       toast.error(error.message || "Call failed");
     }
   };
@@ -575,8 +564,10 @@ export default function Dashboard() {
             <Dialer
               onCall={handleCall}
               onEndCall={handleEndCall}
+              onMarkAnswered={markCallAnswered}
               disabled={isInitializing || (!isConnected && !currentCall)}
-              isInCall={!!currentCall}
+              isInCall={callState === "answered"}
+              callState={callState}
               callDuration={callDuration}
               callerName={
                 currentNumber

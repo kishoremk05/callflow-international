@@ -56,9 +56,7 @@ interface ExternalParticipant {
 export default function VoiceCall() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<
-    "browser-call" | "internal" | "external"
-  >("browser-call");
+  const [activeTab, setActiveTab] = useState<"internal">("internal");
 
   // Internal Browser Call State
   const [showInternalCall, setShowInternalCall] = useState(false);
@@ -533,32 +531,21 @@ export default function VoiceCall() {
           </Card>
         )}
 
-        {/* Tabs for Internal vs External */}
+        {/* Internal Call Section */}
         <Tabs
           value={activeTab}
           onValueChange={(v) => setActiveTab(v as any)}
           className="space-y-6"
         >
-          <TabsList className="grid w-full max-w-[48rem] grid-cols-3 h-12">
-            <TabsTrigger
-              value="browser-call"
-              className="flex items-center gap-2"
-            >
-              <Headphones className="w-4 h-4" />
-              Browser Call (Free)
-            </TabsTrigger>
+          <TabsList className="grid w-full max-w-[48rem] grid-cols-1 h-12">
             <TabsTrigger value="internal" className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Phone Conference
-            </TabsTrigger>
-            <TabsTrigger value="external" className="flex items-center gap-2">
-              <Globe className="w-4 h-4" />
-              External
+              <Headphones className="w-4 h-4" />
+              Internal Call
             </TabsTrigger>
           </TabsList>
 
-          {/* Browser-Based Internal Call Tab (Free for Enterprise) */}
-          <TabsContent value="browser-call" className="space-y-6">
+          {/* Internal Call Tab */}
+          <TabsContent value="internal" className="space-y-6">
             {showInternalCall ? (
               <InternalCall
                 roomName={internalCallRoom}
@@ -578,20 +565,21 @@ export default function VoiceCall() {
                       Internal Team Call
                     </CardTitle>
                     <p className="text-sm text-gray-600">
-                      ✨ Free browser-based calling with your team • No phone
-                      numbers needed
+                      💼 Professional calling with your team • $2 per hour
                     </p>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
-                      <div className="flex items-center gap-2 text-green-700 mb-2">
+                    <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                      <div className="flex items-center gap-2 text-blue-700 mb-2">
                         <Users className="w-5 h-5" />
-                        <span className="font-semibold">Unlimited & Free</span>
+                        <span className="font-semibold">
+                          Pricing: $2 per Hour
+                        </span>
                       </div>
-                      <ul className="text-sm text-green-600 space-y-1">
-                        <li>✓ No billing or wallet deduction</li>
-                        <li>✓ WebRTC audio (browser-based)</li>
-                        <li>✓ Enterprise users only</li>
+                      <ul className="text-sm text-blue-600 space-y-1">
+                        <li>✓ Billed hourly from your wallet</li>
+                        <li>✓ High-quality audio calling</li>
+                        <li>✓ Available for all users</li>
                         <li>✓ One-to-one or group calls</li>
                       </ul>
                     </div>
@@ -793,9 +781,8 @@ export default function VoiceCall() {
 
                     <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
                       <p className="text-sm text-blue-700">
-                        <strong>Note:</strong> Only team members from your
-                        enterprise can join. External participants should use
-                        the "External" tab.
+                        <strong>Note:</strong> Calls are billed at $2 per hour
+                        and deducted from your wallet balance.
                       </p>
                     </div>
                   </CardContent>
@@ -804,8 +791,12 @@ export default function VoiceCall() {
             )}
           </TabsContent>
 
-          {/* Internal Team Conference Tab */}
-          <TabsContent value="internal" className="space-y-6">
+          {/* Removed Phone Conference Tab */}
+          <TabsContent
+            value="phone-conference"
+            className="space-y-6"
+            style={{ display: "none" }}
+          >
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Create Conference Room */}
               <Card>
@@ -944,158 +935,7 @@ export default function VoiceCall() {
             </div>
           </TabsContent>
 
-          {/* External Conference Tab */}
-          <TabsContent value="external" className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-2">
-              {/* Create External Conference */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-[#1a365d]">
-                    <Globe className="w-5 h-5 text-[#0891b2]" />
-                    Create External Conference
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="conferenceTitle">Conference Title</Label>
-                    <Input
-                      id="conferenceTitle"
-                      placeholder="e.g., Client Review Call"
-                      value={conferenceTitle}
-                      onChange={(e) => setConferenceTitle(e.target.value)}
-                      disabled={isInCall}
-                    />
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label>Add Participants</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Country Code"
-                        value={currentCountryCode}
-                        onChange={(e) => setCurrentCountryCode(e.target.value)}
-                        className="w-24"
-                        disabled={isInCall}
-                      />
-                      <Input
-                        placeholder="Phone Number"
-                        value={currentNumber}
-                        onChange={(e) => setCurrentNumber(e.target.value)}
-                        className="flex-1"
-                        disabled={isInCall}
-                      />
-                    </div>
-                    <Input
-                      placeholder="Name (optional)"
-                      value={currentName}
-                      onChange={(e) => setCurrentName(e.target.value)}
-                      disabled={isInCall}
-                    />
-                    <Button
-                      onClick={addExternalParticipant}
-                      variant="outline"
-                      className="w-full"
-                      disabled={isInCall}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Participant
-                    </Button>
-                  </div>
-
-                  {externalParticipants.length > 0 && (
-                    <div>
-                      <Label className="mb-2 block">
-                        Participants ({externalParticipants.length})
-                      </Label>
-                      <div className="space-y-2 max-h-48 overflow-y-auto">
-                        {externalParticipants.map((participant) => (
-                          <div
-                            key={participant.id}
-                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                          >
-                            <div>
-                              <p className="text-sm font-medium">
-                                {participant.name || "Unknown"}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {participant.countryCode}{" "}
-                                {participant.phoneNumber}
-                              </p>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                removeExternalParticipant(participant.id)
-                              }
-                              disabled={isInCall}
-                            >
-                              <Trash2 className="w-4 h-4 text-red-500" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <Button
-                    onClick={startExternalConference}
-                    disabled={
-                      isInCall ||
-                      externalParticipants.length === 0 ||
-                      !conferenceTitle
-                    }
-                    className="w-full bg-[#f97316] hover:bg-[#ea580c]"
-                  >
-                    <Phone className="w-4 h-4 mr-2" />
-                    Start Conference Call
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Active External Conferences */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-[#1a365d]">
-                    <Phone className="w-5 h-5 text-[#0891b2]" />
-                    Active Conferences
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {activeConferences.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">
-                      <Phone className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No active external conferences</p>
-                      <p className="text-xs mt-1">
-                        Start a conference to see it here
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {activeConferences.map((conf) => (
-                        <div
-                          key={conf.id}
-                          className="p-4 bg-orange-50 border border-orange-200 rounded-lg"
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-semibold text-[#1a365d]">
-                              {conf.title}
-                            </h4>
-                            <span className="text-xs px-2 py-1 bg-orange-500 text-white rounded-full">
-                              Active
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600">
-                            {conf.participants} participants
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
+          {/* External Conference Tab - Removed */}
         </Tabs>
       </main>
     </div>

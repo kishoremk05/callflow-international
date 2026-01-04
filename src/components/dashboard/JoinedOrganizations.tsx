@@ -6,10 +6,29 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Building2, Users, Loader2, Calendar } from "lucide-react";
+import {
+  Building2,
+  Users,
+  Loader2,
+  Calendar,
+  LogOut,
+  AlertTriangle,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 
 interface JoinedOrganizationsProps {
@@ -35,6 +54,12 @@ export function JoinedOrganizations({
 }: JoinedOrganizationsProps) {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(false);
+  const [leavingOrgId, setLeavingOrgId] = useState<string | null>(null);
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const [selectedOrg, setSelectedOrg] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   useEffect(() => {
     if (open && userId) {
@@ -80,6 +105,59 @@ export function JoinedOrganizations({
       month: "short",
       day: "numeric",
     });
+  };
+
+  const handleLeaveClick = (orgId: string, orgName: string) => {
+    setSelectedOrg({ id: orgId, name: orgName });
+    setShowLeaveDialog(true);
+  };
+
+  const handleConfirmLeave = async () => {
+    if (!selectedOrg) return;
+
+    setLeavingOrgId(selectedOrg.id);
+    setShowLeaveDialog(false);
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Please login to continue");
+        return;
+      }
+
+      const response = await fetch(
+        `${
+          import.meta.env.VITE_API_URL || "http://localhost:5000"
+        }/api/organizations/${selectedOrg.id}/leave`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to leave organization");
+      }
+
+      toast.success(data.message || "Left organization successfully");
+      // Refresh the organizations list
+      await fetchOrganizations();
+      // If no organizations left, close the modal
+      if (organizations.length <= 1) {
+        onClose();
+      }
+    } catch (error: any) {
+      console.error("Error leaving organization:", error);
+      toast.error(error.message || "Failed to leave organization");
+    } finally {
+      setLeavingOrgId(null);
+    }
   };
 
   return (
@@ -139,7 +217,12 @@ export function JoinedOrganizations({
                           </div>
                           <div className="space-y-1">
                             <p className="text-xs text-gray-600">
-                              Owner: {org.owner_name || org.owner_email}
+                              Owner: {org.owner_name || "Unknown"}
+                              {org.owner_email && (
+                                <span className="text-[#0891b2] ml-1">
+                                  ({org.owner_email})
+                                </span>
+                              )}
                             </p>
                             <div className="flex items-center gap-4 text-xs text-gray-500">
                               <div className="flex items-center gap-1">
@@ -154,6 +237,22 @@ export function JoinedOrganizations({
                           </div>
                         </div>
                       </div>
+                      {org.role !== "owner" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleLeaveClick(org.id, org.name)}
+                          disabled={leavingOrgId === org.id}
+                          className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700"
+                        >
+                          {leavingOrgId === org.id ? (
+                            <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                          ) : (
+                            <LogOut className="w-4 h-4 mr-1" />
+                          )}
+                          Leave
+                        </Button>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -172,6 +271,53 @@ export function JoinedOrganizations({
           </Button>
         </div>
       </DialogContent>
+
+      {/* Leave Organization Confirmation Dialog */}
+      <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <AlertDialogTitle className="text-lg text-left">
+                  Leave Organization?
+                </AlertDialogTitle>
+              </div>
+            </div>
+            <AlertDialogDescription className="text-left space-y-3 pt-2">
+              <p className="text-base">
+                Are you sure you want to leave{" "}
+                <span className="font-semibold text-gray-900">
+                  "{selectedOrg?.name}"
+                </span>
+                ?
+              </p>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <p className="text-sm text-amber-800">
+                  <strong>⚠️ Important:</strong> Your wallet credits will be
+                  automatically transferred back to the organization owner.
+                </p>
+              </div>
+              <p className="text-sm text-gray-600">
+                This action cannot be undone. You'll need to be re-invited to
+                join again.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-2">
+            <AlertDialogCancel className="mt-0">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmLeave}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Yes, Leave Organization
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

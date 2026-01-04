@@ -143,20 +143,24 @@ const countryCodes = [
 interface DialerProps {
   onCall?: (number: string, countryCode: string) => void;
   onEndCall?: () => void;
+  onMarkAnswered?: () => void;
   disabled?: boolean;
   isInCall?: boolean;
   callDuration?: number;
   callerName?: string;
+  callState?: "idle" | "connecting" | "ringing" | "answered";
   onUploadCSV?: () => void;
 }
 
 export function Dialer({
   onCall,
   onEndCall,
+  onMarkAnswered,
   disabled,
   isInCall = false,
   callDuration = 0,
   callerName = "Unknown",
+  callState = "idle",
   onUploadCSV,
 }: DialerProps) {
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -172,6 +176,19 @@ export function Dialer({
   // Country code search state
   const [countrySearchOpen, setCountrySearchOpen] = useState(false);
   const [countrySearchQuery, setCountrySearchQuery] = useState("");
+  const countrySearchRef = useRef<HTMLInputElement>(null);
+
+  // Handle country search dropdown focus
+  useEffect(() => {
+    if (countrySearchOpen && countrySearchRef.current) {
+      // Immediate focus without delay
+      countrySearchRef.current.focus();
+      // Also set a backup with minimal delay
+      setTimeout(() => {
+        countrySearchRef.current?.focus();
+      }, 10);
+    }
+  }, [countrySearchOpen]);
 
   // Contacts state
   const [contacts, setContacts] = useState<any[]>([]);
@@ -447,14 +464,25 @@ export function Dialer({
               {countryCode} {formatPhoneNumber(phoneNumber)}
             </p>
 
+            {/* Call Status */}
+            <div className="mt-2 px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm">
+              <p className="text-white/90 text-xs font-medium">
+                {callState === "connecting" && "🔵 Connecting..."}
+                {callState === "ringing" && "📞 Ringing..."}
+                {callState === "answered" && "✅ Connected"}
+              </p>
+            </div>
+
             {/* Voice Level Indicator */}
             <div className="mt-4 bg-white/10 rounded-full p-3 backdrop-blur-sm">
               <VoiceVisualizer />
             </div>
 
-            <div className="mt-3 text-2xl font-mono font-bold">
-              {formatDuration(callDuration)}
-            </div>
+            {callState === "answered" && (
+              <div className="mt-3 text-2xl font-mono font-bold">
+                {formatDuration(callDuration)}
+              </div>
+            )}
           </div>
         </div>
 
@@ -560,6 +588,17 @@ export function Dialer({
             ))}
           </div>
 
+          {/* Call Answered Button - shown when ringing */}
+          {callState === "ringing" && onMarkAnswered && (
+            <Button
+              onClick={onMarkAnswered}
+              className="w-full h-14 text-lg bg-green-500 hover:bg-green-600 shadow-lg shadow-green-500/30 transition-all duration-300 rounded-full font-semibold mb-4"
+              size="lg"
+            >
+              ✅ Person Answered
+            </Button>
+          )}
+
           {/* End Call Button */}
           <Button
             onClick={onEndCall}
@@ -639,9 +678,17 @@ export function Dialer({
         <div className="flex gap-2">
           <Select
             value={countryCode}
-            onValueChange={setCountryCode}
+            onValueChange={(value) => {
+              setCountryCode(value);
+              setCountrySearchOpen(false);
+            }}
             open={countrySearchOpen}
-            onOpenChange={setCountrySearchOpen}
+            onOpenChange={(open) => {
+              setCountrySearchOpen(open);
+              if (!open) {
+                setCountrySearchQuery("");
+              }
+            }}
           >
             <SelectTrigger className="w-32 border-gray-200 bg-gray-50 hover:bg-gray-100">
               <SelectValue>
@@ -656,12 +703,40 @@ export function Dialer({
             <SelectContent className="max-h-72">
               <div className="sticky top-0 z-10 bg-white p-2 border-b">
                 <input
+                  ref={countrySearchRef}
                   type="text"
                   placeholder="Search country..."
                   value={countrySearchQuery}
-                  onChange={(e) => setCountrySearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setCountrySearchQuery(e.target.value);
+                    // Ensure focus remains after state update
+                    setTimeout(() => {
+                      if (countrySearchRef.current && countrySearchOpen) {
+                        countrySearchRef.current.focus();
+                      }
+                    }, 0);
+                  }}
                   className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0891b2]/30 focus:border-[#0891b2]"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.currentTarget.focus();
+                  }}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => {
+                    e.stopPropagation();
+                    // Allow normal typing and navigation
+                    if (e.key === "Escape") {
+                      setCountrySearchOpen(false);
+                    }
+                  }}
+                  onKeyUp={(e) => e.stopPropagation()}
+                  onKeyPress={(e) => e.stopPropagation()}
+                  onFocus={(e) => e.stopPropagation()}
+                  onBlur={(e) => {
+                    // Prevent blur from closing dropdown unless clicking outside
+                    e.stopPropagation();
+                  }}
+                  autoFocus
                 />
               </div>
               <div className="max-h-60 overflow-y-auto">

@@ -7,6 +7,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +28,9 @@ import {
   Loader2,
   UserCheck,
   ArrowRightLeft,
+  UserMinus,
+  LogOut,
+  AlertTriangle,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +52,7 @@ interface Member {
   email: string;
   role: string;
   joined_at: string;
+  wallet_balance: number;
 }
 
 export function OrganizationManagement({
@@ -55,6 +69,27 @@ export function OrganizationManagement({
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [showShareCredit, setShowShareCredit] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string>("");
+  const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
+  const [leavingOrg, setLeavingOrg] = useState(false);
+  const [showRemoveDialog, setShowRemoveDialog] = useState(false);
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+      }
+    };
+    getCurrentUser();
+  }, []);
 
   useEffect(() => {
     if (open && organizationId) {
@@ -161,6 +196,102 @@ export function OrganizationManagement({
       month: "short",
       day: "numeric",
     });
+  };
+
+  const handleRemoveMember = async (memberId: string, memberName: string) => {
+    setMemberToRemove({ id: memberId, name: memberName });
+    setShowRemoveDialog(true);
+  };
+
+  const handleConfirmRemoveMember = async () => {
+    if (!memberToRemove) return;
+
+    setShowRemoveDialog(false);
+    setRemovingMemberId(memberToRemove.id);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Please login to continue");
+        return;
+      }
+
+      const response = await fetch(
+        `${
+          import.meta.env.VITE_API_URL || "http://localhost:8080"
+        }/api/organizations/${organizationId}/members/${memberToRemove.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to remove member");
+      }
+
+      toast.success(data.message || "Member removed successfully");
+      fetchMembers();
+      if (onBalanceUpdate) {
+        onBalanceUpdate();
+      }
+    } catch (error: any) {
+      console.error("Error removing member:", error);
+      toast.error(error.message || "Failed to remove member");
+    } finally {
+      setRemovingMemberId(null);
+    }
+  };
+
+  const handleLeaveOrganization = async () => {
+    setShowLeaveDialog(true);
+  };
+
+  const handleConfirmLeaveOrganization = async () => {
+    setShowLeaveDialog(false);
+    setLeavingOrg(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Please login to continue");
+        return;
+      }
+
+      const response = await fetch(
+        `${
+          import.meta.env.VITE_API_URL || "http://localhost:5000"
+        }/api/organizations/${organizationId}/leave`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to leave organization");
+      }
+
+      toast.success(data.message || "Left organization successfully");
+      onClose();
+      // Refresh the page or parent component
+      window.location.reload();
+    } catch (error: any) {
+      console.error("Error leaving organization:", error);
+      toast.error(error.message || "Failed to leave organization");
+    } finally {
+      setLeavingOrg(false);
+    }
   };
 
   return (
@@ -303,27 +434,75 @@ export function OrganizationManagement({
                             <p className="text-xs text-muted-foreground">
                               {member.email}
                             </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              Joined {formatDate(member.joined_at)}
-                            </p>
+                            <div className="flex items-center gap-4 mt-1">
+                              <p className="text-xs text-gray-500">
+                                Joined {formatDate(member.joined_at)}
+                              </p>
+                              <div className="flex items-center gap-1 text-xs">
+                                <span className="text-gray-500">Balance:</span>
+                                <span className="font-semibold text-green-600">
+                                  ${(member.wallet_balance || 0).toFixed(2)}
+                                </span>
+                              </div>
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           {member.role !== "owner" && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setSelectedMember(member);
-                                setShowShareCredit(true);
-                              }}
-                              className="text-[#0891b2] border-[#0891b2]/30 hover:bg-[#0891b2]/10 hover:text-[#0e7490]"
-                            >
-                              <ArrowRightLeft className="w-3 h-3 mr-1" />
-                              Share Credit
-                            </Button>
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedMember(member);
+                                  setShowShareCredit(true);
+                                }}
+                                className="text-[#0891b2] border-[#0891b2]/30 hover:bg-[#0891b2]/10 hover:text-[#0e7490]"
+                              >
+                                <ArrowRightLeft className="w-3 h-3 mr-1" />
+                                Share Credit
+                              </Button>
+                              {member.user_id === currentUserId ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={handleLeaveOrganization}
+                                  disabled={leavingOrg}
+                                  className="text-orange-600 border-orange-300 hover:bg-orange-50 hover:text-orange-700"
+                                >
+                                  {leavingOrg ? (
+                                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                  ) : (
+                                    <LogOut className="w-3 h-3 mr-1" />
+                                  )}
+                                  Leave
+                                </Button>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    handleRemoveMember(
+                                      member.id,
+                                      member.full_name || member.email
+                                    )
+                                  }
+                                  disabled={removingMemberId === member.id}
+                                  className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700"
+                                >
+                                  {removingMemberId === member.id ? (
+                                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                  ) : (
+                                    <UserMinus className="w-3 h-3 mr-1" />
+                                  )}
+                                  Remove
+                                </Button>
+                              )}
+                            </>
                           )}
-                          <UserCheck className="w-5 h-5 text-green-500" />
+                          {member.role === "owner" && (
+                            <UserCheck className="w-5 h-5 text-green-500" />
+                          )}
                         </div>
                       </div>
                     </CardContent>
@@ -359,6 +538,105 @@ export function OrganizationManagement({
           }}
         />
       )}
+
+      {/* Remove Member Confirmation Dialog */}
+      <AlertDialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <UserMinus className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <AlertDialogTitle className="text-[#1a365d]">
+                  Remove Team Member
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-sm text-gray-600 mt-1">
+                  This action cannot be undone
+                </AlertDialogDescription>
+              </div>
+            </div>
+          </AlertDialogHeader>
+
+          <div className="py-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm">
+                  <p className="font-medium text-amber-800 mb-1">
+                    Are you sure you want to remove {memberToRemove?.name}?
+                  </p>
+                  <p className="text-amber-700">
+                    Their wallet credits will be transferred to your account.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-gray-300">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmRemoveMember}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Remove Member
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Leave Organization Confirmation Dialog */}
+      <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
+                <LogOut className="w-6 h-6 text-orange-600" />
+              </div>
+              <div>
+                <AlertDialogTitle className="text-[#1a365d]">
+                  Leave Organization
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-sm text-gray-600 mt-1">
+                  You can be re-invited later
+                </AlertDialogDescription>
+              </div>
+            </div>
+          </AlertDialogHeader>
+
+          <div className="py-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm">
+                  <p className="font-medium text-amber-800 mb-1">
+                    Leave {organizationName}?
+                  </p>
+                  <p className="text-amber-700">
+                    Your wallet credits will be transferred to the organization
+                    owner.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-gray-300">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmLeaveOrganization}
+              className="bg-orange-600 hover:bg-orange-700 text-white"
+            >
+              Leave Organization
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

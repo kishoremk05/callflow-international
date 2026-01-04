@@ -130,7 +130,7 @@ function CallControls({
               <p className="font-semibold text-lg">Internal Call Active</p>
               <p className="text-sm text-white/80 flex items-center gap-2">
                 <Clock className="w-4 h-4" />
-                {formatDuration(callDuration)}
+                {formatDuration(callDuration)} • Billed at $2/hour
               </p>
             </div>
           </div>
@@ -176,6 +176,7 @@ function CallRoom({ roomName, userName, onLeave }: InternalCallProps) {
   const [callId, setCallId] = useState<string>("");
   const [callStatus, setCallStatus] = useState<string>("connecting");
   const [isHost, setIsHost] = useState(false);
+  const [walletBalance, setWalletBalance] = useState<number>(0);
 
   useEffect(() => {
     const fetchToken = async () => {
@@ -218,6 +219,9 @@ function CallRoom({ roomName, userName, onLeave }: InternalCallProps) {
             setCallStatus("approved");
             toast.success(`Joined ${roomName}`);
           }
+        } else if (response.status === 402) {
+          toast.error(data.message || "Insufficient wallet balance");
+          onLeave();
         } else {
           toast.error(data.error || "Failed to join call");
           onLeave();
@@ -370,7 +374,7 @@ export default function InternalCall({
             Internal Call: {roomName}
           </h1>
           <p className="text-gray-600">
-            Free voice call with your team members
+            Professional team calling - $2 per hour
           </p>
         </div>
 

@@ -729,6 +729,7 @@ app.post("/api/calls/initiate", authenticate, async (req, res, next) => {
       return res.status(400).json({ error: "Country not supported" });
     }
 
+    // Create call log entry - Device will handle the actual call
     const { data: callLog } = await supabase
       .from("call_logs")
       .insert({
@@ -739,6 +740,7 @@ app.post("/api/calls/initiate", authenticate, async (req, res, next) => {
         caller_id_type: callerIdType || "public",
         caller_id_number: callerIdNumber || "",
         status: "initiated",
+        started_at: new Date().toISOString(),
       })
       .select()
       .single();
@@ -751,6 +753,59 @@ app.post("/api/calls/initiate", authenticate, async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+});
+
+// Get call status endpoint
+app.get("/api/calls/status/:callId", authenticate, async (req, res, next) => {
+  try {
+    const { callId } = req.params;
+
+    const { data: callLog } = await supabase
+      .from("call_logs")
+      .select(
+        "id, status, call_status, answered_at, started_at, ended_at, duration_seconds"
+      )
+      .eq("id", callId)
+      .eq("user_id", req.user.id)
+      .single();
+
+    if (!callLog) {
+      return res.status(404).json({ error: "Call not found" });
+    }
+
+    // Map database status to frontend states
+    let callState = "idle";
+    if (callLog.status === "initiated") {
+      callState = "connecting";
+    } else if (callLog.status === "ringing") {
+      callState = "ringing";
+    } else if (callLog.status === "in_progress" || callLog.answered_at) {
+      callState = "answered";
+    }
+
+    res.json({
+      success: true,
+      callState,
+      status: callLog.status,
+      answeredAt: callLog.answered_at,
+      startedAt: callLog.started_at,
+      endedAt: callLog.ended_at,
+      duration: callLog.duration_seconds || 0,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// TwiML endpoint for call handling
+app.post("/api/calls/twiml", (req, res) => {
+  const twiml = new twilio.twiml.VoiceResponse();
+
+  // Simple dial to connect the call
+  twiml.say("Please hold while we connect your call.");
+
+  res.type("text/xml");
+  res.send(twiml.toString());
 });
 
 app.post("/api/calls/end", authenticate, async (req, res, next) => {
@@ -775,7 +830,16 @@ app.post("/api/calls/end", authenticate, async (req, res, next) => {
       .single();
 
     const durationMinutes = (durationSeconds || 0) / 60;
-    const billedAmount = durationMinutes * (rate?.sell_rate_per_minute || 0);
+
+    // Billing logic:
+    // - Free for calls under 30 seconds
+    // - 1-minute minimum billing for calls 30 seconds and above
+    let billedMinutes = 0;
+    if (durationSeconds >= 30) {
+      billedMinutes = Math.ceil(durationMinutes); // Round up to next full minute
+    }
+
+    const billedAmount = billedMinutes * (rate?.sell_rate_per_minute || 0);
     const twilioEstimatedCost = durationMinutes * (rate?.cost_per_minute || 0);
     const profitMargin = billedAmount - twilioEstimatedCost;
 
@@ -1531,86 +1595,24 @@ app.post("/api/internal-call/token", authenticate, async (req, res, next) => {
       });
     }
 
-    // Check if user is part of an enterprise
-    const { data: enterpriseMember } = await supabase
-      .from("enterprise_members")
-      .select("enterprise_id, enterprise_accounts(name)")
+    // Check wallet balance - require at least $2 to join call
+    const { data: wallet } = await supabase
+      .from("wallets")
+      .select("balance")
       .eq("user_id", req.user.id)
       .single();
 
-    // If not enterprise user, add to waiting room
-    if (!enterpriseMember) {
-      // Find the call by room code (search in room_name column, not room_id)
-      const { data: existingCall } = await supabase
-        .from("internal_calls")
-        .select("id, created_by, enterprise_id, room_id")
-        .eq("room_name", roomName) // Search by room_name (the 6-digit code)
-        .eq("status", "active")
-        .single();
-
-      if (!existingCall) {
-        return res.status(404).json({
-          error: "Room not found or inactive",
-        });
-      }
-
-      // Check if user is already waiting or approved for this call
-      const { data: existingParticipant } = await supabase
-        .from("internal_call_participants")
-        .select("id, status")
-        .eq("call_id", existingCall.id)
-        .eq("user_id", req.user.id)
-        .in("status", ["waiting", "approved"])
-        .single();
-
-      if (existingParticipant) {
-        // User already requested access, return existing status
-        return res.json({
-          success: true,
-          status: existingParticipant.status,
-          message:
-            existingParticipant.status === "approved"
-              ? "Already approved"
-              : "Already in waiting room",
-          callId: existingCall.id,
-        });
-      }
-
-      // Add user to waiting list
-      const tempUserId = `temp_${Date.now()}_${Math.random()
-        .toString(36)
-        .substr(2, 9)}`;
-
-      const { error: participantError } = await supabase
-        .from("internal_call_participants")
-        .insert({
-          call_id: existingCall.id,
-          user_id: req.user.id,
-          temporary_user_id: tempUserId,
-          participant_name: participantName,
-          status: "waiting",
-        });
-
-      if (participantError) {
-        console.error("Failed to add to waiting room:", participantError);
-        return res.status(500).json({
-          error: "Failed to join waiting room",
-          details: participantError.message || "Database error",
-          hint: "Please ensure the database migration has been applied",
-        });
-      }
-
-      // Return waiting status
-      return res.json({
-        success: true,
-        status: "waiting",
-        message: "Waiting for host approval",
-        callId: existingCall.id,
+    const minimumBalance = 2.0; // $2 minimum to join call
+    if (!wallet || (wallet.balance || 0) < minimumBalance) {
+      return res.status(402).json({
+        error: "Insufficient wallet balance",
+        message: `You need at least $${minimumBalance} in your wallet to join an internal call. Please add funds to continue.`,
+        currentBalance: wallet?.balance || 0,
       });
     }
 
-    // Create room ID scoped to enterprise
-    const roomId = `${enterpriseMember.enterprise_id}-${roomName}`;
+    // Create room ID - allow any user to create/join calls
+    const roomId = `global-${roomName}`;
 
     // Generate LiveKit access token
     const at = new LiveKitAccessToken(
@@ -1652,7 +1654,7 @@ app.post("/api/internal-call/token", authenticate, async (req, res, next) => {
         .insert({
           room_id: roomId,
           room_name: roomName,
-          enterprise_id: enterpriseMember.enterprise_id,
+          enterprise_id: null, // No enterprise required
           created_by: req.user.id,
           call_type: "group", // Assume group call by default
           status: "active",
@@ -1694,7 +1696,6 @@ app.post("/api/internal-call/token", authenticate, async (req, res, next) => {
       wsUrl: process.env.LIVEKIT_URL,
       callId,
       isHost,
-      enterpriseName: enterpriseMember.enterprise_accounts?.name,
     });
   } catch (error) {
     console.error("Token generation error:", error);
@@ -1979,6 +1980,57 @@ app.post(
   async (req, res, next) => {
     try {
       const { callId } = req.params;
+
+      // Get participant join time to calculate duration and cost
+      const { data: participant } = await supabase
+        .from("internal_call_participants")
+        .select("joined_at")
+        .eq("call_id", callId)
+        .eq("user_id", req.user.id)
+        .eq("status", "joined")
+        .single();
+
+      if (participant && participant.joined_at) {
+        // Calculate call duration in hours
+        const joinTime = new Date(participant.joined_at);
+        const leaveTime = new Date();
+        const durationMs = leaveTime - joinTime;
+        const durationHours = durationMs / (1000 * 60 * 60); // Convert to hours
+
+        // Calculate cost at $2 per hour
+        const costPerHour = 2.0;
+        const totalCost = Math.ceil(durationHours * costPerHour * 100) / 100; // Round up to 2 decimals
+
+        if (totalCost > 0) {
+          // Deduct from wallet
+          const { data: wallet } = await supabase
+            .from("wallets")
+            .select("balance")
+            .eq("user_id", req.user.id)
+            .single();
+
+          if (wallet) {
+            const newBalance = (wallet.balance || 0) - totalCost;
+
+            // Update wallet balance
+            await supabase
+              .from("wallets")
+              .update({ balance: newBalance })
+              .eq("user_id", req.user.id);
+
+            // Record transaction
+            await supabase.from("wallet_transactions").insert({
+              user_id: req.user.id,
+              amount: -totalCost,
+              type: "deduction",
+              description: `Internal call - ${Math.round(
+                durationHours * 60
+              )} minutes at $${costPerHour}/hr`,
+              balance_after: newBalance,
+            });
+          }
+        }
+      }
 
       // Update participant status
       const { error: participantError } = await supabase
@@ -2565,6 +2617,119 @@ app.post(
   }
 );
 
+// Call status callback endpoint to handle individual call state changes
+app.post(
+  "/api/calls/status-callback",
+  express.urlencoded({ extended: true }),
+  async (req, res) => {
+    try {
+      const { CallSid, CallStatus, Duration, From, To } = req.body;
+
+      console.log("Call Status Callback:", {
+        CallSid,
+        CallStatus,
+        Duration,
+        From,
+        To,
+      });
+
+      // Find the call log by call_sid
+      const { data: callLog } = await supabase
+        .from("call_logs")
+        .select("id, user_id, status, started_at, to_country_code, answered_at")
+        .eq("call_sid", CallSid)
+        .single();
+
+      if (!callLog) {
+        console.log(`Call log not found for CallSid: ${CallSid}`);
+        return res.status(200).send("OK");
+      }
+
+      let updateData = {
+        call_status: CallStatus,
+        updated_at: new Date().toISOString(),
+      };
+
+      // Handle different call states
+      if (CallStatus === "ringing") {
+        updateData.status = "ringing";
+      } else if (CallStatus === "in-progress") {
+        updateData.status = "answered";
+        // Only set answered_at if not already set
+        if (!callLog.answered_at) {
+          updateData.answered_at = new Date().toISOString();
+        }
+      } else if (
+        CallStatus === "completed" ||
+        CallStatus === "busy" ||
+        CallStatus === "no-answer" ||
+        CallStatus === "failed"
+      ) {
+        updateData.status = "completed";
+        updateData.ended_at = new Date().toISOString();
+
+        if (Duration && callLog.answered_at) {
+          // Only bill if call was actually answered
+          updateData.duration_seconds = parseInt(Duration);
+
+          // Calculate billing for answered calls
+          const { data: rate } = await supabase
+            .from("rate_settings")
+            .select("sell_rate_per_minute, cost_per_minute")
+            .eq("country_code", callLog.to_country_code)
+            .single();
+
+          const durationSeconds = parseInt(Duration);
+          const durationMinutes = durationSeconds / 60;
+
+          // Billing logic:
+          // - Free for calls under 30 seconds
+          // - 1-minute minimum billing for calls 30 seconds and above
+          let billedMinutes = 0;
+          if (durationSeconds >= 30) {
+            billedMinutes = Math.ceil(durationMinutes); // Round up to next full minute
+          }
+
+          const billedAmount =
+            billedMinutes * (rate?.sell_rate_per_minute || 0);
+          const twilioEstimatedCost =
+            durationMinutes * (rate?.cost_per_minute || 0);
+          const profitMargin = billedAmount - twilioEstimatedCost;
+
+          updateData.billed_amount = billedAmount;
+          updateData.twilio_cost = twilioEstimatedCost;
+          updateData.profit_margin = profitMargin;
+
+          // Deduct from wallet if there's a charge
+          if (billedAmount > 0) {
+            const { data: wallet } = await supabase
+              .from("wallets")
+              .select("balance")
+              .eq("user_id", callLog.user_id)
+              .single();
+
+            if (wallet) {
+              const newBalance = parseFloat(wallet.balance) - billedAmount;
+              await supabase
+                .from("wallets")
+                .update({ balance: Math.max(0, newBalance) })
+                .eq("user_id", callLog.user_id);
+            }
+          }
+        }
+      }
+
+      // Update the call log
+      await supabase.from("call_logs").update(updateData).eq("id", callLog.id);
+
+      res.status(200).send("OK");
+    } catch (error) {
+      console.error("Call status callback error:", error);
+      res.status(500).send("Error");
+    }
+  }
+);
+
 // ============================================================================
 // ORGANIZATION ROUTES
 // ============================================================================
@@ -2814,34 +2979,47 @@ app.post(
           .json({ error: "User is already a member of this organization" });
       }
 
-      // Check for pending invite
+      // Check for any existing invite
       const { data: existingInvite } = await supabase
         .from("organization_invites")
         .select("id")
         .eq("organization_id", organizationId)
         .eq("invited_email", email)
-        .eq("status", "pending")
         .single();
 
+      let invite;
       if (existingInvite) {
-        return res
-          .status(400)
-          .json({ error: "Invite already sent to this user" });
+        // Update existing invite to pending
+        const { data: updatedInvite, error: updateError } = await supabase
+          .from("organization_invites")
+          .update({
+            status: "pending",
+            invited_by: req.user.id,
+            invited_at: new Date().toISOString(),
+            responded_at: null,
+          })
+          .eq("id", existingInvite.id)
+          .select()
+          .single();
+
+        if (updateError) throw updateError;
+        invite = updatedInvite;
+      } else {
+        // Create new invite
+        const { data: newInvite, error: inviteError } = await supabase
+          .from("organization_invites")
+          .insert({
+            organization_id: organizationId,
+            invited_email: email,
+            invited_by: req.user.id,
+            status: "pending",
+          })
+          .select()
+          .single();
+
+        if (inviteError) throw inviteError;
+        invite = newInvite;
       }
-
-      // Create invite
-      const { data: invite, error: inviteError } = await supabase
-        .from("organization_invites")
-        .insert({
-          organization_id: organizationId,
-          invited_email: email,
-          invited_by: req.user.id,
-          status: "pending",
-        })
-        .select()
-        .single();
-
-      if (inviteError) throw inviteError;
 
       res.json({
         success: true,
@@ -2893,10 +3071,28 @@ app.get(
             .eq("id", member.user_id)
             .single();
 
+          // Get member's wallet balance
+          let { data: wallet } = await supabase
+            .from("wallets")
+            .select("balance")
+            .eq("user_id", member.user_id)
+            .single();
+
+          // Create wallet if it doesn't exist
+          if (!wallet) {
+            const { data: newWallet } = await supabase
+              .from("wallets")
+              .insert({ user_id: member.user_id, balance: 0 })
+              .select()
+              .single();
+            wallet = newWallet;
+          }
+
           return {
             ...member,
             full_name: profile?.full_name || "Unknown User",
             email: profile?.email || "",
+            wallet_balance: wallet?.balance || 0,
           };
         })
       );
@@ -2999,27 +3195,45 @@ app.post(
           .json({ error: "Invite not found or already processed" });
       }
 
-      // Update invite status
-      const { error: updateError } = await supabase
+      const organizationId = invite.organization_id;
+
+      // Check if user is already a member
+      const { data: existingMember } = await supabase
+        .from("organization_members")
+        .select("id")
+        .eq("organization_id", organizationId)
+        .eq("user_id", req.user.id)
+        .single();
+
+      // Update invite status to accepted
+      const { error: inviteUpdateError } = await supabase
         .from("organization_invites")
         .update({
           status: "accepted",
           responded_at: new Date().toISOString(),
         })
-        .eq("id", inviteId);
+        .eq("id", inviteId)
+        .eq("status", "pending");
 
-      if (updateError) throw updateError;
+      if (inviteUpdateError) throw inviteUpdateError;
 
-      // Add user to organization
-      const { error: memberError } = await supabase
-        .from("organization_members")
-        .insert({
-          organization_id: invite.organization_id,
-          user_id: req.user.id,
-          role: "member",
-        });
+      if (!existingMember) {
+        // Add user to organization using upsert to handle duplicates
+        const { error: memberError } = await supabase
+          .from("organization_members")
+          .upsert(
+            {
+              organization_id: organizationId,
+              user_id: req.user.id,
+              role: "member",
+            },
+            {
+              onConflict: "organization_id,user_id",
+            }
+          );
 
-      if (memberError) throw memberError;
+        if (memberError) throw memberError;
+      }
 
       res.json({
         success: true,
@@ -3050,13 +3264,11 @@ app.post(
         return res.status(404).json({ error: "Profile not found" });
       }
 
-      // Update invite status
+      // Simply delete the invite instead of updating status
+      // This avoids unique constraint issues
       const { error } = await supabase
         .from("organization_invites")
-        .update({
-          status: "rejected",
-          responded_at: new Date().toISOString(),
-        })
+        .delete()
         .eq("id", inviteId)
         .eq("invited_email", profile.email)
         .eq("status", "pending");
@@ -3094,6 +3306,104 @@ app.delete(
           .json({ error: "Only organization owner can remove members" });
       }
 
+      // Get the member's user_id and wallet balance before deleting
+      const { data: memberData } = await supabase
+        .from("organization_members")
+        .select("user_id")
+        .eq("id", memberId)
+        .eq("organization_id", organizationId)
+        .single();
+
+      if (!memberData) {
+        return res.status(404).json({ error: "Member not found" });
+      }
+
+      // Get member's current wallet balance from wallets table
+      let { data: memberWallet } = await supabase
+        .from("wallets")
+        .select("balance")
+        .eq("user_id", memberData.user_id)
+        .single();
+
+      // Create wallet if it doesn't exist
+      if (!memberWallet) {
+        const { data: newWallet } = await supabase
+          .from("wallets")
+          .insert({ user_id: memberData.user_id, balance: 0 })
+          .select()
+          .single();
+        memberWallet = newWallet;
+      }
+
+      const memberBalance = memberWallet?.balance || 0;
+
+      // Transfer member's credits to organization owner if they have any
+      if (memberBalance > 0) {
+        // Get or create owner's wallet
+        let { data: ownerWallet } = await supabase
+          .from("wallets")
+          .select("balance")
+          .eq("user_id", organization.owner_id)
+          .single();
+
+        if (!ownerWallet) {
+          const { data: newWallet } = await supabase
+            .from("wallets")
+            .insert({ user_id: organization.owner_id, balance: 0 })
+            .select()
+            .single();
+          ownerWallet = newWallet;
+        }
+
+        const newOwnerBalance = (ownerWallet?.balance || 0) + memberBalance;
+
+        // Deduct from member wallet
+        await supabase
+          .from("wallets")
+          .update({ balance: 0 })
+          .eq("user_id", memberData.user_id);
+
+        // Add to organization owner's wallet
+        await supabase
+          .from("wallets")
+          .update({ balance: newOwnerBalance })
+          .eq("user_id", organization.owner_id);
+
+        // Record transaction for member
+        await supabase.from("wallet_transactions").insert({
+          user_id: memberData.user_id,
+          amount: -memberBalance,
+          type: "deduction",
+          description: `Credits transferred to organization owner upon removal`,
+          balance_after: 0,
+        });
+
+        // Record transaction for owner
+        await supabase.from("wallet_transactions").insert({
+          user_id: organization.owner_id,
+          amount: memberBalance,
+          type: "credit",
+          description: `Credits received from removed member`,
+          balance_after: newOwnerBalance,
+        });
+      }
+
+      // Get member's email for invite update
+      const { data: memberProfile } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("id", memberData.user_id)
+        .single();
+
+      // Update invite status to revoked if exists
+      if (memberProfile?.email) {
+        await supabase
+          .from("organization_invites")
+          .update({ status: "revoked" })
+          .eq("organization_id", organizationId)
+          .eq("invited_email", memberProfile.email);
+      }
+
       // Delete member
       const { error } = await supabase
         .from("organization_members")
@@ -3103,7 +3413,15 @@ app.delete(
 
       if (error) throw error;
 
-      res.json({ success: true, message: "Member removed successfully" });
+      res.json({
+        success: true,
+        message:
+          memberBalance > 0
+            ? `Member removed successfully. $${memberBalance.toFixed(
+                2
+              )} transferred to your wallet.`
+            : "Member removed successfully",
+      });
     } catch (error) {
       next(error);
     }
@@ -3132,6 +3450,92 @@ app.post(
         });
       }
 
+      // Get user's current wallet balance from wallets table
+      let { data: userWallet } = await supabase
+        .from("wallets")
+        .select("balance")
+        .eq("user_id", req.user.id)
+        .single();
+
+      // Create wallet if it doesn't exist
+      if (!userWallet) {
+        const { data: newWallet } = await supabase
+          .from("wallets")
+          .insert({ user_id: req.user.id, balance: 0 })
+          .select()
+          .single();
+        userWallet = newWallet;
+      }
+
+      const userBalance = userWallet?.balance || 0;
+
+      // Transfer user's credits to organization owner if they have any
+      if (userBalance > 0 && organization) {
+        // Get or create owner's wallet
+        let { data: ownerWallet } = await supabase
+          .from("wallets")
+          .select("balance")
+          .eq("user_id", organization.owner_id)
+          .single();
+
+        if (!ownerWallet) {
+          const { data: newWallet } = await supabase
+            .from("wallets")
+            .insert({ user_id: organization.owner_id, balance: 0 })
+            .select()
+            .single();
+          ownerWallet = newWallet;
+        }
+
+        const newOwnerBalance = (ownerWallet?.balance || 0) + userBalance;
+
+        // Deduct from user wallet
+        await supabase
+          .from("wallets")
+          .update({ balance: 0 })
+          .eq("user_id", req.user.id);
+
+        // Add to organization owner's wallet
+        await supabase
+          .from("wallets")
+          .update({ balance: newOwnerBalance })
+          .eq("user_id", organization.owner_id);
+
+        // Record transaction for user
+        await supabase.from("wallet_transactions").insert({
+          user_id: req.user.id,
+          amount: -userBalance,
+          type: "deduction",
+          description: `Credits transferred to organization owner upon leaving`,
+          balance_after: 0,
+        });
+
+        // Record transaction for owner
+        await supabase.from("wallet_transactions").insert({
+          user_id: organization.owner_id,
+          amount: userBalance,
+          type: "credit",
+          description: `Credits received from member who left organization`,
+          balance_after: newOwnerBalance,
+        });
+      }
+
+      // Get user's email for invite update
+      const { data: userProfile } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("id", req.user.id)
+        .single();
+
+      // Update invite status to revoked if exists
+      if (userProfile?.email) {
+        await supabase
+          .from("organization_invites")
+          .update({ status: "revoked" })
+          .eq("organization_id", organizationId)
+          .eq("invited_email", userProfile.email);
+      }
+
       // Remove membership
       const { error } = await supabase
         .from("organization_members")
@@ -3141,7 +3545,15 @@ app.post(
 
       if (error) throw error;
 
-      res.json({ success: true, message: "Left organization successfully" });
+      res.json({
+        success: true,
+        message:
+          userBalance > 0
+            ? `Left organization successfully. $${userBalance.toFixed(
+                2
+              )} transferred to organization owner.`
+            : "Left organization successfully",
+      });
     } catch (error) {
       next(error);
     }

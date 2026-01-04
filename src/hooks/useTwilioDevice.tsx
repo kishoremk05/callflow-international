@@ -10,8 +10,12 @@ export function useTwilioDevice() {
   const [isConnected, setIsConnected] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
   const [currentCall, setCurrentCall] = useState<Call | null>(null);
+  const [callState, setCallState] = useState<
+    "idle" | "connecting" | "ringing" | "answered"
+  >("idle");
   const [error, setError] = useState<string | null>(null);
   const callStartTimeRef = useRef<number | null>(null);
+  const callAnsweredTimeRef = useRef<number | null>(null);
   const hasShownReadyToast = useRef(false);
   const initAttempted = useRef(false);
 
@@ -144,7 +148,9 @@ export function useTwilioDevice() {
   ) => {
     try {
       if (!device) {
-        throw new Error("Device not initialized. Backend server may not be running.");
+        throw new Error(
+          "Device not initialized. Backend server may not be running."
+        );
       }
 
       const {
@@ -186,24 +192,43 @@ export function useTwilioDevice() {
       }
 
       const call = await device.connect({ params });
+      setCallState("connecting");
+      callStartTimeRef.current = Date.now();
+
+      call.on("ringing", () => {
+        console.log("Call is ringing");
+        setCallState("ringing");
+        toast.info("Ringing...");
+      });
 
       call.on("accept", () => {
-        console.log("Call accepted");
-        callStartTimeRef.current = Date.now();
-        toast.success("Call connected!");
+        console.log("Call connected - ringing");
+        setCallState("ringing");
+        // Don't set answered time here - wait for manual confirmation or timeout
       });
 
       call.on("disconnect", async () => {
         console.log("Call disconnected");
-        const duration = callStartTimeRef.current
-          ? Math.floor((Date.now() - callStartTimeRef.current) / 1000)
+        const duration = callAnsweredTimeRef.current
+          ? Math.floor((Date.now() - callAnsweredTimeRef.current) / 1000)
           : 0;
 
         await endCallOnBackend(data.callId, duration);
 
         setCurrentCall(null);
+        setCallState("idle");
         callStartTimeRef.current = null;
-        toast.info("Call ended");
+        callAnsweredTimeRef.current = null;
+
+        if (duration > 0) {
+          toast.info(
+            `Call ended - ${Math.floor(duration / 60)}:${(duration % 60)
+              .toString()
+              .padStart(2, "0")}`
+          );
+        } else {
+          toast.info("Call ended - No answer");
+        }
       });
 
       call.on("error", (error) => {
@@ -247,6 +272,7 @@ export function useTwilioDevice() {
     if (currentCall) {
       currentCall.disconnect();
     }
+    setCallState("idle");
   };
 
   const getPublicNumber = async () => {
@@ -279,14 +305,25 @@ export function useTwilioDevice() {
     initializeDevice();
   };
 
+  const markCallAnswered = () => {
+    if (currentCall && callState === "ringing") {
+      console.log("Call manually marked as answered");
+      callAnsweredTimeRef.current = Date.now();
+      setCallState("answered");
+      toast.success("Call answered - timer started!");
+    }
+  };
+
   return {
     device,
     isConnected,
     isInitializing,
     currentCall,
+    callState,
     error,
     makeCall,
     hangupCall,
+    markCallAnswered,
     getPublicNumber,
     retryConnection,
   };
