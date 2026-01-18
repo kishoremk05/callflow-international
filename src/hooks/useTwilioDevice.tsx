@@ -167,7 +167,7 @@ export function useTwilioDevice() {
     countryCode: string,
     callerIdType: string,
     callerIdNumber?: string,
-    retryCount = 0
+    retryCount = 0,
   ) => {
     try {
       if (!device) {
@@ -180,11 +180,11 @@ export function useTwilioDevice() {
             countryCode,
             callerIdType,
             callerIdNumber,
-            retryCount + 1
+            retryCount + 1,
           );
         }
         throw new Error(
-          "Device not initialized. Backend server may not be running."
+          "Device not initialized. Backend server may not be running.",
         );
       }
 
@@ -193,6 +193,43 @@ export function useTwilioDevice() {
       } = await supabase.auth.getSession();
       if (!session) {
         throw new Error("No session found");
+      }
+
+      // Check pricing and balance before initiating call
+      const fullNumber = `${countryCode}${toNumber}`;
+      const pricingResponse = await fetch(
+        `${API_URL}/api/pricing/check-balance`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            toNumber: fullNumber,
+            estimatedMinutes: 5,
+          }),
+        },
+      );
+
+      const pricingData = await pricingResponse.json();
+
+      if (pricingData.success && !pricingData.hasSufficientFunds) {
+        throw new Error(
+          `Insufficient balance. You need $${pricingData.requiredAmount.toFixed(4)} but have $${pricingData.currentBalance.toFixed(2)}. Please add credits to your wallet.`,
+        );
+      }
+
+      // Show cost preview to user
+      if (pricingData.success && pricingData.costEstimate) {
+        const { costEstimate } = pricingData;
+        console.log(
+          `💰 Call to ${costEstimate.countryName} (${costEstimate.phoneType}): $${costEstimate.ratePerMinute.toFixed(4)}/min - Est. cost: $${costEstimate.estimatedCost.toFixed(4)}`,
+        );
+        toast.info(
+          `Call to ${costEstimate.countryName}: $${costEstimate.ratePerMinute.toFixed(4)}/min`,
+          { duration: 3000 },
+        );
       }
 
       const response = await fetch(`${API_URL}/api/calls/initiate`, {
@@ -214,6 +251,9 @@ export function useTwilioDevice() {
       if (!data.success) {
         throw new Error(data.error || "Failed to initiate call");
       }
+
+      // Store tempCallSid for later linking
+      const tempCallSid = data.tempCallSid;
 
       const callerIdParam = callerIdNumber || (await getPublicNumber());
 
@@ -250,10 +290,11 @@ export function useTwilioDevice() {
                 body: JSON.stringify({
                   callId: data.callId,
                   twilioCallSid: twilioCallSid,
+                  tempCallSid: tempCallSid, // Link temp CallSid to real CallSid
                 }),
               });
               console.log(
-                `✅ Successfully linked call ${data.callId} with CallSid ${twilioCallSid}`
+                `✅ Successfully linked call ${data.callId} with CallSid ${twilioCallSid}`,
               );
             } catch (error) {
               console.error("Failed to update call with CallSid:", error);
@@ -276,11 +317,12 @@ export function useTwilioDevice() {
 
         call.on("disconnect", async () => {
           console.log("Call disconnected");
+          const twilioCallSid = call.parameters?.CallSid;
           const duration = callAnsweredTimeRef.current
             ? Math.floor((Date.now() - callAnsweredTimeRef.current) / 1000)
             : 0;
 
-          await endCallOnBackend(data.callId, duration);
+          await endCallOnBackend(data.callId, duration, twilioCallSid);
 
           setCurrentCall(null);
           setCallState("idle");
@@ -291,7 +333,7 @@ export function useTwilioDevice() {
             toast.info(
               `Call ended - ${Math.floor(duration / 60)}:${(duration % 60)
                 .toString()
-                .padStart(2, "0")}`
+                .padStart(2, "0")}`,
             );
           } else {
             toast.info("Call ended - No answer");
@@ -314,7 +356,7 @@ export function useTwilioDevice() {
           retryCount < 2
         ) {
           console.log(
-            "🔄 Device destroyed during connection, reinitializing..."
+            "🔄 Device destroyed during connection, reinitializing...",
           );
           toast.info("Reconnecting...");
           await initializeDevice();
@@ -324,7 +366,7 @@ export function useTwilioDevice() {
             countryCode,
             callerIdType,
             callerIdNumber,
-            retryCount + 1
+            retryCount + 1,
           );
         }
 
@@ -348,7 +390,7 @@ export function useTwilioDevice() {
           countryCode,
           callerIdType,
           callerIdNumber,
-          retryCount + 1
+          retryCount + 1,
         );
       }
 
@@ -357,14 +399,18 @@ export function useTwilioDevice() {
     }
   };
 
-  const endCallOnBackend = async (callId: string, durationSeconds: number) => {
+  const endCallOnBackend = async (
+    callId: string,
+    durationSeconds: number,
+    twilioCallSid?: string,
+  ) => {
     try {
       const {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) return;
 
-      await fetch(`${API_URL}/api/calls/end`, {
+      const response = await fetch(`${API_URL}/api/calls/end`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${session.access_token}`,
@@ -373,8 +419,41 @@ export function useTwilioDevice() {
         body: JSON.stringify({
           callId,
           durationSeconds,
+          twilioCallSid,
         }),
       });
+
+      const result = await response.json();
+
+      // Show cost to user after call ends
+      if (result.success && result.billedAmount > 0) {
+        const minutes = Math.ceil(durationSeconds / 60);
+        const profitInfo =
+          result.profitMargin > 0
+            ? ` | Profit: $${result.profitMargin.toFixed(4)}`
+            : "";
+
+        // Show detailed cost breakdown
+        const costMessage = result.costBreakdown
+          ? `Call ended: ${result.costBreakdown.billedMinutes} min × $${parseFloat(result.costBreakdown.finalRate).toFixed(4)}/min = $${result.billedAmount.toFixed(4)}${profitInfo}`
+          : `Call cost: $${result.billedAmount.toFixed(4)} (${minutes} min)${profitInfo}`;
+
+        toast.success(costMessage, { duration: 6000 });
+
+        // Log detailed breakdown for debugging
+        if (result.costBreakdown) {
+          console.log("💰 Call Cost Breakdown:", {
+            duration: `${durationSeconds}s`,
+            billedMinutes: result.costBreakdown.billedMinutes,
+            baseRate: `$${parseFloat(result.costBreakdown.baseRate).toFixed(6)}/min`,
+            markup: `${result.costBreakdown.markupPercentage}%`,
+            finalRate: `$${parseFloat(result.costBreakdown.finalRate).toFixed(6)}/min`,
+            twilioBaseCost: `$${result.costBreakdown.twilioBaseCost}`,
+            profit: `$${result.costBreakdown.profitAmount}`,
+            totalCharged: `$${result.costBreakdown.totalCharged}`,
+          });
+        }
+      }
     } catch (error) {
       console.error("Failed to end call on backend:", error);
     }

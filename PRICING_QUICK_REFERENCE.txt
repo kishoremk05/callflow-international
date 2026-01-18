@@ -1,0 +1,161 @@
+╔══════════════════════════════════════════════════════════════╗
+║          📞 PRICING SYSTEM - QUICK REFERENCE                 ║
+╚══════════════════════════════════════════════════════════════╝
+
+┌─ SETUP STEPS ────────────────────────────────────────────────┐
+│                                                               │
+│  1. Apply Migration:                                          │
+│     → Open Supabase Dashboard → SQL Editor                   │
+│     → Run: supabase/migrations/20260118000000_create_...sql  │
+│                                                               │
+│  2. Import Pricing:                                           │
+│     → Run: node backend/import-pricing-data.js               │
+│                                                               │
+│  3. Test System:                                              │
+│     → Run: node backend/test-pricing-system.js               │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+┌─ HOW IT WORKS ───────────────────────────────────────────────┐
+│                                                               │
+│  BEFORE CALL:                                                 │
+│   1. Look up pricing    → $0.0144/min (US Mobile)            │
+│   2. Estimate 5 min     → $0.072                              │
+│   3. Reserve $0.072     → Balance: $10.00 → $9.93            │
+│   4. Call proceeds      → ☎️                                  │
+│                                                               │
+│  AFTER CALL (3:45 = 4 billed minutes):                        │
+│   1. Calculate actual   → 4 × $0.0144 = $0.0576              │
+│   2. Settle & refund    → $0.072 - $0.0576 = $0.0144         │
+│   3. Final balance      → $9.93 + $0.0144 = $9.97            │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+┌─ NEW API ENDPOINTS ──────────────────────────────────────────┐
+│                                                               │
+│  GET  /api/pricing/estimate                                   │
+│       ?toNumber=+14155551234&estimatedMinutes=5              │
+│       → Returns cost estimate before call                     │
+│                                                               │
+│  POST /api/pricing/lookup                                     │
+│       { "destinationNumber": "+442071234567" }               │
+│       → Returns pricing details                               │
+│                                                               │
+│  POST /api/pricing/check-balance                              │
+│       { "toNumber": "+14155551234", "estimatedMinutes": 5 }  │
+│       → Checks if user can afford call                        │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+┌─ MODIFIED ENDPOINTS ─────────────────────────────────────────┐
+│                                                               │
+│  POST /api/calls/initiate                                     │
+│       ✨ Now reserves funds automatically                     │
+│       ✨ Returns pricing info + tempCallSid                   │
+│                                                               │
+│  POST /api/calls/end                                          │
+│       ✨ Now settles actual cost + refunds difference         │
+│       ✨ Works with both old and new system                   │
+│                                                               │
+│  POST /api/calls/update-sid                                   │
+│       ✨ Now updates cost records + transactions              │
+│       ✨ Links tempCallSid to real Twilio CallSid             │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+┌─ DATABASE TABLES ────────────────────────────────────────────┐
+│                                                               │
+│  call_pricing                                                 │
+│    → 612 pricing records (200+ countries)                     │
+│    → Mobile/landline differentiation                          │
+│    → 15% markup by default                                    │
+│                                                               │
+│  wallet_transactions                                          │
+│    → Types: reserve, settle, refund, purchase                 │
+│    → Full audit trail                                         │
+│    → Links to call_sid                                        │
+│                                                               │
+│  call_cost_records                                            │
+│    → Estimated vs actual costs                                │
+│    → Links to pricing + transactions                          │
+│    → Complete call costing history                            │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+┌─ KEY BENEFITS ───────────────────────────────────────────────┐
+│                                                               │
+│  ✅ Accurate per-destination pricing (not just country)       │
+│  ✅ Funds reserved before call (no mid-call failures)         │
+│  ✅ Automatic refunds (exact charging)                        │
+│  ✅ Full transaction audit trail                              │
+│  ✅ Easy price updates (re-import CSV)                        │
+│  ✅ Fallback pricing for unknown destinations                 │
+│  ✅ 200+ countries supported                                  │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+┌─ EXAMPLE USAGE (Frontend) ───────────────────────────────────┐
+│                                                               │
+│  // Check if user can afford call                             │
+│  const res = await fetch('/api/pricing/check-balance', {     │
+│    method: 'POST',                                            │
+│    headers: {                                                 │
+│      'Authorization': `Bearer ${token}`,                     │
+│      'Content-Type': 'application/json'                       │
+│    },                                                         │
+│    body: JSON.stringify({                                     │
+│      toNumber: '+14155551234',                               │
+│      estimatedMinutes: 5                                      │
+│    })                                                         │
+│  });                                                          │
+│                                                               │
+│  const { hasSufficientFunds, costEstimate } =                 │
+│    await res.json();                                          │
+│                                                               │
+│  if (hasSufficientFunds) {                                    │
+│    // Proceed with call                                       │
+│    // Funds will be reserved automatically                    │
+│  }                                                            │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+┌─ MAINTENANCE ────────────────────────────────────────────────┐
+│                                                               │
+│  Update Pricing:                                              │
+│    → Download new CSV from Twilio                             │
+│    → Replace public/OutboundVoicePricing.csv                  │
+│    → Run: node backend/import-pricing-data.js                │
+│                                                               │
+│  Change Markup:                                               │
+│    UPDATE call_pricing                                        │
+│    SET markup_percentage = 20.00                              │
+│    WHERE is_active = true;                                    │
+│                                                               │
+│  View Transactions:                                           │
+│    SELECT * FROM wallet_transactions                          │
+│    WHERE user_id = 'uuid'                                    │
+│    ORDER BY created_at DESC;                                  │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+┌─ TROUBLESHOOTING ────────────────────────────────────────────┐
+│                                                               │
+│  ❌ "call_pricing table not found"                            │
+│     → Apply migration first                                   │
+│                                                               │
+│  ❌ "No pricing data"                                         │
+│     → Run: node backend/import-pricing-data.js               │
+│                                                               │
+│  ❌ "Insufficient balance" error                              │
+│     → Check wallet_balance column exists                      │
+│     → Verify user has funds in wallets table                  │
+│                                                               │
+│  ❌ "Failed to reserve funds"                                 │
+│     → Check reserve_call_funds() function exists              │
+│     → Verify migration was applied successfully               │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+📖 Full Docs: PRICING_SYSTEM_SETUP.md
+📝 Summary: PRICING_IMPLEMENTATION_SUMMARY.md
+🧪 Test: node backend/test-pricing-system.js

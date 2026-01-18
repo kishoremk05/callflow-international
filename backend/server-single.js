@@ -13,6 +13,17 @@ import { getRealCallCostFromTwilio } from "./src/utils/twilioCosting.js";
 
 dotenv.config();
 
+// ============================================================================
+// CONFIGURATION
+// ============================================================================
+
+// Profit margin configuration (percentage to add on top of Twilio's base rates)
+// This markup is applied to all call pricing to generate profit
+const PROFIT_MARGIN_PERCENTAGE = parseFloat(
+  process.env.PROFIT_MARGIN_PERCENTAGE || "15.0",
+);
+console.log(`💰 Profit margin configured at: ${PROFIT_MARGIN_PERCENTAGE}%`);
+
 // Initialize clients
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -145,6 +156,155 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ============================================================================
+// PRICING SERVICE FUNCTIONS
+// ============================================================================
+
+/**
+ * Get pricing for a destination number from call_pricing table
+ */
+async function getCallPricing(destinationNumber) {
+  try {
+    const cleanNumber = destinationNumber.replace(/\D/g, "");
+
+    const { data, error } = await supabase.rpc("get_call_pricing", {
+      destination_number: cleanNumber,
+    });
+
+    if (error) throw error;
+
+    if (data && data.length > 0) {
+      return {
+        success: true,
+        pricing: {
+          pricingId: data[0].pricing_id,
+          ratePerMinute: parseFloat(data[0].rate_per_minute),
+          markupPercentage: parseFloat(data[0].markup_percentage),
+          finalRate: parseFloat(data[0].final_rate),
+          countryName: data[0].country_name,
+          phoneType: data[0].phone_type,
+        },
+      };
+    }
+
+    return {
+      success: true,
+      pricing: {
+        pricingId: null,
+        ratePerMinute: 0.5,
+        markupPercentage: 15.0,
+        finalRate: 0.575,
+        countryName: "Unknown",
+        phoneType: "unknown",
+      },
+      isFallback: true,
+    };
+  } catch (error) {
+    console.error("Error getting call pricing:", error);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+}
+
+/**
+ * Estimate call cost
+ */
+async function estimateCallCost(
+  destinationNumber,
+  estimatedDurationMinutes = 5,
+) {
+  try {
+    const pricingResult = await getCallPricing(destinationNumber);
+
+    if (!pricingResult.success) {
+      throw new Error(pricingResult.error);
+    }
+
+    const { pricing } = pricingResult;
+    const estimatedCost = pricing.finalRate * estimatedDurationMinutes;
+
+    return {
+      success: true,
+      estimation: {
+        destinationNumber,
+        countryName: pricing.countryName,
+        phoneType: pricing.phoneType,
+        ratePerMinute: pricing.finalRate,
+        estimatedDurationMinutes,
+        estimatedCost: parseFloat(estimatedCost.toFixed(4)),
+        pricingId: pricing.pricingId,
+        isFallback: pricingResult.isFallback || false,
+      },
+    };
+  } catch (error) {
+    console.error("Error estimating call cost:", error);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+}
+
+/**
+ * Reserve funds for a call
+ */
+async function reserveCallFunds(
+  userId,
+  organizationId,
+  callSid,
+  estimatedCost,
+) {
+  try {
+    const { data, error } = await supabase.rpc("reserve_call_funds", {
+      p_user_id: userId,
+      p_organization_id: organizationId,
+      p_call_sid: callSid,
+      p_estimated_cost: estimatedCost,
+    });
+
+    if (error) throw error;
+
+    return {
+      success: true,
+      transactionId: data,
+      reservedAmount: estimatedCost,
+    };
+  } catch (error) {
+    console.error("Error reserving call funds:", error);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+}
+
+/**
+ * Settle actual call cost
+ */
+async function settleCallCost(callSid, actualCost) {
+  try {
+    const { data, error } = await supabase.rpc("settle_call_cost", {
+      p_call_sid: callSid,
+      p_actual_cost: actualCost,
+    });
+
+    if (error) throw error;
+
+    return {
+      success: true,
+      transactionId: data,
+    };
+  } catch (error) {
+    console.error("Error settling call cost:", error);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+}
+
+// ============================================================================
 // HEALTH CHECK & ROOT ROUTES
 // ============================================================================
 
@@ -246,6 +406,102 @@ app.post("/api/auth/verify-token", authenticate, (req, res) => {
       user_metadata: req.user.user_metadata,
     },
   });
+});
+
+// ============================================================================
+// PRICING API ROUTES
+// ============================================================================
+
+// Get cost estimate for a destination number
+app.get("/api/pricing/estimate", authenticate, async (req, res, next) => {
+  try {
+    const { toNumber, estimatedMinutes = 5 } = req.query;
+
+    if (!toNumber) {
+      return res.status(400).json({
+        success: false,
+        error: "Destination number is required",
+      });
+    }
+
+    const result = await estimateCallCost(
+      toNumber,
+      parseFloat(estimatedMinutes),
+    );
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error("Error in pricing estimate:", error);
+    next(error);
+  }
+});
+
+// Look up pricing for a destination number
+app.post("/api/pricing/lookup", authenticate, async (req, res, next) => {
+  try {
+    const { destinationNumber } = req.body;
+
+    if (!destinationNumber) {
+      return res.status(400).json({
+        success: false,
+        error: "Destination number is required",
+      });
+    }
+
+    const result = await getCallPricing(destinationNumber);
+    res.json(result);
+  } catch (error) {
+    console.error("Error in pricing lookup:", error);
+    next(error);
+  }
+});
+
+// Check if user has sufficient balance for a call
+app.post("/api/pricing/check-balance", authenticate, async (req, res, next) => {
+  try {
+    const { toNumber, estimatedMinutes = 5, organizationId } = req.body;
+
+    if (!toNumber) {
+      return res.status(400).json({
+        success: false,
+        error: "Destination number is required",
+      });
+    }
+
+    // Get estimated cost
+    const costEstimate = await estimateCallCost(toNumber, estimatedMinutes);
+
+    if (!costEstimate.success) {
+      return res.status(400).json(costEstimate);
+    }
+
+    // Check balance
+    const { data: wallet } = await supabase
+      .from("wallets")
+      .select("wallet_balance")
+      .eq("user_id", req.user.id)
+      .single();
+
+    const currentBalance = parseFloat(wallet?.wallet_balance || 0);
+    const requiredAmount = costEstimate.estimation.estimatedCost;
+    const hasSufficientFunds = currentBalance >= requiredAmount;
+
+    res.json({
+      success: true,
+      hasSufficientFunds,
+      currentBalance,
+      requiredAmount,
+      shortfall: hasSufficientFunds ? 0 : requiredAmount - currentBalance,
+      costEstimate: costEstimate.estimation,
+    });
+  } catch (error) {
+    console.error("Error checking balance:", error);
+    next(error);
+  }
 });
 
 // ============================================================================
@@ -711,42 +967,76 @@ app.post(
 
 app.post("/api/calls/initiate", authenticate, async (req, res, next) => {
   try {
-    const { toNumber, toCountryCode, callerIdType, callerIdNumber } = req.body;
+    const {
+      toNumber,
+      toCountryCode,
+      callerIdType,
+      callerIdNumber,
+      organizationId,
+    } = req.body;
 
-    if (!toNumber || !toCountryCode) {
-      return res
-        .status(400)
-        .json({ error: "To number and country code are required" });
+    if (!toNumber) {
+      return res.status(400).json({ error: "Destination number is required" });
     }
 
+    console.log(`📞 Initiating call to ${toNumber}`);
+
+    // Get pricing using new system
+    const costEstimate = await estimateCallCost(toNumber, 5); // 5-minute estimate
+
+    if (!costEstimate.success) {
+      return res.status(400).json({ error: "Failed to estimate call cost" });
+    }
+
+    console.log(
+      `💰 Estimated cost: $${costEstimate.estimation.estimatedCost} (${costEstimate.estimation.countryName} - ${costEstimate.estimation.phoneType})`,
+    );
+
+    // Check wallet balance
     const { data: wallet } = await supabase
       .from("wallets")
-      .select("balance")
+      .select("wallet_balance")
       .eq("user_id", req.user.id)
       .single();
 
-    if (!wallet || wallet.balance <= 0) {
-      return res.status(400).json({ error: "Insufficient balance" });
+    if (
+      !wallet ||
+      parseFloat(wallet.wallet_balance) < costEstimate.estimation.estimatedCost
+    ) {
+      return res.status(400).json({
+        error: "Insufficient balance",
+        required: costEstimate.estimation.estimatedCost,
+        available: parseFloat(wallet?.wallet_balance || 0),
+      });
     }
 
-    const { data: rate } = await supabase
-      .from("rate_settings")
-      .select("sell_rate_per_minute, cost_per_minute")
-      .eq("country_code", toCountryCode)
-      .single();
+    // Generate temporary CallSid for reserve (will be updated with real Twilio SID)
+    const tempCallSid = `TEMP_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
-    if (!rate) {
-      return res.status(400).json({ error: "Country not supported" });
+    // Reserve funds before making the call
+    const reserveResult = await reserveCallFunds(
+      req.user.id,
+      organizationId || null,
+      tempCallSid,
+      costEstimate.estimation.estimatedCost,
+    );
+
+    if (!reserveResult.success) {
+      return res.status(400).json({ error: reserveResult.error });
     }
 
-    // Create call log entry - Device will handle the actual call
-    const { data: callLog } = await supabase
+    console.log(
+      `✅ Reserved $${reserveResult.reservedAmount} (Transaction ID: ${reserveResult.transactionId})`,
+    );
+
+    // Create call log entry
+    const { data: callLog, error: logError } = await supabase
       .from("call_logs")
       .insert({
         user_id: req.user.id,
         from_number: req.user.id,
         to_number: toNumber,
-        to_country_code: toCountryCode,
+        to_country_code: toCountryCode || costEstimate.estimation.countryName,
         caller_id_type: callerIdType || "public",
         caller_id_number: callerIdNumber || "",
         status: "initiated",
@@ -755,12 +1045,47 @@ app.post("/api/calls/initiate", authenticate, async (req, res, next) => {
       .select()
       .single();
 
+    if (logError) {
+      console.error("Failed to create call log:", logError);
+      return res.status(500).json({ error: "Failed to create call log" });
+    }
+
+    // Create call cost record
+    const { error: costRecordError } = await supabase
+      .from("call_cost_records")
+      .insert({
+        call_sid: tempCallSid,
+        user_id: req.user.id,
+        organization_id: organizationId || null,
+        from_number: req.user.id,
+        to_number: toNumber,
+        destination_country_code: costEstimate.estimation.countryName,
+        phone_number_type: costEstimate.estimation.phoneType,
+        pricing_id: costEstimate.estimation.pricingId,
+        rate_per_minute: costEstimate.estimation.ratePerMinute / (1 + 15 / 100), // base rate
+        markup_percentage: 15.0,
+        final_rate_per_minute: costEstimate.estimation.ratePerMinute,
+        estimated_cost: costEstimate.estimation.estimatedCost,
+        reserve_transaction_id: reserveResult.transactionId,
+        call_started_at: new Date().toISOString(),
+      });
+
+    if (costRecordError) {
+      console.warn("Failed to create cost record:", costRecordError);
+    }
+
     res.json({
       success: true,
       callId: callLog.id,
-      ratePerMinute: rate.sell_rate_per_minute,
+      tempCallSid: tempCallSid,
+      ratePerMinute: costEstimate.estimation.ratePerMinute,
+      estimatedCost: costEstimate.estimation.estimatedCost,
+      countryName: costEstimate.estimation.countryName,
+      phoneType: costEstimate.estimation.phoneType,
+      reserveTransactionId: reserveResult.transactionId,
     });
   } catch (error) {
+    console.error("Error initiating call:", error);
     next(error);
   }
 });
@@ -820,9 +1145,11 @@ app.post("/api/calls/twiml", (req, res) => {
 
 app.post("/api/calls/end", authenticate, async (req, res, next) => {
   try {
-    const { callId, durationSeconds } = req.body;
+    const { callId, durationSeconds, twilioCallSid } = req.body;
 
-    console.log(`📞 Ending call ${callId}, duration: ${durationSeconds}s`);
+    console.log(
+      `📞 Ending call ${callId}, duration: ${durationSeconds}s, CallSid: ${twilioCallSid}`,
+    );
 
     const { data: callLog } = await supabase
       .from("call_logs")
@@ -835,81 +1162,174 @@ app.post("/api/calls/end", authenticate, async (req, res, next) => {
       return res.status(404).json({ error: "Call log not found" });
     }
 
+    // Get the actual CallSid (use from request if available, fallback to stored one)
+    const actualCallSid = twilioCallSid || callLog.twilio_call_sid;
+
     console.log(
-      `📋 Call log found - CallSid: ${callLog.twilio_call_sid}, Duration: ${durationSeconds}`,
+      `📋 Call log found - CallSid: ${actualCallSid}, Duration: ${durationSeconds}`,
     );
 
-    // � Use ESTIMATED cost immediately (Twilio pricing has delays)
-    let billedAmount = 0;
-    let twilioEstimatedCost = 0;
-    let profitMargin = 0;
-
-    // Get rate settings for this country
-    const { data: rate } = await supabase
-      .from("rate_settings")
-      .select("sell_rate_per_minute, cost_per_minute")
-      .eq("country_code", callLog.to_country_code)
+    // Get cost record for this call
+    const { data: costRecord } = await supabase
+      .from("call_cost_records")
+      .select("*, reserve_transaction_id")
+      .or(
+        `call_sid.eq.${actualCallSid}${actualCallSid && actualCallSid.startsWith("TEMP_") ? "" : `,twilio_call_sid.eq.${actualCallSid}`}`,
+      )
+      .eq("user_id", req.user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
       .single();
 
-    const durationMinutes = (durationSeconds || 0) / 60;
+    let billedAmount = 0;
+    let actualCost = 0;
+    let profitMargin = 0;
+    let finalRate = 0;
 
-    // Billing logic:
-    // - Free for calls under 30 seconds
-    // - 1-minute minimum billing for calls 30 seconds and above
-    let billedMinutes = 0;
-    if (durationSeconds >= 30) {
-      billedMinutes = Math.ceil(durationMinutes); // Round up to next full minute
+    if (costRecord && costRecord.final_rate_per_minute) {
+      // Use new pricing system
+      finalRate = parseFloat(costRecord.final_rate_per_minute);
+      const durationMinutes = (durationSeconds || 0) / 60;
+
+      // Billing logic: Free for calls under 30 seconds
+      let billedMinutes = 0;
+      if (durationSeconds >= 30) {
+        billedMinutes = Math.ceil(durationMinutes); // Round up to next full minute
+      }
+
+      actualCost = billedMinutes * finalRate;
+      billedAmount = actualCost; // Same for now, can add additional fees if needed
+
+      const baseRate = parseFloat(costRecord.rate_per_minute);
+      const markupPercentage = parseFloat(
+        costRecord.markup_percentage || PROFIT_MARGIN_PERCENTAGE,
+      );
+      const twilioCost = durationMinutes * baseRate;
+      profitMargin = actualCost - twilioCost;
+
+      console.log(`💰 Call Cost Breakdown:`);
+      console.log(
+        `   Duration: ${durationSeconds}s (${billedMinutes} billed minutes)`,
+      );
+      console.log(`   Base Rate: $${baseRate.toFixed(6)}/min (Twilio)`);
+      console.log(`   Markup: ${markupPercentage.toFixed(2)}%`);
+      console.log(`   Final Rate: $${finalRate.toFixed(6)}/min`);
+      console.log(`   Twilio Cost: $${twilioCost.toFixed(4)}`);
+      console.log(
+        `   Profit Margin: $${profitMargin.toFixed(4)} (${profitMargin > 0 ? ((profitMargin / twilioCost) * 100).toFixed(1) : "0"}%)`,
+      );
+      console.log(`   💵 Total Charged: $${actualCost.toFixed(4)}`);
+
+      // Settle the cost (refund or charge difference from reserved amount)
+      if (costRecord.reserve_transaction_id) {
+        const settleResult = await settleCallCost(actualCallSid, actualCost);
+        if (settleResult.success) {
+          console.log(
+            `✅ Settled call cost. Transaction ID: ${settleResult.transactionId}`,
+          );
+
+          // Update cost record with settlement info
+          await supabase
+            .from("call_cost_records")
+            .update({
+              call_duration: durationSeconds,
+              actual_cost: actualCost,
+              settle_transaction_id: settleResult.transactionId,
+              call_ended_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", costRecord.id);
+        } else {
+          console.error(`❌ Failed to settle call cost: ${settleResult.error}`);
+        }
+      }
+    } else {
+      // Fallback to old rate_settings system
+      const { data: rate } = await supabase
+        .from("rate_settings")
+        .select("sell_rate_per_minute, cost_per_minute")
+        .eq("country_code", callLog.to_country_code)
+        .single();
+
+      const durationMinutes = (durationSeconds || 0) / 60;
+
+      let billedMinutes = 0;
+      if (durationSeconds >= 30) {
+        billedMinutes = Math.ceil(durationMinutes);
+      }
+
+      billedAmount = billedMinutes * (rate?.sell_rate_per_minute || 0);
+      const twilioEstimatedCost =
+        durationMinutes * (rate?.cost_per_minute || 0);
+      profitMargin = billedAmount - twilioEstimatedCost;
+
+      console.log(
+        `💸 Old System: ${durationSeconds}s (${billedMinutes} min) × $${rate?.sell_rate_per_minute}/min = $${billedAmount}`,
+      );
+
+      // Manual wallet deduction for old system
+      if (billedAmount > 0) {
+        const { data: wallet } = await supabase
+          .from("wallets")
+          .select("wallet_balance")
+          .eq("user_id", req.user.id)
+          .single();
+
+        const oldBalance = parseFloat(wallet.wallet_balance);
+        const newBalance = oldBalance - billedAmount;
+
+        console.log(
+          `🏦 Deducting $${billedAmount} from wallet. Old: $${oldBalance.toFixed(2)}, New: $${newBalance.toFixed(2)}`,
+        );
+
+        await supabase
+          .from("wallets")
+          .update({ wallet_balance: Math.max(0, newBalance) })
+          .eq("user_id", req.user.id);
+      }
     }
 
-    billedAmount = billedMinutes * (rate?.sell_rate_per_minute || 0);
-    twilioEstimatedCost = durationMinutes * (rate?.cost_per_minute || 0);
-    profitMargin = billedAmount - twilioEstimatedCost;
-
-    console.log(
-      `💸 Billing: ${durationSeconds}s (${billedMinutes} min) × $${rate?.sell_rate_per_minute}/min = $${billedAmount}`,
-    );
-    console.log(
-      `📊 Estimated Twilio cost: $${twilioEstimatedCost.toFixed(
-        4,
-      )}, Profit: $${profitMargin.toFixed(4)}`,
-    );
-
+    // Update call log
     await supabase
       .from("call_logs")
       .update({
         status: "completed",
         duration_seconds: durationSeconds || 0,
+        twilio_call_sid: actualCallSid,
         billed_amount: billedAmount,
-        twilio_cost: twilioEstimatedCost,
+        twilio_cost: actualCost,
         profit_margin: profitMargin,
         ended_at: new Date().toISOString(),
       })
       .eq("id", callId);
 
-    if (billedAmount > 0) {
-      const { data: wallet } = await supabase
-        .from("wallets")
-        .select("balance")
-        .eq("user_id", req.user.id)
-        .single();
+    // Return detailed cost information including profit margin
+    const baseRate = costRecord ? parseFloat(costRecord.rate_per_minute) : 0;
+    const markupPercentage = costRecord
+      ? parseFloat(costRecord.markup_percentage || PROFIT_MARGIN_PERCENTAGE)
+      : PROFIT_MARGIN_PERCENTAGE;
 
-      const oldBalance = parseFloat(wallet.balance);
-      const newBalance = oldBalance - billedAmount;
-
-      console.log(
-        `🏦 Deducting $${billedAmount} from wallet. Old: $${oldBalance.toFixed(
-          2,
-        )}, New: $${newBalance.toFixed(2)}`,
-      );
-
-      await supabase
-        .from("wallets")
-        .update({ balance: Math.max(0, newBalance) })
-        .eq("user_id", req.user.id);
-    }
-
-    res.json({ success: true, billedAmount, durationSeconds, profitMargin });
+    res.json({
+      success: true,
+      billedAmount,
+      durationSeconds,
+      profitMargin,
+      baseRate,
+      finalRate,
+      markupPercentage,
+      costBreakdown: {
+        baseRate: baseRate,
+        markupPercentage: markupPercentage,
+        finalRate: finalRate,
+        durationMinutes: (durationSeconds / 60).toFixed(2),
+        billedMinutes: Math.ceil(durationSeconds / 60),
+        twilioBaseCost: (baseRate * (durationSeconds / 60)).toFixed(4),
+        profitAmount: profitMargin.toFixed(4),
+        totalCharged: billedAmount.toFixed(4),
+      },
+    });
   } catch (error) {
+    console.error("Error ending call:", error);
     next(error);
   }
 });
@@ -917,7 +1337,7 @@ app.post("/api/calls/end", authenticate, async (req, res, next) => {
 // Update call with Twilio CallSid
 app.post("/api/calls/update-sid", authenticate, async (req, res, next) => {
   try {
-    const { callId, twilioCallSid } = req.body;
+    const { callId, twilioCallSid, tempCallSid } = req.body;
 
     if (!callId || !twilioCallSid) {
       return res
@@ -942,6 +1362,25 @@ app.post("/api/calls/update-sid", authenticate, async (req, res, next) => {
     if (error) {
       console.error("Failed to update call with CallSid:", error);
       return res.status(500).json({ error: "Failed to update call" });
+    }
+
+    // Update cost record with actual Twilio CallSid
+    if (tempCallSid) {
+      await supabase
+        .from("call_cost_records")
+        .update({
+          call_sid: twilioCallSid,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("call_sid", tempCallSid)
+        .eq("user_id", req.user.id);
+
+      // Update wallet transactions with actual CallSid
+      await supabase
+        .from("wallet_transactions")
+        .update({ related_call_sid: twilioCallSid })
+        .eq("related_call_sid", tempCallSid)
+        .eq("user_id", req.user.id);
     }
 
     console.log(
