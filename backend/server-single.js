@@ -9,6 +9,7 @@ import Stripe from "stripe";
 import Razorpay from "razorpay";
 import crypto from "crypto";
 import { AccessToken as LiveKitAccessToken } from "livekit-server-sdk";
+import { getRealCallCostFromTwilio } from "./src/utils/twilioCosting.js";
 
 dotenv.config();
 
@@ -16,7 +17,7 @@ dotenv.config();
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY,
-  { auth: { autoRefreshToken: false, persistSession: false } }
+  { auth: { autoRefreshToken: false, persistSession: false } },
 );
 
 // Initialize Twilio (optional for development)
@@ -33,7 +34,7 @@ if (
   try {
     twilioClient = twilio(
       process.env.TWILIO_ACCOUNT_SID,
-      process.env.TWILIO_AUTH_TOKEN
+      process.env.TWILIO_AUTH_TOKEN,
     );
     TwilioAccessToken = twilio.jwt.AccessToken;
     VoiceGrant = TwilioAccessToken.VoiceGrant;
@@ -133,12 +134,12 @@ app.use(
       }
     },
     credentials: true,
-  })
+  }),
 );
 app.use(morgan("dev"));
 app.use(
   "/api/payments/stripe-webhook",
-  express.raw({ type: "application/json" })
+  express.raw({ type: "application/json" }),
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -535,7 +536,7 @@ app.post(
 
       const completed =
         contacts?.filter(
-          (c) => c.status === "answered" || c.status === "skipped"
+          (c) => c.status === "answered" || c.status === "skipped",
         ).length || 0;
 
       await supabase
@@ -550,7 +551,7 @@ app.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Get active queues for user
@@ -583,7 +584,10 @@ app.post("/api/twilio/token", authenticate, async (req, res, next) => {
       process.env.TWILIO_ACCOUNT_SID,
       process.env.TWILIO_API_KEY,
       process.env.TWILIO_API_SECRET,
-      { identity }
+      {
+        identity,
+        ttl: 3600, // 1 hour TTL
+      },
     );
 
     const voiceGrant = new VoiceGrant({
@@ -648,8 +652,8 @@ app.post(
         CallerId && CallerId !== "null"
           ? CallerId
           : !From || From.startsWith("client:")
-          ? process.env.TWILIO_PHONE_NUMBER
-          : From;
+            ? process.env.TWILIO_PHONE_NUMBER
+            : From;
 
       if (!callerIdToUse) {
         console.error("No caller ID available");
@@ -663,7 +667,13 @@ app.post(
       // Create TwiML response to make the call
       const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Dial callerId="${callerIdToUse}">${To}</Dial>
+  <Dial 
+    callerId="${callerIdToUse}"
+    action="${
+      process.env.API_URL || "http://localhost:5000"
+    }/api/calls/status-callback"
+    method="POST"
+  >${To}</Dial>
 </Response>`;
 
       console.log("Sending TwiML:", twiml);
@@ -678,7 +688,7 @@ app.post(
       res.type("text/xml");
       res.send(errorTwiml);
     }
-  }
+  },
 );
 
 // Twilio Voice Fallback Webhook
@@ -692,7 +702,7 @@ app.post(
 </Response>`;
     res.type("text/xml");
     res.send(twiml);
-  }
+  },
 );
 
 // ============================================================================
@@ -763,7 +773,7 @@ app.get("/api/calls/status/:callId", authenticate, async (req, res, next) => {
     const { data: callLog } = await supabase
       .from("call_logs")
       .select(
-        "id, status, call_status, answered_at, started_at, ended_at, duration_seconds"
+        "id, status, call_status, answered_at, started_at, ended_at, duration_seconds",
       )
       .eq("id", callId)
       .eq("user_id", req.user.id)
@@ -812,9 +822,11 @@ app.post("/api/calls/end", authenticate, async (req, res, next) => {
   try {
     const { callId, durationSeconds } = req.body;
 
+    console.log(`📞 Ending call ${callId}, duration: ${durationSeconds}s`);
+
     const { data: callLog } = await supabase
       .from("call_logs")
-      .select("*, to_country_code")
+      .select("*, to_country_code, twilio_call_sid")
       .eq("id", callId)
       .eq("user_id", req.user.id)
       .single();
@@ -823,6 +835,16 @@ app.post("/api/calls/end", authenticate, async (req, res, next) => {
       return res.status(404).json({ error: "Call log not found" });
     }
 
+    console.log(
+      `📋 Call log found - CallSid: ${callLog.twilio_call_sid}, Duration: ${durationSeconds}`,
+    );
+
+    // � Use ESTIMATED cost immediately (Twilio pricing has delays)
+    let billedAmount = 0;
+    let twilioEstimatedCost = 0;
+    let profitMargin = 0;
+
+    // Get rate settings for this country
     const { data: rate } = await supabase
       .from("rate_settings")
       .select("sell_rate_per_minute, cost_per_minute")
@@ -839,9 +861,18 @@ app.post("/api/calls/end", authenticate, async (req, res, next) => {
       billedMinutes = Math.ceil(durationMinutes); // Round up to next full minute
     }
 
-    const billedAmount = billedMinutes * (rate?.sell_rate_per_minute || 0);
-    const twilioEstimatedCost = durationMinutes * (rate?.cost_per_minute || 0);
-    const profitMargin = billedAmount - twilioEstimatedCost;
+    billedAmount = billedMinutes * (rate?.sell_rate_per_minute || 0);
+    twilioEstimatedCost = durationMinutes * (rate?.cost_per_minute || 0);
+    profitMargin = billedAmount - twilioEstimatedCost;
+
+    console.log(
+      `💸 Billing: ${durationSeconds}s (${billedMinutes} min) × $${rate?.sell_rate_per_minute}/min = $${billedAmount}`,
+    );
+    console.log(
+      `📊 Estimated Twilio cost: $${twilioEstimatedCost.toFixed(
+        4,
+      )}, Profit: $${profitMargin.toFixed(4)}`,
+    );
 
     await supabase
       .from("call_logs")
@@ -855,14 +886,21 @@ app.post("/api/calls/end", authenticate, async (req, res, next) => {
       })
       .eq("id", callId);
 
-    if (durationSeconds > 0) {
+    if (billedAmount > 0) {
       const { data: wallet } = await supabase
         .from("wallets")
         .select("balance")
         .eq("user_id", req.user.id)
         .single();
 
-      const newBalance = parseFloat(wallet.balance) - billedAmount;
+      const oldBalance = parseFloat(wallet.balance);
+      const newBalance = oldBalance - billedAmount;
+
+      console.log(
+        `🏦 Deducting $${billedAmount} from wallet. Old: $${oldBalance.toFixed(
+          2,
+        )}, New: $${newBalance.toFixed(2)}`,
+      );
 
       await supabase
         .from("wallets")
@@ -871,6 +909,45 @@ app.post("/api/calls/end", authenticate, async (req, res, next) => {
     }
 
     res.json({ success: true, billedAmount, durationSeconds, profitMargin });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update call with Twilio CallSid
+app.post("/api/calls/update-sid", authenticate, async (req, res, next) => {
+  try {
+    const { callId, twilioCallSid } = req.body;
+
+    if (!callId || !twilioCallSid) {
+      return res
+        .status(400)
+        .json({ error: "CallId and twilioCallSid are required" });
+    }
+
+    console.log(
+      `🔗 Updating call ${callId} with Twilio CallSid: ${twilioCallSid}`,
+    );
+
+    // Update the call log with Twilio CallSid
+    const { error } = await supabase
+      .from("call_logs")
+      .update({
+        twilio_call_sid: twilioCallSid,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", callId)
+      .eq("user_id", req.user.id);
+
+    if (error) {
+      console.error("Failed to update call with CallSid:", error);
+      return res.status(500).json({ error: "Failed to update call" });
+    }
+
+    console.log(
+      `✅ Successfully linked call ${callId} with Twilio CallSid ${twilioCallSid}`,
+    );
+    res.json({ success: true, message: "Call updated with Twilio CallSid" });
   } catch (error) {
     next(error);
   }
@@ -995,7 +1072,7 @@ app.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 app.post("/api/payments/stripe-webhook", async (req, res, next) => {
@@ -1005,7 +1082,7 @@ app.post("/api/payments/stripe-webhook", async (req, res, next) => {
     const event = stripe.webhooks.constructEvent(
       req.body,
       sig,
-      process.env.STRIPE_WEBHOOK_SECRET
+      process.env.STRIPE_WEBHOOK_SECRET,
     );
 
     if (event.type === "payment_intent.succeeded") {
@@ -1222,7 +1299,7 @@ app.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 app.get("/api/numbers/my-numbers", authenticate, async (req, res, next) => {
@@ -1290,7 +1367,7 @@ app.get(
           can_make_calls, can_purchase_numbers, joined_at,
           profiles:user_id (full_name, email)
         )
-      `
+      `,
         )
         .eq("id", enterpriseId)
         .single();
@@ -1301,7 +1378,7 @@ app.get(
 
       const isAdmin = enterprise.admin_id === req.user.id;
       const isMember = enterprise.enterprise_members?.some(
-        (m) => m.user_id === req.user.id
+        (m) => m.user_id === req.user.id,
       );
 
       if (!isAdmin && !isMember) {
@@ -1312,7 +1389,7 @@ app.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 app.post(
@@ -1368,7 +1445,7 @@ app.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 app.post(
@@ -1424,7 +1501,7 @@ app.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 app.get(
@@ -1458,7 +1535,7 @@ app.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // ============================================================================
@@ -1622,7 +1699,7 @@ app.post("/api/internal-call/token", authenticate, async (req, res, next) => {
         identity: req.user.id,
         name: participantName,
         ttl: "24h", // Token valid for 24 hours
-      }
+      },
     );
 
     // Grant permissions for this room
@@ -1736,7 +1813,7 @@ app.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Approve participant (host only)
@@ -1787,7 +1864,7 @@ app.post(
             identity: participant.user_id,
             name: participant.participant_name,
             ttl: "24h",
-          }
+          },
         );
 
         at.addGrant({
@@ -1813,7 +1890,7 @@ app.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Reject participant (host only)
@@ -1854,7 +1931,7 @@ app.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Check approval status (for waiting users)
@@ -1869,7 +1946,7 @@ app.get(
       const { data: participant } = await supabase
         .from("internal_call_participants")
         .select(
-          "id, status, approved_at, participant_name, internal_calls(room_id, enterprise_id)"
+          "id, status, approved_at, participant_name, internal_calls(room_id, enterprise_id)",
         )
         .eq("call_id", callId)
         .eq("user_id", req.user.id)
@@ -1893,7 +1970,7 @@ app.get(
             identity: req.user.id,
             name: participant.participant_name || req.user.email || "User",
             ttl: "24h",
-          }
+          },
         );
 
         // Update status to joined
@@ -1928,7 +2005,7 @@ app.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Get active internal calls for user's enterprise
@@ -1959,7 +2036,7 @@ app.get("/api/internal-call/active", authenticate, async (req, res, next) => {
           left_at,
           status
         )
-      `
+      `,
       )
       .eq("enterprise_id", enterpriseMember.enterprise_id)
       .eq("status", "active")
@@ -2024,7 +2101,7 @@ app.post(
               amount: -totalCost,
               type: "deduction",
               description: `Internal call - ${Math.round(
-                durationHours * 60
+                durationHours * 60,
               )} minutes at $${costPerHour}/hr`,
               balance_after: newBalance,
             });
@@ -2066,7 +2143,7 @@ app.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // End internal call (creator only)
@@ -2113,7 +2190,7 @@ app.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // ============================================================================
@@ -2229,12 +2306,12 @@ app.post(
               });
 
               console.log(
-                `📞 Calling contact: ${contact.name} at ${fullPhoneNumber}`
+                `📞 Calling contact: ${contact.name} at ${fullPhoneNumber}`,
               );
             } catch (callError) {
               console.error(
                 `Failed to call ${contact.name}:`,
-                callError.message
+                callError.message,
               );
             }
           }
@@ -2257,7 +2334,7 @@ app.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Create external conference
@@ -2347,7 +2424,7 @@ app.post(
             console.log(
               `📞 Calling ${
                 participant.name || "participant"
-              } at ${fullPhoneNumber}`
+              } at ${fullPhoneNumber}`,
             );
           } catch (error) {
             console.warn(`Failed to dial ${participant.phone}:`, error.message);
@@ -2367,7 +2444,7 @@ app.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Get active conferences
@@ -2382,7 +2459,7 @@ app.get("/api/conference/active", authenticate, async (req, res, next) => {
           id, user_id, phone_number, participant_name, status, joined_at,
           profiles:user_id (full_name, email)
         )
-      `
+      `,
       )
       .eq("created_by", req.user.id)
       .eq("status", "active")
@@ -2448,7 +2525,7 @@ app.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Join conference (for internal participants)
@@ -2493,7 +2570,7 @@ app.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Leave conference
@@ -2517,7 +2594,7 @@ app.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // TwiML endpoint to connect participants to conference
@@ -2614,7 +2691,7 @@ app.post(
       console.error("Conference callback error:", error);
       res.status(500).send("Error");
     }
-  }
+  },
 );
 
 // Call status callback endpoint to handle individual call state changes
@@ -2633,11 +2710,13 @@ app.post(
         To,
       });
 
-      // Find the call log by call_sid
+      // Find the call log by twilio_call_sid
       const { data: callLog } = await supabase
         .from("call_logs")
-        .select("id, user_id, status, started_at, to_country_code, answered_at")
-        .eq("call_sid", CallSid)
+        .select(
+          "id, user_id, status, started_at, to_country_code, answered_at, twilio_call_sid",
+        )
+        .eq("twilio_call_sid", CallSid)
         .single();
 
       if (!callLog) {
@@ -2668,54 +2747,117 @@ app.post(
         updateData.status = "completed";
         updateData.ended_at = new Date().toISOString();
 
-        if (Duration && callLog.answered_at) {
-          // Only bill if call was actually answered
+        if (Duration && callLog.answered_at && CallSid) {
+          // Only bill if call was actually answered and we have CallSid
           updateData.duration_seconds = parseInt(Duration);
 
-          // Calculate billing for answered calls
-          const { data: rate } = await supabase
-            .from("rate_settings")
-            .select("sell_rate_per_minute, cost_per_minute")
-            .eq("country_code", callLog.to_country_code)
-            .single();
+          try {
+            // 🚀 GET REAL COST FROM TWILIO API
+            console.log(
+              `💰 Fetching REAL cost from Twilio for CallSid: ${CallSid}`,
+            );
+            const twilioRealCost = await getRealCallCostFromTwilio(CallSid);
 
-          const durationSeconds = parseInt(Duration);
-          const durationMinutes = durationSeconds / 60;
+            // Use EXACT Twilio cost (no markup - as per user requirement)
+            const actualTwilioCost = twilioRealCost.actualCost;
+            const userChargeAmount = actualTwilioCost; // Exact cost, no markup
 
-          // Billing logic:
-          // - Free for calls under 30 seconds
-          // - 1-minute minimum billing for calls 30 seconds and above
-          let billedMinutes = 0;
-          if (durationSeconds >= 30) {
-            billedMinutes = Math.ceil(durationMinutes); // Round up to next full minute
-          }
+            console.log(
+              `✅ Real Twilio cost for ${CallSid}: $${actualTwilioCost}`,
+            );
+            console.log(`💸 Charging user exactly: $${userChargeAmount}`);
 
-          const billedAmount =
-            billedMinutes * (rate?.sell_rate_per_minute || 0);
-          const twilioEstimatedCost =
-            durationMinutes * (rate?.cost_per_minute || 0);
-          const profitMargin = billedAmount - twilioEstimatedCost;
+            updateData.billed_amount = userChargeAmount;
+            updateData.twilio_cost = actualTwilioCost;
+            updateData.profit_margin = 0; // No markup, so profit is 0
 
-          updateData.billed_amount = billedAmount;
-          updateData.twilio_cost = twilioEstimatedCost;
-          updateData.profit_margin = profitMargin;
+            // 💰 Deduct REAL cost from wallet
+            if (userChargeAmount > 0) {
+              const { data: wallet } = await supabase
+                .from("wallets")
+                .select("balance")
+                .eq("user_id", callLog.user_id)
+                .single();
 
-          // Deduct from wallet if there's a charge
-          if (billedAmount > 0) {
-            const { data: wallet } = await supabase
-              .from("wallets")
-              .select("balance")
-              .eq("user_id", callLog.user_id)
+              if (wallet) {
+                const oldBalance = parseFloat(wallet.balance);
+                const newBalance = oldBalance - userChargeAmount;
+                console.log(
+                  `🏦 Wallet update: $${oldBalance} - $${userChargeAmount} = $${newBalance}`,
+                );
+
+                await supabase
+                  .from("wallets")
+                  .update({ balance: Math.max(0, newBalance) })
+                  .eq("user_id", callLog.user_id);
+
+                console.log(
+                  `✅ User wallet updated! New balance: $${Math.max(
+                    0,
+                    newBalance,
+                  )}`,
+                );
+              }
+            }
+          } catch (twilioError) {
+            console.error(
+              `❌ Failed to get real cost from Twilio for ${CallSid}:`,
+              twilioError.message,
+            );
+
+            // 🔄 Fallback to estimated calculation if Twilio API fails
+            console.log(
+              `⚠️ Using fallback estimated cost calculation for ${CallSid}`,
+            );
+            const { data: rate } = await supabase
+              .from("rate_settings")
+              .select("sell_rate_per_minute, cost_per_minute")
+              .eq("country_code", callLog.to_country_code)
               .single();
 
-            if (wallet) {
-              const newBalance = parseFloat(wallet.balance) - billedAmount;
-              await supabase
+            const durationSeconds = parseInt(Duration);
+            const durationMinutes = durationSeconds / 60;
+            let billedMinutes = 0;
+
+            if (durationSeconds >= 30) {
+              billedMinutes = Math.ceil(durationMinutes);
+            }
+
+            const billedAmount =
+              billedMinutes * (rate?.sell_rate_per_minute || 0);
+            const twilioEstimatedCost =
+              durationMinutes * (rate?.cost_per_minute || 0);
+
+            updateData.billed_amount = billedAmount;
+            updateData.twilio_cost = twilioEstimatedCost;
+            updateData.profit_margin = billedAmount - twilioEstimatedCost;
+
+            // Deduct fallback amount from wallet
+            if (billedAmount > 0) {
+              const { data: wallet } = await supabase
                 .from("wallets")
-                .update({ balance: Math.max(0, newBalance) })
-                .eq("user_id", callLog.user_id);
+                .select("balance")
+                .eq("user_id", callLog.user_id)
+                .single();
+
+              if (wallet) {
+                const newBalance = parseFloat(wallet.balance) - billedAmount;
+                await supabase
+                  .from("wallets")
+                  .update({ balance: Math.max(0, newBalance) })
+                  .eq("user_id", callLog.user_id);
+              }
             }
           }
+        } else if (Duration && !callLog.answered_at) {
+          // Call completed but was never answered (busy/no-answer) - no charge
+          console.log(
+            `📞 Call ${CallSid} completed but never answered - no charge`,
+          );
+          updateData.duration_seconds = parseInt(Duration);
+          updateData.billed_amount = 0;
+          updateData.twilio_cost = 0;
+          updateData.profit_margin = 0;
         }
       }
 
@@ -2727,7 +2869,945 @@ app.post(
       console.error("Call status callback error:", error);
       res.status(500).send("Error");
     }
+  },
+);
+
+// ============================================================================
+// COMPANY ADMIN ROUTES
+// ============================================================================
+
+// Register as company admin
+app.post(
+  "/api/company-admin/register",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { company_name, company_email, company_phone } = req.body;
+
+      if (!company_name || !company_email) {
+        return res
+          .status(400)
+          .json({ error: "Company name and email are required" });
+      }
+
+      // Check if user is already a company admin
+      const { data: existingAdmin } = await supabase
+        .from("company_admins")
+        .select("id")
+        .eq("user_id", req.user.id)
+        .single();
+
+      if (existingAdmin) {
+        return res
+          .status(400)
+          .json({ error: "User is already a company admin" });
+      }
+
+      // Create company admin
+      const { data: companyAdmin, error: adminError } = await supabase
+        .from("company_admins")
+        .insert({
+          user_id: req.user.id,
+          company_name,
+          company_email,
+          company_phone: company_phone || null,
+        })
+        .select()
+        .single();
+
+      if (adminError) throw adminError;
+
+      // Update user profile to company_admin type
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ user_type: "company_admin" })
+        .eq("id", req.user.id);
+
+      if (profileError) throw profileError;
+
+      res.json({ success: true, companyAdmin });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Get company admin profile
+app.get("/api/company-admin/profile", authenticate, async (req, res, next) => {
+  try {
+    const { data: companyAdmin, error } = await supabase
+      .from("company_admins")
+      .select("*")
+      .eq("user_id", req.user.id)
+      .single();
+
+    if (error || !companyAdmin) {
+      return res.status(404).json({ error: "Company admin profile not found" });
+    }
+
+    res.json({ success: true, companyAdmin });
+  } catch (error) {
+    next(error);
   }
+});
+
+// Update company admin profile
+app.put("/api/company-admin/profile", authenticate, async (req, res, next) => {
+  try {
+    const { company_name, company_email, company_phone } = req.body;
+
+    const { data: companyAdmin, error } = await supabase
+      .from("company_admins")
+      .update({
+        company_name,
+        company_email,
+        company_phone: company_phone || null,
+      })
+      .eq("user_id", req.user.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({ success: true, companyAdmin });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get company admin wallet
+app.get("/api/company-admin/wallet", authenticate, async (req, res, next) => {
+  try {
+    const { data: wallet, error } = await supabase
+      .from("wallets")
+      .select("*")
+      .eq("user_id", req.user.id)
+      .single();
+
+    if (error) throw error;
+
+    // Get total shared amount
+    const { data: companyAdmin } = await supabase
+      .from("company_admins")
+      .select("id")
+      .eq("user_id", req.user.id)
+      .single();
+
+    let totalShared = 0;
+    if (companyAdmin) {
+      const { data: shares } = await supabase
+        .from("wallet_shares")
+        .select("shared_amount")
+        .eq("company_admin_id", companyAdmin.id);
+
+      totalShared =
+        shares?.reduce(
+          (sum, share) => sum + parseFloat(share.shared_amount),
+          0,
+        ) || 0;
+    }
+
+    res.json({
+      success: true,
+      wallet: {
+        ...wallet,
+        total_shared: totalShared,
+        available: parseFloat(wallet.balance) - totalShared,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get all organizations under company
+app.get(
+  "/api/company-admin/organizations",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      // Get company admin
+      const { data: companyAdmin } = await supabase
+        .from("company_admins")
+        .select("id")
+        .eq("user_id", req.user.id)
+        .single();
+
+      if (!companyAdmin) {
+        return res.status(403).json({ error: "Not a company admin" });
+      }
+
+      // Get organizations
+      const { data: organizations, error: orgError } = await supabase
+        .from("organizations")
+        .select("*")
+        .eq("company_admin_id", companyAdmin.id)
+        .order("created_at", { ascending: false });
+
+      if (orgError) throw orgError;
+
+      // Get organization members and profiles for each organization
+      const enrichedOrganizations = await Promise.all(
+        (organizations || []).map(async (org) => {
+          // Get members for this organization
+          const { data: members } = await supabase
+            .from("organization_members")
+            .select("id, user_id, role")
+            .eq("organization_id", org.id);
+
+          // Get profiles for these members
+          const memberProfiles = await Promise.all(
+            (members || []).map(async (member) => {
+              const { data: profile } = await supabase
+                .from("profiles")
+                .select("full_name, email")
+                .eq("id", member.user_id)
+                .single();
+
+              return {
+                ...member,
+                profiles: profile,
+              };
+            }),
+          );
+
+          // Get owner's wallet balance
+          const { data: ownerWallet } = await supabase
+            .from("wallets")
+            .select("balance")
+            .eq("user_id", org.owner_id)
+            .single();
+
+          // Get wallet shares
+          const { data: shares } = await supabase
+            .from("wallet_shares")
+            .select("shared_amount, shared_at")
+            .eq("organization_id", org.id);
+
+          return {
+            ...org,
+            organization_members: memberProfiles,
+            wallet_shares: shares || [],
+            owner_wallet_balance: ownerWallet?.balance || 0,
+          };
+        }),
+      );
+
+      res.json({ success: true, organizations: enrichedOrganizations });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Create organization under company
+app.post(
+  "/api/company-admin/organizations/create",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { name, description, owner_email } = req.body;
+
+      if (!name || !owner_email) {
+        return res
+          .status(400)
+          .json({ error: "Organization name and owner email are required" });
+      }
+
+      // Get company admin
+      const { data: companyAdmin } = await supabase
+        .from("company_admins")
+        .select("id")
+        .eq("user_id", req.user.id)
+        .single();
+
+      if (!companyAdmin) {
+        return res.status(403).json({ error: "Not a company admin" });
+      }
+
+      // Find the owner user by email
+      const { data: ownerProfile } = await supabase
+        .from("profiles")
+        .select("id, email")
+        .eq("email", owner_email)
+        .single();
+
+      if (!ownerProfile) {
+        return res
+          .status(404)
+          .json({ error: "Owner user not found with this email" });
+      }
+
+      // Create organization
+      const { data: organization, error: orgError } = await supabase
+        .from("organizations")
+        .insert({
+          name,
+          description: description || null,
+          owner_id: ownerProfile.id,
+          company_admin_id: companyAdmin.id,
+        })
+        .select()
+        .single();
+
+      if (orgError) throw orgError;
+
+      // Add owner as member
+      const { error: memberError } = await supabase
+        .from("organization_members")
+        .insert({
+          organization_id: organization.id,
+          user_id: ownerProfile.id,
+          role: "owner",
+        });
+
+      if (memberError) throw memberError;
+
+      res.json({ success: true, organization });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Search for organization owners by email
+app.get(
+  "/api/company-admin/search-owners",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { email } = req.query;
+
+      if (!email || email.length < 2) {
+        return res.json({ success: true, owners: [] });
+      }
+
+      // Get company admin
+      const { data: companyAdmin } = await supabase
+        .from("company_admins")
+        .select("id")
+        .eq("user_id", req.user.id)
+        .single();
+
+      if (!companyAdmin) {
+        return res.status(403).json({ error: "Not a company admin" });
+      }
+
+      // First, get all organizations that are not yet linked to this company
+      const { data: availableOrgs, error: orgError } = await supabase
+        .from("organizations")
+        .select("id, name, owner_id, company_admin_id")
+        .or(`company_admin_id.is.null,company_admin_id.neq.${companyAdmin.id}`)
+        .limit(50);
+
+      if (orgError) throw orgError;
+
+      if (!availableOrgs || availableOrgs.length === 0) {
+        return res.json({ success: true, owners: [] });
+      }
+
+      // Get unique owner IDs
+      const ownerIds = [...new Set(availableOrgs.map((org) => org.owner_id))];
+
+      // Search for profiles that match the email and are owners of these organizations
+      const { data: profiles, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, email, full_name")
+        .in("id", ownerIds)
+        .ilike("email", `%${email}%`)
+        .limit(10);
+
+      if (profileError) throw profileError;
+
+      // Map profiles to their organizations
+      const filteredOwners = (profiles || [])
+        .map((profile) => {
+          // Find this owner's available organization
+          const availableOrg = availableOrgs.find(
+            (org) =>
+              org.owner_id === profile.id && org.company_admin_id === null,
+          );
+
+          // If no available org (all are already linked), skip this owner
+          if (!availableOrg) {
+            return null;
+          }
+
+          return {
+            email: profile.email,
+            full_name: profile.full_name || profile.email,
+            organization_name: availableOrg.name,
+          };
+        })
+        .filter((owner) => owner !== null);
+
+      res.json({ success: true, owners: filteredOwners });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Invite organization owner to join company
+app.post(
+  "/api/company-admin/invite-organization",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { ownerEmail } = req.body;
+
+      if (!ownerEmail) {
+        return res.status(400).json({ error: "Owner email is required" });
+      }
+
+      // Get company admin
+      const { data: companyAdmin } = await supabase
+        .from("company_admins")
+        .select("id, company_name, user_id")
+        .eq("user_id", req.user.id)
+        .single();
+
+      if (!companyAdmin) {
+        return res.status(403).json({ error: "Not a company admin" });
+      }
+
+      // Check if the owner user exists
+      const { data: ownerProfile } = await supabase
+        .from("profiles")
+        .select("id, email")
+        .eq("email", ownerEmail)
+        .single();
+
+      if (!ownerProfile) {
+        return res.status(404).json({
+          error:
+            "User not found with this email. Please ask them to register first.",
+        });
+      }
+
+      // Check if they already own an organization under this company
+      const { data: existingOrg } = await supabase
+        .from("organizations")
+        .select("id, name")
+        .eq("owner_id", ownerProfile.id)
+        .eq("company_admin_id", companyAdmin.id)
+        .single();
+
+      if (existingOrg) {
+        return res.status(400).json({
+          error:
+            "This organization owner already has an organization under your company",
+        });
+      }
+
+      // Check if user has an organization in the system (not linked to any company)
+      const { data: userOrganizations } = await supabase
+        .from("organizations")
+        .select("id, name, description, shared_balance")
+        .eq("owner_id", ownerProfile.id)
+        .is("company_admin_id", null);
+
+      if (!userOrganizations || userOrganizations.length === 0) {
+        return res.status(404).json({
+          error:
+            "This user doesn't have an available organization. They may need to create one first or their organization is already linked to another company.",
+        });
+      }
+
+      const userOrganization = userOrganizations[0];
+
+      // Link the organization to the company
+      const { error: updateError } = await supabase
+        .from("organizations")
+        .update({
+          company_admin_id: companyAdmin.id,
+        })
+        .eq("id", userOrganization.id);
+
+      if (updateError) throw updateError;
+
+      // Get the updated organization with members
+      const { data: updatedOrg } = await supabase
+        .from("organizations")
+        .select("*")
+        .eq("id", userOrganization.id)
+        .single();
+
+      // Get organization members
+      const { data: members } = await supabase
+        .from("organization_members")
+        .select("id, user_id, role")
+        .eq("organization_id", userOrganization.id);
+
+      // Get profiles for members
+      const memberProfiles = await Promise.all(
+        (members || []).map(async (member) => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("id, email, full_name")
+            .eq("id", member.user_id)
+            .single();
+
+          return {
+            ...member,
+            profiles: profile,
+          };
+        }),
+      );
+
+      const enrichedOrg = {
+        ...updatedOrg,
+        organization_members: memberProfiles,
+      };
+
+      // TODO: Send email notification to the organization owner
+      // You can implement email sending here using a service like SendGrid, Resend, etc.
+
+      res.json({
+        success: true,
+        message: "Organization owner invited and linked successfully!",
+        organization: enrichedOrg,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Get company admin info for organization owner
+app.get(
+  "/api/organizations/company-admin-info",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      // Get organizations owned by this user
+      const { data: organizations, error: orgError } = await supabase
+        .from("organizations")
+        .select("id, name, company_admin_id")
+        .eq("owner_id", req.user.id);
+
+      if (orgError) throw orgError;
+
+      // Find the first organization with a company admin
+      const linkedOrg = organizations?.find(
+        (org) => org.company_admin_id !== null,
+      );
+
+      if (!linkedOrg || !linkedOrg.company_admin_id) {
+        return res.json({ linked: false });
+      }
+
+      // Get company admin details
+      const { data: companyAdmin, error: adminError } = await supabase
+        .from("company_admins")
+        .select("company_name, company_email, company_phone")
+        .eq("id", linkedOrg.company_admin_id)
+        .single();
+
+      if (adminError) throw adminError;
+
+      res.json({
+        linked: true,
+        companyAdmin: companyAdmin,
+        organizationName: linkedOrg.name,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Get company admin info for a specific organization
+app.get(
+  "/api/organizations/:organizationId/company-admin",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { organizationId } = req.params;
+
+      // Get organization details
+      const { data: org, error: orgError } = await supabase
+        .from("organizations")
+        .select("id, name, company_admin_id, owner_id")
+        .eq("id", organizationId)
+        .single();
+
+      if (orgError) throw orgError;
+
+      if (!org || !org.company_admin_id) {
+        return res.json({ companyAdmin: null });
+      }
+
+      // Verify user is owner or member of this organization
+      const { data: membership } = await supabase
+        .from("organization_members")
+        .select("id")
+        .eq("organization_id", organizationId)
+        .eq("user_id", req.user.id)
+        .single();
+
+      if (org.owner_id !== req.user.id && !membership) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      // Get company admin details
+      const { data: companyAdmin, error: adminError } = await supabase
+        .from("company_admins")
+        .select("company_name, company_email, company_phone")
+        .eq("id", org.company_admin_id)
+        .single();
+
+      if (adminError) throw adminError;
+
+      res.json({
+        companyAdmin: companyAdmin,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Share wallet balance to organization
+app.post(
+  "/api/company-admin/wallet/share",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { organization_id, amount, notes } = req.body;
+
+      if (!organization_id || !amount || amount <= 0) {
+        return res
+          .status(400)
+          .json({ error: "Valid organization ID and amount are required" });
+      }
+
+      // Get company admin
+      const { data: companyAdmin } = await supabase
+        .from("company_admins")
+        .select("id")
+        .eq("user_id", req.user.id)
+        .single();
+
+      if (!companyAdmin) {
+        return res.status(403).json({ error: "Not a company admin" });
+      }
+
+      // Check company wallet balance
+      const { data: wallet } = await supabase
+        .from("wallets")
+        .select("balance")
+        .eq("user_id", req.user.id)
+        .single();
+
+      // Get current total shared amount
+      const { data: shares } = await supabase
+        .from("wallet_shares")
+        .select("shared_amount")
+        .eq("company_admin_id", companyAdmin.id);
+
+      const totalShared =
+        shares?.reduce(
+          (sum, share) => sum + parseFloat(share.shared_amount),
+          0,
+        ) || 0;
+      const available = parseFloat(wallet.balance) - totalShared;
+
+      if (available < parseFloat(amount)) {
+        return res.status(400).json({
+          error: "Insufficient balance",
+          available,
+          requested: parseFloat(amount),
+        });
+      }
+
+      // Check if organization belongs to this company admin
+      const { data: organization } = await supabase
+        .from("organizations")
+        .select("id, shared_balance, owner_id")
+        .eq("id", organization_id)
+        .eq("company_admin_id", companyAdmin.id)
+        .single();
+
+      if (!organization) {
+        return res.status(404).json({
+          error: "Organization not found or doesn't belong to this company",
+        });
+      }
+
+      // Get owner's wallet
+      const { data: ownerWallet } = await supabase
+        .from("wallets")
+        .select("balance")
+        .eq("user_id", organization.owner_id)
+        .single();
+
+      if (!ownerWallet) {
+        return res.status(404).json({
+          error: "Owner wallet not found",
+        });
+      }
+
+      // Check if share already exists
+      const { data: existingShare } = await supabase
+        .from("wallet_shares")
+        .select("id, shared_amount")
+        .eq("company_admin_id", companyAdmin.id)
+        .eq("organization_id", organization_id)
+        .single();
+
+      if (existingShare) {
+        // Update existing share
+        const newAmount =
+          parseFloat(existingShare.shared_amount) + parseFloat(amount);
+
+        const { error: updateError } = await supabase
+          .from("wallet_shares")
+          .update({
+            shared_amount: newAmount,
+            shared_at: new Date().toISOString(),
+            notes,
+          })
+          .eq("id", existingShare.id);
+
+        if (updateError) throw updateError;
+
+        // Update organization shared_balance
+        const { error: orgError } = await supabase
+          .from("organizations")
+          .update({
+            shared_balance:
+              parseFloat(organization.shared_balance) + parseFloat(amount),
+          })
+          .eq("id", organization_id);
+
+        if (orgError) throw orgError;
+
+        // Credit owner's wallet
+        const newOwnerBalance =
+          parseFloat(ownerWallet.balance) + parseFloat(amount);
+        console.log(
+          `💰 Crediting owner wallet (update): ${organization.owner_id}`,
+        );
+        console.log(`   Old balance: $${ownerWallet.balance}`);
+        console.log(`   Adding: $${amount}`);
+        console.log(`   New balance: $${newOwnerBalance}`);
+
+        const { error: ownerWalletError } = await supabase
+          .from("wallets")
+          .update({
+            balance: newOwnerBalance,
+          })
+          .eq("user_id", organization.owner_id);
+
+        if (ownerWalletError) {
+          console.error("❌ Error updating owner wallet:", ownerWalletError);
+          throw ownerWalletError;
+        }
+
+        console.log("✅ Owner wallet updated successfully");
+      } else {
+        // Create new share
+        const { error: shareError } = await supabase
+          .from("wallet_shares")
+          .insert({
+            company_admin_id: companyAdmin.id,
+            organization_id,
+            shared_amount: amount,
+            shared_by: req.user.id,
+            notes,
+          });
+
+        if (shareError) throw shareError;
+
+        // Update organization shared_balance
+        const { error: orgError } = await supabase
+          .from("organizations")
+          .update({
+            shared_balance:
+              parseFloat(organization.shared_balance) + parseFloat(amount),
+          })
+          .eq("id", organization_id);
+
+        if (orgError) throw orgError;
+
+        // Credit owner's wallet
+        const newOwnerBalance =
+          parseFloat(ownerWallet.balance) + parseFloat(amount);
+        console.log(`💰 Crediting owner wallet: ${organization.owner_id}`);
+        console.log(`   Old balance: $${ownerWallet.balance}`);
+        console.log(`   Adding: $${amount}`);
+        console.log(`   New balance: $${newOwnerBalance}`);
+
+        const { error: ownerWalletError } = await supabase
+          .from("wallets")
+          .update({
+            balance: newOwnerBalance,
+          })
+          .eq("user_id", organization.owner_id);
+
+        if (ownerWalletError) {
+          console.error("❌ Error updating owner wallet:", ownerWalletError);
+          throw ownerWalletError;
+        }
+
+        console.log("✅ Owner wallet updated successfully");
+      }
+
+      res.json({
+        success: true,
+        message: "Wallet balance shared successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Get wallet shares
+app.get(
+  "/api/company-admin/wallet/shares",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { data: companyAdmin } = await supabase
+        .from("company_admins")
+        .select("id")
+        .eq("user_id", req.user.id)
+        .single();
+
+      if (!companyAdmin) {
+        return res.status(403).json({ error: "Not a company admin" });
+      }
+
+      const { data: shares, error } = await supabase
+        .from("wallet_shares")
+        .select(
+          `
+        *,
+        organizations(
+          id,
+          name,
+          shared_balance
+        )
+      `,
+        )
+        .eq("company_admin_id", companyAdmin.id)
+        .order("shared_at", { ascending: false });
+
+      if (error) throw error;
+
+      res.json({ success: true, shares: shares || [] });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Get company admin stats
+app.get("/api/company-admin/stats", authenticate, async (req, res, next) => {
+  try {
+    const { data: companyAdmin } = await supabase
+      .from("company_admins")
+      .select("id")
+      .eq("user_id", req.user.id)
+      .single();
+
+    if (!companyAdmin) {
+      return res.status(403).json({ error: "Not a company admin" });
+    }
+
+    // Get total organizations
+    const { count: totalOrganizations } = await supabase
+      .from("organizations")
+      .select("*", { count: "exact", head: true })
+      .eq("company_admin_id", companyAdmin.id);
+
+    // Get total shared balance
+    const { data: shares } = await supabase
+      .from("wallet_shares")
+      .select("shared_amount")
+      .eq("company_admin_id", companyAdmin.id);
+
+    const totalShared =
+      shares?.reduce(
+        (sum, share) => sum + parseFloat(share.shared_amount),
+        0,
+      ) || 0;
+
+    // Get total members across all organizations
+    const { data: organizations } = await supabase
+      .from("organizations")
+      .select("id")
+      .eq("company_admin_id", companyAdmin.id);
+
+    let totalMembers = 0;
+    if (organizations && organizations.length > 0) {
+      const orgIds = organizations.map((org) => org.id);
+      const { count: memberCount } = await supabase
+        .from("organization_members")
+        .select("*", { count: "exact", head: true })
+        .in("organization_id", orgIds);
+
+      totalMembers = memberCount || 0;
+    }
+
+    res.json({
+      success: true,
+      stats: {
+        totalOrganizations: totalOrganizations || 0,
+        totalShared: parseFloat(totalShared.toFixed(2)),
+        totalMembers,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Delete organization
+app.delete(
+  "/api/company-admin/organizations/:id",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+
+      const { data: companyAdmin } = await supabase
+        .from("company_admins")
+        .select("id")
+        .eq("user_id", req.user.id)
+        .single();
+
+      if (!companyAdmin) {
+        return res.status(403).json({ error: "Not a company admin" });
+      }
+
+      // Verify organization belongs to this company admin
+      const { data: organization } = await supabase
+        .from("organizations")
+        .select("id, shared_balance")
+        .eq("id", id)
+        .eq("company_admin_id", companyAdmin.id)
+        .single();
+
+      if (!organization) {
+        return res.status(404).json({ error: "Organization not found" });
+      }
+
+      // Delete the organization (cascade will handle members and shares)
+      const { error } = await supabase
+        .from("organizations")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      res.json({ success: true, message: "Organization deleted successfully" });
+    } catch (error) {
+      next(error);
+    }
+  },
 );
 
 // ============================================================================
@@ -2806,7 +3886,7 @@ app.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Get user's organization memberships (for normal users)
@@ -2857,18 +3937,18 @@ app.get(
             joined_at: membership.joined_at,
             role: membership.role,
           };
-        })
+        }),
       );
 
       const organizations = organizationsWithDetails.filter(
-        (org) => org !== null
+        (org) => org !== null,
       );
 
       res.json({ success: true, organizations });
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Get organization details
@@ -2895,7 +3975,7 @@ app.get(
             user_type
           )
         )
-      `
+      `,
         )
         .eq("id", organizationId)
         .single();
@@ -2904,7 +3984,7 @@ app.get(
 
       // Check if user has access
       const isMember = organization.organization_members.some(
-        (m) => m.user_id === req.user.id
+        (m) => m.user_id === req.user.id,
       );
       const isOwner = organization.owner_id === req.user.id;
 
@@ -2916,7 +3996,7 @@ app.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Send organization invite
@@ -3029,7 +4109,7 @@ app.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Get organization members
@@ -3094,14 +4174,14 @@ app.get(
             email: profile?.email || "",
             wallet_balance: wallet?.balance || 0,
           };
-        })
+        }),
       );
 
       res.json({ success: true, members: membersWithDetails });
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Get pending invites for current user
@@ -3151,14 +4231,14 @@ app.get(
             organizations: org,
             invited_by_profile: inviter,
           };
-        })
+        }),
       );
 
       res.json({ success: true, invites: invitesWithDetails });
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Accept organization invite
@@ -3229,7 +4309,7 @@ app.post(
             },
             {
               onConflict: "organization_id,user_id",
-            }
+            },
           );
 
         if (memberError) throw memberError;
@@ -3242,7 +4322,7 @@ app.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Reject organization invite
@@ -3282,7 +4362,7 @@ app.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Remove member from organization
@@ -3418,14 +4498,14 @@ app.delete(
         message:
           memberBalance > 0
             ? `Member removed successfully. $${memberBalance.toFixed(
-                2
+                2,
               )} transferred to your wallet.`
             : "Member removed successfully",
       });
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Leave organization
@@ -3550,14 +4630,14 @@ app.post(
         message:
           userBalance > 0
             ? `Left organization successfully. $${userBalance.toFixed(
-                2
+                2,
               )} transferred to organization owner.`
             : "Left organization successfully",
       });
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // ============================================================================
@@ -3586,7 +4666,7 @@ app.get("/api/admin/temp/users", async (req, res, next) => {
             business_type
           )
         )
-      `
+      `,
       )
       .order("created_at", { ascending: false });
 
@@ -3713,7 +4793,7 @@ app.post(
       console.error("Failed to remove user:", error);
       next(error);
     }
-  }
+  },
 );
 
 app.get(
@@ -3734,7 +4814,7 @@ app.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 app.get(
@@ -3746,7 +4826,7 @@ app.get(
       const { data: enterprises } = await supabase
         .from("enterprise_accounts")
         .select(
-          `*, profiles:admin_id (full_name, email), enterprise_members (count)`
+          `*, profiles:admin_id (full_name, email), enterprise_members (count)`,
         )
         .order("created_at", { ascending: false });
 
@@ -3754,7 +4834,7 @@ app.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 app.get(
@@ -3772,7 +4852,7 @@ app.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 app.put(
@@ -3801,7 +4881,7 @@ app.put(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 app.get(
@@ -3822,7 +4902,7 @@ app.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 app.get(
@@ -3843,7 +4923,7 @@ app.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 app.get(
@@ -3888,7 +4968,7 @@ app.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // ============================================================================
@@ -3924,7 +5004,7 @@ server.on("error", (error) => {
   console.error("❌ Server error:", error);
   if (error.code === "EADDRINUSE") {
     console.error(
-      `Port ${PORT} is already in use. Please use a different port.`
+      `Port ${PORT} is already in use. Please use a different port.`,
     );
   }
   process.exit(1);

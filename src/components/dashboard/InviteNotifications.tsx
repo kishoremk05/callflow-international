@@ -32,12 +32,14 @@ interface InviteNotificationsProps {
   open: boolean;
   onClose: () => void;
   userId: string;
+  onInviteAccepted?: () => void;
 }
 
 export function InviteNotifications({
   open,
   onClose,
   userId,
+  onInviteAccepted,
 }: InviteNotificationsProps) {
   const [invites, setInvites] = useState<OrganizationInvite[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,7 +68,7 @@ export function InviteNotifications({
           headers: {
             Authorization: `Bearer ${session.access_token}`,
           },
-        }
+        },
       );
 
       const data = await response.json();
@@ -102,7 +104,7 @@ export function InviteNotifications({
           headers: {
             Authorization: `Bearer ${session.access_token}`,
           },
-        }
+        },
       );
 
       const data = await response.json();
@@ -113,6 +115,16 @@ export function InviteNotifications({
 
       toast.success("Successfully joined organization!");
       setInvites(invites.filter((inv) => inv.id !== inviteId));
+
+      // Notify parent component
+      if (onInviteAccepted) {
+        onInviteAccepted();
+      }
+
+      // Close dialog if no more invites
+      if (invites.length === 1) {
+        onClose();
+      }
     } catch (error: any) {
       console.error("Error accepting invite:", error);
       toast.error(error.message || "Failed to accept invite");
@@ -142,7 +154,7 @@ export function InviteNotifications({
           headers: {
             Authorization: `Bearer ${session.access_token}`,
           },
-        }
+        },
       );
 
       const data = await response.json();
@@ -215,12 +227,18 @@ export function InviteNotifications({
                           size="sm"
                           onClick={() => handleAccept(invite.id)}
                           disabled={processingId === invite.id}
-                          className="bg-green-500 hover:bg-green-600"
+                          className="bg-green-500 hover:bg-green-600 gap-1"
                         >
                           {processingId === invite.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Joining...
+                            </>
                           ) : (
-                            <Check className="w-4 h-4" />
+                            <>
+                              <Check className="w-4 h-4" />
+                              Join
+                            </>
                           )}
                         </Button>
                         <Button
@@ -228,12 +246,15 @@ export function InviteNotifications({
                           variant="outline"
                           onClick={() => handleReject(invite.id)}
                           disabled={processingId === invite.id}
-                          className="border-red-200 text-red-600 hover:bg-red-50"
+                          className="border-red-200 text-red-600 hover:bg-red-50 gap-1"
                         >
                           {processingId === invite.id ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
-                            <X className="w-4 h-4" />
+                            <>
+                              <X className="w-4 h-4" />
+                              Reject
+                            </>
                           )}
                         </Button>
                       </div>

@@ -55,6 +55,12 @@ interface Member {
   wallet_balance: number;
 }
 
+interface CompanyAdmin {
+  company_name: string;
+  company_email: string;
+  company_phone: string | null;
+}
+
 export function OrganizationManagement({
   open,
   onClose,
@@ -78,6 +84,8 @@ export function OrganizationManagement({
     id: string;
     name: string;
   } | null>(null);
+  const [companyAdmin, setCompanyAdmin] = useState<CompanyAdmin | null>(null);
+  const [loadingCompanyInfo, setLoadingCompanyInfo] = useState(false);
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -94,8 +102,47 @@ export function OrganizationManagement({
   useEffect(() => {
     if (open && organizationId) {
       fetchMembers();
+      fetchCompanyAdmin();
     }
   }, [open, organizationId]);
+
+  const fetchCompanyAdmin = async () => {
+    if (!organizationId) return;
+
+    setLoadingCompanyInfo(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) return;
+
+      // Use backend API to get company admin info
+      const response = await fetch(
+        `${
+          import.meta.env.VITE_API_URL || "http://localhost:5000"
+        }/api/organizations/${organizationId}/company-admin`,
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      if (response.ok && data.companyAdmin) {
+        setCompanyAdmin(data.companyAdmin);
+      } else {
+        setCompanyAdmin(null);
+      }
+    } catch (error) {
+      console.error("Error fetching company admin:", error);
+      setCompanyAdmin(null);
+    } finally {
+      setLoadingCompanyInfo(false);
+    }
+  };
 
   const fetchMembers = async () => {
     if (!organizationId) return;
@@ -116,7 +163,7 @@ export function OrganizationManagement({
           headers: {
             Authorization: `Bearer ${session.access_token}`,
           },
-        }
+        },
       );
 
       const data = await response.json();
@@ -169,7 +216,7 @@ export function OrganizationManagement({
             Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({ email }),
-        }
+        },
       );
 
       const data = await response.json();
@@ -226,7 +273,7 @@ export function OrganizationManagement({
           headers: {
             Authorization: `Bearer ${session.access_token}`,
           },
-        }
+        },
       );
 
       const data = await response.json();
@@ -273,7 +320,7 @@ export function OrganizationManagement({
           headers: {
             Authorization: `Bearer ${session.access_token}`,
           },
-        }
+        },
       );
 
       const data = await response.json();
@@ -308,6 +355,42 @@ export function OrganizationManagement({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          {/* Company Admin Info */}
+          {companyAdmin && (
+            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                  <Building2 className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-semibold text-blue-900">
+                      Managed by Company
+                    </h4>
+                    <Badge className="bg-blue-500">Company</Badge>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <p className="text-blue-800 font-medium">
+                      {companyAdmin.company_name}
+                    </p>
+                    <p className="text-blue-700 flex items-center gap-1">
+                      <Mail className="w-3 h-3" />
+                      {companyAdmin.company_email}
+                    </p>
+                    {companyAdmin.company_phone && (
+                      <p className="text-blue-700">
+                        📞 {companyAdmin.company_phone}
+                      </p>
+                    )}
+                  </div>
+                  <p className="text-xs text-blue-600 mt-2">
+                    Your organization is under this company's management
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Invite Section */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
@@ -484,7 +567,7 @@ export function OrganizationManagement({
                                   onClick={() =>
                                     handleRemoveMember(
                                       member.id,
-                                      member.full_name || member.email
+                                      member.full_name || member.email,
                                     )
                                   }
                                   disabled={removingMemberId === member.id}

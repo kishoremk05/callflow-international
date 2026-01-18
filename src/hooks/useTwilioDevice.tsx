@@ -112,7 +112,29 @@ export function useTwilioDevice() {
 
         newDevice.on("error", (error) => {
           console.error("Twilio Device error:", error);
-          setError(error.message);
+
+          // Handle token expiration
+          if (
+            error.message?.includes("AccessTokenExpired") ||
+            error.message?.includes("20104")
+          ) {
+            console.log("🔄 Token expired, refreshing...");
+            setError("Token expired, refreshing...");
+            setIsConnected(false);
+
+            // Destroy current device
+            if (newDevice) {
+              newDevice.destroy();
+            }
+
+            // Reinitialize with new token after a short delay
+            setTimeout(() => {
+              console.log("♻️ Reinitializing Twilio Device...");
+              initializeDevice();
+            }, 1000);
+          } else {
+            setError(error.message);
+          }
         });
 
         newDevice.on("incoming", (call) => {
@@ -144,10 +166,23 @@ export function useTwilioDevice() {
     toNumber: string,
     countryCode: string,
     callerIdType: string,
-    callerIdNumber?: string
+    callerIdNumber?: string,
+    retryCount = 0
   ) => {
     try {
       if (!device) {
+        if (retryCount < 2) {
+          console.log("🔄 Device not ready, reinitializing...");
+          await initializeDevice();
+          await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait for device to be ready
+          return makeCall(
+            toNumber,
+            countryCode,
+            callerIdType,
+            callerIdNumber,
+            retryCount + 1
+          );
+        }
         throw new Error(
           "Device not initialized. Backend server may not be running."
         );
@@ -191,55 +226,132 @@ export function useTwilioDevice() {
         params.CallerId = callerIdParam;
       }
 
-      const call = await device.connect({ params });
-      setCallState("connecting");
-      callStartTimeRef.current = Date.now();
+      try {
+        const call = await device.connect({ params });
+        setCallState("connecting");
+        callStartTimeRef.current = Date.now();
 
-      call.on("ringing", () => {
-        console.log("Call is ringing");
-        setCallState("ringing");
-        toast.info("Ringing...");
-      });
+        // Capture and store the Twilio CallSid
+        call.on("accept", async () => {
+          console.log("Call accepted and connected!");
+          const twilioCallSid = call.parameters?.CallSid;
 
-      call.on("accept", () => {
-        console.log("Call connected - ringing");
-        setCallState("ringing");
-        // Don't set answered time here - wait for manual confirmation or timeout
-      });
+          if (twilioCallSid) {
+            console.log(`📞 Twilio CallSid: ${twilioCallSid}`);
 
-      call.on("disconnect", async () => {
-        console.log("Call disconnected");
-        const duration = callAnsweredTimeRef.current
-          ? Math.floor((Date.now() - callAnsweredTimeRef.current) / 1000)
-          : 0;
+            // Update our database with the real Twilio CallSid
+            try {
+              await fetch(`${API_URL}/api/calls/update-sid`, {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${session.access_token}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  callId: data.callId,
+                  twilioCallSid: twilioCallSid,
+                }),
+              });
+              console.log(
+                `✅ Successfully linked call ${data.callId} with CallSid ${twilioCallSid}`
+              );
+            } catch (error) {
+              console.error("Failed to update call with CallSid:", error);
+            }
+          } else {
+            console.warn("⚠️ No CallSid found in call parameters");
+          }
 
-        await endCallOnBackend(data.callId, duration);
+          // Set to answered when call is accepted (connected)
+          setCallState("answered");
+          callAnsweredTimeRef.current = Date.now();
+          toast.success("Call connected!");
+        });
 
-        setCurrentCall(null);
-        setCallState("idle");
-        callStartTimeRef.current = null;
-        callAnsweredTimeRef.current = null;
+        call.on("ringing", () => {
+          console.log("Call is ringing");
+          setCallState("ringing");
+          toast.info("Ringing...");
+        });
 
-        if (duration > 0) {
-          toast.info(
-            `Call ended - ${Math.floor(duration / 60)}:${(duration % 60)
-              .toString()
-              .padStart(2, "0")}`
+        call.on("disconnect", async () => {
+          console.log("Call disconnected");
+          const duration = callAnsweredTimeRef.current
+            ? Math.floor((Date.now() - callAnsweredTimeRef.current) / 1000)
+            : 0;
+
+          await endCallOnBackend(data.callId, duration);
+
+          setCurrentCall(null);
+          setCallState("idle");
+          callStartTimeRef.current = null;
+          callAnsweredTimeRef.current = null;
+
+          if (duration > 0) {
+            toast.info(
+              `Call ended - ${Math.floor(duration / 60)}:${(duration % 60)
+                .toString()
+                .padStart(2, "0")}`
+            );
+          } else {
+            toast.info("Call ended - No answer");
+          }
+        });
+
+        call.on("error", (error) => {
+          console.error("Call error:", error);
+          toast.error("Call error: " + error.message);
+        });
+
+        setCurrentCall(call);
+        return call;
+      } catch (connectError: any) {
+        console.error("Connection error:", connectError);
+
+        // Handle destroyed device - retry
+        if (
+          connectError.message?.includes("Device has been destroyed") &&
+          retryCount < 2
+        ) {
+          console.log(
+            "🔄 Device destroyed during connection, reinitializing..."
           );
-        } else {
-          toast.info("Call ended - No answer");
+          toast.info("Reconnecting...");
+          await initializeDevice();
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          return makeCall(
+            toNumber,
+            countryCode,
+            callerIdType,
+            callerIdNumber,
+            retryCount + 1
+          );
         }
-      });
 
-      call.on("error", (error) => {
-        console.error("Call error:", error);
-        toast.error("Call error: " + error.message);
-      });
-
-      setCurrentCall(call);
-      return call;
+        toast.error(connectError.message || "Connection failed");
+        throw connectError;
+      }
     } catch (error: any) {
       console.error("Failed to make call:", error);
+
+      // Handle destroyed device error
+      if (
+        error.message?.includes("Device has been destroyed") &&
+        retryCount < 2
+      ) {
+        console.log("🔄 Device destroyed, reinitializing and retrying...");
+        toast.info("Reconnecting...");
+        await initializeDevice();
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        return makeCall(
+          toNumber,
+          countryCode,
+          callerIdType,
+          callerIdNumber,
+          retryCount + 1
+        );
+      }
+
       toast.error(error.message || "Failed to make call");
       throw error;
     }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,7 @@ import { toast } from "sonner";
 import { Phone, Mail, Lock, User, Building2, UserCircle } from "lucide-react";
 
 export function AuthForm() {
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -225,16 +227,40 @@ export function AuthForm() {
                   : "Create Account"}
               </Button>
             </form>
-            <div className="mt-6 text-center">
-              <button
-                type="button"
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-sm text-gray-600 hover:text-orange-600 transition-colors font-medium"
-              >
-                {isLogin
-                  ? "Don't have an account? Sign up"
-                  : "Already have an account? Sign in"}
-              </button>
+            <div className="mt-6 space-y-3">
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setIsLogin(!isLogin)}
+                  className="text-sm text-gray-600 hover:text-orange-600 transition-colors font-medium"
+                >
+                  {isLogin
+                    ? "Don't have an account? Sign up"
+                    : "Already have an account? Sign in"}
+                </button>
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    or
+                  </span>
+                </div>
+              </div>
+
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => navigate("/company-admin/login")}
+                  className="text-sm text-blue-600 hover:text-blue-700 transition-colors font-medium flex items-center justify-center gap-2 mx-auto"
+                >
+                  <Building2 className="w-4 h-4" />
+                  Company Admin Login
+                </button>
+              </div>
             </div>
           </CardContent>
         </Card>

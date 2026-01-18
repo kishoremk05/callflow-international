@@ -86,7 +86,7 @@ export default function Dashboard() {
   const [currentNumber, setCurrentNumber] = useState("");
   const [currentCountryCode, setCurrentCountryCode] = useState("");
   const [activeView, setActiveView] = useState<"dialer" | "team" | "analytics">(
-    "dialer"
+    "dialer",
   );
 
   // Organization state
@@ -98,6 +98,8 @@ export default function Dashboard() {
   const [joinedOrganizations, setJoinedOrganizations] = useState<any[]>([]);
   const [selectedOrg, setSelectedOrg] = useState<any>(null);
   const [pendingInvitesCount, setPendingInvitesCount] = useState(0);
+  const [showCompanyNotification, setShowCompanyNotification] = useState(false);
+  const [companyAdminInfo, setCompanyAdminInfo] = useState<any>(null);
 
   // Call Queue state (Company users only)
   const [showCallQueueUpload, setShowCallQueueUpload] = useState(false);
@@ -173,6 +175,7 @@ export default function Dashboard() {
       fetchData();
       if (userType === "company") {
         fetchOrganizations();
+        checkCompanyLinking();
       }
       if (userType === "normal") {
         fetchPendingInvites();
@@ -180,6 +183,44 @@ export default function Dashboard() {
       }
     }
   }, [user, userType]);
+
+  const checkCompanyLinking = async () => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) return;
+
+      // Check if user has already dismissed the notification
+      const dismissed = localStorage.getItem(
+        `company-notification-dismissed-${user?.id}`,
+      );
+      if (dismissed === "true") {
+        return; // Don't show notification if already dismissed
+      }
+
+      // Use backend API to avoid RLS issues
+      const response = await fetch(
+        `${
+          import.meta.env.VITE_API_URL || "http://localhost:5000"
+        }/api/organizations/company-admin-info`,
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      if (response.ok && data.linked && data.companyAdmin) {
+        setCompanyAdminInfo(data.companyAdmin);
+        setShowCompanyNotification(true);
+      }
+    } catch (error) {
+      console.error("Error checking company linking:", error);
+    }
+  };
 
   const fetchOrganizations = async () => {
     try {
@@ -196,7 +237,7 @@ export default function Dashboard() {
           headers: {
             Authorization: `Bearer ${session.access_token}`,
           },
-        }
+        },
       );
 
       const data = await response.json();
@@ -223,7 +264,7 @@ export default function Dashboard() {
           headers: {
             Authorization: `Bearer ${session.access_token}`,
           },
-        }
+        },
       );
 
       const data = await response.json();
@@ -250,7 +291,7 @@ export default function Dashboard() {
           headers: {
             Authorization: `Bearer ${session.access_token}`,
           },
-        }
+        },
       );
 
       const data = await response.json();
@@ -294,7 +335,7 @@ export default function Dashboard() {
       const { data: callsData } = await supabase
         .from("call_logs")
         .select(
-          "id, to_number, to_country_code, status, duration_seconds, started_at, billed_amount"
+          "id, to_number, to_country_code, status, duration_seconds, started_at, billed_amount",
         )
         .eq("user_id", user.id)
         .order("started_at", { ascending: false })
@@ -309,11 +350,11 @@ export default function Dashboard() {
         const totalCalls = callsData.length;
         const totalMinutes = callsData.reduce(
           (sum, call) => sum + (call.duration_seconds || 0) / 60,
-          0
+          0,
         );
         const totalSpent = callsData.reduce(
           (sum, call) => sum + (call.billed_amount || 0),
-          0
+          0,
         );
         const thisMonth = callsData
           .filter((call) => new Date(call.started_at) >= startOfMonth)
@@ -336,7 +377,7 @@ export default function Dashboard() {
 
     if (!isConnected && !isInitializing) {
       toast.error(
-        "Calling device not ready. Backend server may not be running."
+        "Calling device not ready. Backend server may not be running.",
       );
       return;
     }
@@ -507,6 +548,47 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Company Linking Notification - Organization Owners */}
+        {userType === "company" &&
+          showCompanyNotification &&
+          companyAdminInfo && (
+            <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-300 rounded-xl shadow-md">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 animate-pulse">
+                  <Building2 className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-blue-800">
+                    🎉 Your organization has been linked to a company!
+                  </p>
+                  <p className="text-sm text-blue-700 mt-1">
+                    <strong>{companyAdminInfo.company_name}</strong> has invited
+                    your organization to join their company.
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    Contact: {companyAdminInfo.company_email}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                  onClick={() => {
+                    // Save dismissal to localStorage
+                    if (companyAdminInfo && user?.id) {
+                      localStorage.setItem(
+                        `company-notification-dismissed-${user.id}`,
+                        "true",
+                      );
+                    }
+                    setShowCompanyNotification(false);
+                  }}
+                >
+                  Got it
+                </Button>
+              </div>
+            </div>
+          )}
+
         {/* Organization Invitation Alert - Normal Users */}
         {userType === "normal" && pendingInvitesCount > 0 && (
           <div className="mb-6 p-4 bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-300 rounded-xl flex items-center gap-3 shadow-md">
@@ -604,7 +686,7 @@ export default function Dashboard() {
                     "Raw:",
                     rawNumber,
                     "Length:",
-                    rawNumber.length
+                    rawNumber.length,
                   );
 
                   // If number already has + symbol (like +91 9080222066)
@@ -689,7 +771,7 @@ export default function Dashboard() {
                     "Final: Country Code:",
                     countryCode,
                     "Clean Number:",
-                    cleanNumber
+                    cleanNumber,
                   );
                   handleCall(cleanNumber, countryCode);
                 }}
@@ -792,6 +874,10 @@ export default function Dashboard() {
               fetchPendingInvites();
             }}
             userId={user.id}
+            onInviteAccepted={() => {
+              fetchPendingInvites();
+              fetchJoinedOrganizations();
+            }}
           />
 
           <JoinedOrganizations

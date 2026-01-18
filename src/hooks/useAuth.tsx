@@ -4,14 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
 interface UserProfile {
-  user_type?: "normal" | "company";
+  user_type?: "normal" | "company" | "company_admin";
 }
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [userType, setUserType] = useState<"normal" | "company">("normal");
+  const [userType, setUserType] = useState<
+    "normal" | "company" | "company_admin"
+  >("normal");
   const navigate = useNavigate();
 
   useEffect(() => {

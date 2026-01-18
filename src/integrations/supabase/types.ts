@@ -216,6 +216,7 @@ export type Database = {
           id: string
           phone: string | null
           updated_at: string
+          user_type: Database["public"]["Enums"]["user_type"] | null
         }
         Insert: {
           avatar_url?: string | null
@@ -226,6 +227,7 @@ export type Database = {
           id: string
           phone?: string | null
           updated_at?: string
+          user_type?: Database["public"]["Enums"]["user_type"] | null
         }
         Update: {
           avatar_url?: string | null
@@ -236,6 +238,7 @@ export type Database = {
           id?: string
           phone?: string | null
           updated_at?: string
+          user_type?: Database["public"]["Enums"]["user_type"] | null
         }
         Relationships: []
       }
@@ -423,6 +426,7 @@ export type Database = {
       payment_provider: "stripe" | "razorpay"
       payment_status: "pending" | "completed" | "failed" | "refunded"
       user_role: "user" | "enterprise_admin" | "enterprise_member" | "admin"
+      user_type: "normal" | "company" | "company_admin"
     }
     CompositeTypes: {
       [_ in never]: never
