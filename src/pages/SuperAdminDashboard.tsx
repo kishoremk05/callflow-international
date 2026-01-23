@@ -66,6 +66,7 @@ interface NormalUser {
   full_name: string;
   wallet_balance: number;
   created_at: string;
+  country?: string;
 }
 
 interface Stats {
@@ -155,6 +156,62 @@ const SuperAdminDashboard = () => {
     navigate("/super-admin/login");
   };
 
+  const populateCountries = async () => {
+    try {
+      const token = localStorage.getItem("super_admin_token");
+      const apiUrl = import.meta.env.VITE_API_URL;
+
+      // First detect country from browser using ipapi.co (works with HTTPS)
+      let detectedCountry = "India"; // Default fallback
+      try {
+        const geoResponse = await fetch("https://ipapi.co/json/");
+        const geoData = await geoResponse.json();
+        detectedCountry = geoData.country_name || "India";
+        console.log("Detected country from browser:", detectedCountry);
+      } catch (err) {
+        console.log(
+          "Could not detect country from browser, using default:",
+          err,
+        );
+      }
+
+      const response = await fetch(
+        `${apiUrl}/api/super-admin/populate-countries`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ country: detectedCountry }),
+        },
+      );
+
+      const data = await response.json();
+      if (data.success) {
+        toast({
+          title: "Success",
+          description: `Countries updated to: ${detectedCountry}`,
+        });
+        // Refresh dashboard to show updated countries
+        fetchDashboardData();
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Failed to update countries",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error populating countries:", error);
+      toast({
+        title: "Error",
+        description: "Failed to populate countries",
+        variant: "destructive",
+      });
+    }
+  };
+
   const fetchOrgMembers = async (org: Organization) => {
     try {
       setLoadingMembers(true);
@@ -236,6 +293,10 @@ const SuperAdminDashboard = () => {
             </div>
           </div>
           <div className="flex gap-2">
+            <Button onClick={populateCountries} variant="outline" size="sm">
+              <Globe className="w-4 h-4 mr-2" />
+              Detect Countries
+            </Button>
             <Button onClick={fetchDashboardData} variant="outline" size="sm">
               <RefreshCw className="w-4 h-4 mr-2" />
               Refresh
@@ -516,6 +577,7 @@ const SuperAdminDashboard = () => {
                   <TableRow className="bg-gray-50">
                     <TableHead className="font-semibold">Email</TableHead>
                     <TableHead className="font-semibold">Full Name</TableHead>
+                    <TableHead className="font-semibold">Country</TableHead>
                     <TableHead className="font-semibold">
                       Wallet Balance
                     </TableHead>
@@ -537,6 +599,12 @@ const SuperAdminDashboard = () => {
                       <TableCell className="text-gray-600">
                         {user.full_name || "N/A"}
                       </TableCell>
+                      <TableCell className="text-gray-600">
+                        <div className="flex items-center gap-1">
+                          <Globe className="w-3 h-3" />
+                          {user.country || "Unknown"}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Badge
                           variant="outline"
@@ -557,7 +625,7 @@ const SuperAdminDashboard = () => {
                   {filteredUsers.length === 0 && (
                     <TableRow>
                       <TableCell
-                        colSpan={4}
+                        colSpan={5}
                         className="text-center text-gray-500 py-8"
                       >
                         {searchQuery

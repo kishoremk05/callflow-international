@@ -5667,7 +5667,7 @@ app.get(
     try {
       const { data: profiles, error } = await supabase
         .from("profiles")
-        .select("id, email, full_name, user_type, created_at")
+        .select("id, email, full_name, user_type, created_at, country")
         .neq("user_type", "company")
         .order("created_at", { ascending: false });
 
@@ -5688,6 +5688,7 @@ app.get(
             full_name: profile.full_name,
             wallet_balance: wallet?.balance || 0,
             created_at: profile.created_at,
+            country: profile.country || "Unknown",
           };
         }),
       );
@@ -5737,6 +5738,117 @@ app.get(
       res.json({
         success: true,
         members: memberDetails,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Update User Country (called when user logs in)
+app.post("/api/user/update-country", authenticate, async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+    const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+
+    // Detect country from IP using ipapi.co (free tier)
+    let country = "Unknown";
+    try {
+      // Skip for localhost/private IPs - use ipapi without IP parameter to get server location
+      if (
+        !clientIp ||
+        clientIp === "::1" ||
+        clientIp.startsWith("127.") ||
+        clientIp.startsWith("192.168.")
+      ) {
+        const response = await fetch("https://ipapi.co/json/");
+        const data = await response.json();
+        country = data.country_name || "Unknown";
+      } else {
+        const response = await fetch(`https://ipapi.co/${clientIp}/json/`);
+        const data = await response.json();
+        country = data.country_name || "Unknown";
+      }
+    } catch (error) {
+      console.log("Could not detect country from IP:", error.message);
+    }
+
+    // Update profiles table with country
+    const { error } = await supabase
+      .from("profiles")
+      .update({ country: country })
+      .eq("id", userId);
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      country: country,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Populate country for all existing users (Super Admin only)
+app.post(
+  "/api/super-admin/populate-countries",
+  authenticateSuperAdmin,
+  async (req, res, next) => {
+    try {
+      // Try to get country from request body first, then detect from multiple APIs
+      let detectedCountry = req.body?.country || "Unknown";
+
+      if (detectedCountry === "Unknown") {
+        // Try multiple geo APIs as fallback
+        const geoApis = [
+          "https://ipapi.co/json/",
+          "https://ip-api.com/json/",
+          "https://ipwhois.app/json/",
+        ];
+
+        for (const api of geoApis) {
+          try {
+            const response = await fetch(api, { timeout: 5000 });
+            const data = await response.json();
+            detectedCountry = data.country_name || data.country || "Unknown";
+            if (detectedCountry !== "Unknown") {
+              console.log(`Detected country from ${api}:`, detectedCountry);
+              break;
+            }
+          } catch (err) {
+            console.log(`Failed to get country from ${api}:`, err.message);
+          }
+        }
+      }
+
+      // If still unknown, default to India (since that's where most users are)
+      if (detectedCountry === "Unknown") {
+        detectedCountry = "India";
+      }
+
+      console.log("Final country to set:", detectedCountry);
+
+      // Update ALL profiles with detected country (force update)
+      // Using neq on id with empty string to match ALL rows
+      const { data: updated, error } = await supabase
+        .from("profiles")
+        .update({ country: detectedCountry })
+        .neq("id", "00000000-0000-0000-0000-000000000000")
+        .select();
+
+      if (error) {
+        console.error("Update error:", error);
+        throw error;
+      }
+
+      console.log("Updated profiles count:", updated?.length || 0);
+
+      res.json({
+        success: true,
+        message: `Updated ${updated?.length || 0} users with country: ${detectedCountry}`,
+        updated: updated?.length || 0,
+        country: detectedCountry,
       });
     } catch (error) {
       next(error);
