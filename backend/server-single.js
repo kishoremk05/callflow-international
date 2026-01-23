@@ -4234,6 +4234,26 @@ app.delete(
         return res.status(404).json({ error: "Organization not found" });
       }
 
+      // Return the shared balance back to company admin wallet
+      if (organization.shared_balance > 0) {
+        // Get company admin wallet
+        const { data: wallet } = await supabase
+          .from("company_admin_wallets")
+          .select("balance")
+          .eq("company_admin_id", companyAdmin.id)
+          .single();
+
+        if (wallet) {
+          // Add the shared balance back to company admin wallet
+          await supabase
+            .from("company_admin_wallets")
+            .update({
+              balance: wallet.balance + organization.shared_balance,
+            })
+            .eq("company_admin_id", companyAdmin.id);
+        }
+      }
+
       // Delete the organization (cascade will handle members and shares)
       const { error } = await supabase
         .from("organizations")
@@ -4242,7 +4262,11 @@ app.delete(
 
       if (error) throw error;
 
-      res.json({ success: true, message: "Organization deleted successfully" });
+      res.json({
+        success: true,
+        message: "Organization deleted successfully",
+        refunded_amount: organization.shared_balance,
+      });
     } catch (error) {
       next(error);
     }
@@ -5403,6 +5427,316 @@ app.get(
           totalRevenue: parseFloat(totalRevenue.toFixed(2)),
           totalProfit: parseFloat(totalProfit.toFixed(2)),
         },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// ============================================================================
+// SUPER ADMIN ROUTES
+// ============================================================================
+
+// Super Admin credentials (temporary hardcoded)
+const SUPER_ADMIN_EMAIL = "admin@gmail.com";
+const SUPER_ADMIN_PASSWORD = "admin@2026";
+
+// Super Admin middleware
+const authenticateSuperAdmin = (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).json({ error: "No token provided" });
+    }
+
+    // Simple token validation (token is just email for now)
+    if (token === Buffer.from(SUPER_ADMIN_EMAIL).toString("base64")) {
+      req.superAdmin = { email: SUPER_ADMIN_EMAIL };
+      next();
+    } else {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+  } catch (error) {
+    return res.status(401).json({ error: "Authentication failed" });
+  }
+};
+
+// Super Admin Login
+app.post("/api/super-admin/login", async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    if (email === SUPER_ADMIN_EMAIL && password === SUPER_ADMIN_PASSWORD) {
+      // Generate simple token (base64 encoded email)
+      const token = Buffer.from(email).toString("base64");
+
+      res.json({
+        success: true,
+        token,
+        message: "Login successful",
+      });
+    } else {
+      res.status(401).json({
+        success: false,
+        error: "Invalid credentials",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get Super Admin Stats
+app.get(
+  "/api/super-admin/stats",
+  authenticateSuperAdmin,
+  async (req, res, next) => {
+    try {
+      // Count company admins
+      const { count: totalCompanyAdmins } = await supabase
+        .from("company_admins")
+        .select("*", { count: "exact", head: true });
+
+      // Count organizations
+      const { count: totalOrganizations } = await supabase
+        .from("organizations")
+        .select("*", { count: "exact", head: true });
+
+      // Count normal users (excluding company admins)
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, user_type");
+
+      const totalNormalUsers =
+        profiles?.filter((p) => p.user_type !== "company").length || 0;
+
+      // Get Twilio balance
+      let twilioBalance = 0;
+      if (twilioClient) {
+        try {
+          const balance = await twilioClient.balance.fetch();
+          // Twilio balance is returned as an object with balance and currency
+          twilioBalance = Math.abs(parseFloat(balance.balance)) || 0;
+        } catch (error) {
+          console.error("Error fetching Twilio balance:", error);
+          // Fallback: try account fetch method
+          try {
+            const account = await twilioClient.api.v2010
+              .accounts(process.env.TWILIO_ACCOUNT_SID)
+              .fetch();
+            twilioBalance = Math.abs(parseFloat(account.balance)) || 0;
+          } catch (fallbackError) {
+            console.error(
+              "Fallback Twilio balance fetch failed:",
+              fallbackError,
+            );
+            twilioBalance = 0;
+          }
+        }
+      }
+
+      res.json({
+        success: true,
+        stats: {
+          total_company_admins: totalCompanyAdmins || 0,
+          total_organizations: totalOrganizations || 0,
+          total_normal_users: totalNormalUsers,
+          twilio_balance: twilioBalance,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Get All Company Admins
+app.get(
+  "/api/super-admin/company-admins",
+  authenticateSuperAdmin,
+  async (req, res, next) => {
+    try {
+      const { data: companyAdmins, error } = await supabase
+        .from("company_admins")
+        .select("id, company_name, user_id, created_at")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      // Get wallet balances, organization counts, and emails
+      const enrichedAdmins = await Promise.all(
+        companyAdmins.map(async (admin) => {
+          // Get email from profiles
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("email")
+            .eq("id", admin.user_id)
+            .single();
+
+          // Get wallet balance from wallets table (using user_id)
+          const { data: wallet } = await supabase
+            .from("wallets")
+            .select("balance")
+            .eq("user_id", admin.user_id)
+            .single();
+
+          // Count organizations
+          const { count: orgsCount } = await supabase
+            .from("organizations")
+            .select("*", { count: "exact", head: true })
+            .eq("company_admin_id", admin.id);
+
+          return {
+            id: admin.id,
+            company_name: admin.company_name,
+            email: profile?.email || "N/A",
+            wallet_balance: wallet?.balance || 0,
+            organizations_count: orgsCount || 0,
+            created_at: admin.created_at,
+          };
+        }),
+      );
+
+      res.json({
+        success: true,
+        companyAdmins: enrichedAdmins,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Get All Organizations
+app.get(
+  "/api/super-admin/organizations",
+  authenticateSuperAdmin,
+  async (req, res, next) => {
+    try {
+      const { data: organizations, error } = await supabase
+        .from("organizations")
+        .select(
+          `
+        id,
+        name,
+        shared_balance,
+        created_at,
+        company_admins!inner(company_name)
+      `,
+        )
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      // Count members for each organization
+      const enrichedOrgs = await Promise.all(
+        organizations.map(async (org) => {
+          const { count: membersCount } = await supabase
+            .from("organization_members")
+            .select("*", { count: "exact", head: true })
+            .eq("organization_id", org.id);
+
+          return {
+            id: org.id,
+            name: org.name,
+            company_admin_name: org.company_admins.company_name,
+            shared_balance: org.shared_balance || 0,
+            members_count: membersCount || 0,
+            created_at: org.created_at,
+          };
+        }),
+      );
+
+      res.json({
+        success: true,
+        organizations: enrichedOrgs,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Get All Normal Users
+app.get(
+  "/api/super-admin/users",
+  authenticateSuperAdmin,
+  async (req, res, next) => {
+    try {
+      const { data: profiles, error } = await supabase
+        .from("profiles")
+        .select("id, email, full_name, user_type, created_at")
+        .neq("user_type", "company")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      // Get wallet balance for each user
+      const enrichedUsers = await Promise.all(
+        profiles.map(async (profile) => {
+          const { data: wallet } = await supabase
+            .from("wallets")
+            .select("balance")
+            .eq("user_id", profile.id)
+            .single();
+
+          return {
+            id: profile.id,
+            email: profile.email,
+            full_name: profile.full_name,
+            wallet_balance: wallet?.balance || 0,
+            created_at: profile.created_at,
+          };
+        }),
+      );
+
+      res.json({
+        success: true,
+        users: enrichedUsers,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Get Organization Members
+app.get(
+  "/api/super-admin/organizations/:id/members",
+  authenticateSuperAdmin,
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+
+      // Get organization members
+      const { data: members, error } = await supabase
+        .from("organization_members")
+        .select("user_id")
+        .eq("organization_id", id);
+
+      if (error) throw error;
+
+      // Get member details
+      const memberDetails = await Promise.all(
+        (members || []).map(async (member) => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("email, full_name")
+            .eq("id", member.user_id)
+            .single();
+
+          return {
+            email: profile?.email || "N/A",
+            name: profile?.full_name || "N/A",
+          };
+        }),
+      );
+
+      res.json({
+        success: true,
+        members: memberDetails,
       });
     } catch (error) {
       next(error);

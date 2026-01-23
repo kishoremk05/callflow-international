@@ -99,7 +99,7 @@ export default function CompanyAdminLogin() {
                 company_email: companyEmail,
                 company_phone: companyPhone,
               }),
-            }
+            },
           );
 
           const data = await response.json();
@@ -121,6 +121,13 @@ export default function CompanyAdminLogin() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4">
+      <Button
+        onClick={() => navigate("/")}
+        variant="outline"
+        className="absolute top-6 left-6"
+      >
+        ← Back to Homepage
+      </Button>
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 mb-4">
@@ -258,8 +265,8 @@ export default function CompanyAdminLogin() {
                 {loading
                   ? "Loading..."
                   : isLogin
-                  ? "Sign In"
-                  : "Create Company Account"}
+                    ? "Sign In"
+                    : "Create Company Account"}
               </Button>
             </form>
 

@@ -114,47 +114,43 @@ export default function CompanyAdminDashboard() {
         .then((res) => res.data.session?.access_token);
 
       const apiUrl = import.meta.env.VITE_API_URL;
+      const authHeader = { Authorization: `Bearer ${await token}` };
 
-      // Fetch profile
-      const profileRes = await fetch(`${apiUrl}/api/company-admin/profile`, {
-        headers: { Authorization: `Bearer ${await token}` },
-      });
-      const profileData = await profileRes.json();
+      // Fetch all data in parallel for faster loading
+      const [profileRes, walletRes, orgsRes, statsRes] = await Promise.all([
+        fetch(`${apiUrl}/api/company-admin/profile`, { headers: authHeader }),
+        fetch(`${apiUrl}/api/company-admin/wallet`, { headers: authHeader }),
+        fetch(`${apiUrl}/api/company-admin/organizations`, {
+          headers: authHeader,
+        }),
+        fetch(`${apiUrl}/api/company-admin/stats`, { headers: authHeader }),
+      ]);
 
+      // Parse all responses in parallel
+      const [profileData, walletData, orgsData, statsData] = await Promise.all([
+        profileRes.json(),
+        walletRes.json(),
+        orgsRes.json(),
+        statsRes.json(),
+      ]);
+
+      // Check profile first for authorization
       if (!profileData.success && profileRes.status === 403) {
-        // User is not a company admin - redirect to registration
         toast.error("Please register as a company admin first");
         navigate("/company-admin/register");
         return;
       }
 
+      // Update state with all fetched data
       if (profileData.success) {
         setCompanyAdmin(profileData.companyAdmin);
       }
-
-      // Fetch wallet
-      const walletRes = await fetch(`${apiUrl}/api/company-admin/wallet`, {
-        headers: { Authorization: `Bearer ${await token}` },
-      });
-      const walletData = await walletRes.json();
       if (walletData.success) {
         setWallet(walletData.wallet);
       }
-
-      // Fetch organizations
-      const orgsRes = await fetch(`${apiUrl}/api/company-admin/organizations`, {
-        headers: { Authorization: `Bearer ${await token}` },
-      });
-      const orgsData = await orgsRes.json();
       if (orgsData.success) {
         setOrganizations(orgsData.organizations);
       }
-
-      // Fetch stats
-      const statsRes = await fetch(`${apiUrl}/api/company-admin/stats`, {
-        headers: { Authorization: `Bearer ${await token}` },
-      });
-      const statsData = await statsRes.json();
       if (statsData.success) {
         setStats(statsData.stats);
       }

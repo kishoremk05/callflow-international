@@ -15,6 +15,8 @@ import AdminPanel from "./pages/AdminPanel";
 import CompanyAdminLogin from "./pages/CompanyAdminLogin";
 import CompanyAdminRegister from "./pages/CompanyAdminRegister";
 import CompanyAdminDashboard from "./pages/CompanyAdminDashboard";
+import SuperAdminLogin from "./pages/SuperAdminLogin";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +47,11 @@ const App = () => (
           <Route
             path="/company-admin/dashboard"
             element={<CompanyAdminDashboard />}
+          />
+          <Route path="/super-admin/login" element={<SuperAdminLogin />} />
+          <Route
+            path="/super-admin/dashboard"
+            element={<SuperAdminDashboard />}
           />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

@@ -70,6 +70,13 @@ export default function CompanyAdminRegister() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
+      <Button
+        onClick={() => navigate("/")}
+        variant="outline"
+        className="absolute top-6 left-6"
+      >
+        ← Back to Homepage
+      </Button>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 mb-4">
