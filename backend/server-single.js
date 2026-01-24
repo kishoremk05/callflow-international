@@ -5741,7 +5741,20 @@ app.get("/api/companies/search", authenticate, async (req, res, next) => {
 
     if (error) throw error;
 
-    res.json({ success: true, companies: companies || [] });
+    // Remove duplicates based on company_email
+    const uniqueCompanies = companies
+      ? companies.reduce((acc, company) => {
+          const exists = acc.find(
+            (c) => c.company_email === company.company_email,
+          );
+          if (!exists) {
+            acc.push(company);
+          }
+          return acc;
+        }, [])
+      : [];
+
+    res.json({ success: true, companies: uniqueCompanies });
   } catch (error) {
     next(error);
   }

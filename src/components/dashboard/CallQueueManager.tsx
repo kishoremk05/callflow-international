@@ -13,6 +13,7 @@ import {
   Clock,
   Users,
   List,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -263,6 +264,11 @@ export function CallQueueManager({
     }
   };
 
+  const handleClearQueue = () => {
+    toast.success("Call queue cleared");
+    onComplete(); // This will trigger clearing localStorage in Dashboard
+  };
+
   const currentContact = queue[currentIndex];
 
   // Format number to show country code separately
@@ -342,8 +348,18 @@ export function CallQueueManager({
               size="sm"
               onClick={() => setShowAllContacts(!showAllContacts)}
               className="h-7 px-2"
+              title="Toggle list view"
             >
               <List className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClearQueue}
+              className="h-7 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+              title="Clear queue"
+            >
+              <Trash2 className="w-4 h-4" />
             </Button>
           </div>
         </CardTitle>
