@@ -70,7 +70,7 @@ export function InviteMemberModal({
             Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({ email }),
-        }
+        },
       );
 
       const data = await response.json();
@@ -122,8 +122,8 @@ export function InviteMemberModal({
                 />
               </div>
               <p className="text-xs text-gray-500">
-                The user must be registered as a Normal User to accept the
-                invite.
+                The user must be registered as a Normal User or Company User to
+                accept the invite.
               </p>
             </div>
           </div>

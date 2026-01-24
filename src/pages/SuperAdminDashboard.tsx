@@ -11,11 +11,14 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -40,14 +43,16 @@ import {
   Calendar,
   Wallet,
   Globe,
+  Phone,
+  Bell,
 } from "lucide-react";
 
 interface CompanyAdmin {
-  id: string;
   company_name: string;
-  email: string;
+  company_email: string;
   wallet_balance: number;
   organizations_count: number;
+  admins_count: number;
   created_at: string;
 }
 
@@ -76,11 +81,31 @@ interface Stats {
   twilio_balance: string;
 }
 
+interface AdminAccessRequest {
+  id: string;
+  user_id: string;
+  email: string;
+  full_name: string;
+  company_name: string | null;
+  company_email: string | null;
+  company_phone: string | null;
+  company_id: string | null;
+  request_type: "create_new" | "join_existing";
+  status: "pending" | "approved" | "rejected";
+  requested_at: string;
+  reviewed_at: string | null;
+  rejection_reason: string | null;
+  // For join_existing requests
+  existing_company_name?: string;
+  existing_company_email?: string;
+}
+
 const SuperAdminDashboard = () => {
   const [stats, setStats] = useState<Stats | null>(null);
   const [companyAdmins, setCompanyAdmins] = useState<CompanyAdmin[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [normalUsers, setNormalUsers] = useState<NormalUser[]>([]);
+  const [adminRequests, setAdminRequests] = useState<AdminAccessRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
@@ -89,6 +114,27 @@ const SuperAdminDashboard = () => {
     Array<{ email: string; name: string }>
   >([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
+  const [processingRequest, setProcessingRequest] = useState<string | null>(
+    null,
+  );
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [selectedRequest, setSelectedRequest] =
+    useState<AdminAccessRequest | null>(null);
+  const [showCompanyAdminsDialog, setShowCompanyAdminsDialog] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<CompanyAdmin | null>(
+    null,
+  );
+  const [companyAdminsList, setCompanyAdminsList] = useState<
+    Array<{
+      id: string;
+      email: string;
+      full_name: string;
+      role: string;
+      joined_at: string;
+    }>
+  >([]);
+  const [loadingCompanyAdmins, setLoadingCompanyAdmins] = useState(false);
   const usersPerPage = 5;
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -111,24 +157,29 @@ const SuperAdminDashboard = () => {
       const headers = { Authorization: `Bearer ${token}` };
 
       // Fetch all data in parallel
-      const [statsRes, adminsRes, orgsRes, usersRes] = await Promise.all([
-        fetch(`${apiUrl}/api/super-admin/stats`, { headers }),
-        fetch(`${apiUrl}/api/super-admin/company-admins`, { headers }),
-        fetch(`${apiUrl}/api/super-admin/organizations`, { headers }),
-        fetch(`${apiUrl}/api/super-admin/users`, { headers }),
-      ]);
+      const [statsRes, adminsRes, orgsRes, usersRes, requestsRes] =
+        await Promise.all([
+          fetch(`${apiUrl}/api/super-admin/stats`, { headers }),
+          fetch(`${apiUrl}/api/super-admin/company-admins`, { headers }),
+          fetch(`${apiUrl}/api/super-admin/organizations`, { headers }),
+          fetch(`${apiUrl}/api/super-admin/users`, { headers }),
+          fetch(`${apiUrl}/api/super-admin/admin-access-requests`, { headers }),
+        ]);
 
-      const [statsData, adminsData, orgsData, usersData] = await Promise.all([
-        statsRes.json(),
-        adminsRes.json(),
-        orgsRes.json(),
-        usersRes.json(),
-      ]);
+      const [statsData, adminsData, orgsData, usersData, requestsData] =
+        await Promise.all([
+          statsRes.json(),
+          adminsRes.json(),
+          orgsRes.json(),
+          usersRes.json(),
+          requestsRes.json(),
+        ]);
 
       if (statsData.success) setStats(statsData.stats);
       if (adminsData.success) setCompanyAdmins(adminsData.companyAdmins);
       if (orgsData.success) setOrganizations(orgsData.organizations);
       if (usersData.success) setNormalUsers(usersData.users);
+      if (requestsData.success) setAdminRequests(requestsData.requests);
 
       // Check for auth errors
       if (!statsData.success && statsRes.status === 401) {
@@ -154,6 +205,99 @@ const SuperAdminDashboard = () => {
   const handleLogout = () => {
     localStorage.removeItem("super_admin_token");
     navigate("/super-admin/login");
+  };
+
+  const handleApproveRequest = async (requestId: string) => {
+    setProcessingRequest(requestId);
+    try {
+      const token = localStorage.getItem("super_admin_token");
+      const apiUrl = import.meta.env.VITE_API_URL;
+
+      const response = await fetch(
+        `${apiUrl}/api/super-admin/approve-admin-request/${requestId}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast({
+          title: "Request Approved",
+          description: "The user has been granted company admin access",
+        });
+        fetchDashboardData(); // Refresh data
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Failed to approve request",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error approving request:", error);
+      toast({
+        title: "Error",
+        description: "Failed to approve request",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingRequest(null);
+    }
+  };
+
+  const handleRejectRequest = async () => {
+    if (!selectedRequest) return;
+
+    setProcessingRequest(selectedRequest.id);
+    try {
+      const token = localStorage.getItem("super_admin_token");
+      const apiUrl = import.meta.env.VITE_API_URL;
+
+      const response = await fetch(
+        `${apiUrl}/api/super-admin/reject-admin-request/${selectedRequest.id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ reason: rejectionReason }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast({
+          title: "Request Rejected",
+          description: "The admin access request has been rejected",
+        });
+        setShowRejectDialog(false);
+        setRejectionReason("");
+        setSelectedRequest(null);
+        fetchDashboardData(); // Refresh data
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Failed to reject request",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error rejecting request:", error);
+      toast({
+        title: "Error",
+        description: "Failed to reject request",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingRequest(null);
+    }
   };
 
   const populateCountries = async () => {
@@ -378,7 +522,122 @@ const SuperAdminDashboard = () => {
           </Card>
         </div>
 
-        {/* Company Admins Table */}
+        {/* Admin Access Requests */}
+        {adminRequests.filter((r) => r.status === "pending").length > 0 && (
+          <Card className="mb-8 shadow-md border-orange-200 bg-orange-50/50">
+            <CardHeader className="bg-gradient-to-r from-orange-100 to-yellow-100">
+              <div className="flex items-center gap-2">
+                <Bell className="w-5 h-5 text-orange-600" />
+                <CardTitle className="text-orange-900">
+                  Pending Admin Access Requests
+                  <Badge className="ml-2 bg-orange-500">
+                    {adminRequests.filter((r) => r.status === "pending").length}
+                  </Badge>
+                </CardTitle>
+              </div>
+              <CardDescription className="text-orange-700">
+                Review and approve/reject company admin access requests
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="space-y-4">
+                {adminRequests
+                  .filter((r) => r.status === "pending")
+                  .map((request) => (
+                    <div
+                      key={request.id}
+                      className="flex items-center justify-between p-4 bg-white border border-orange-200 rounded-lg hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
+                            <Building2 className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold text-gray-900">
+                                {request.request_type === "join_existing"
+                                  ? request.existing_company_name ||
+                                    "Unknown Company"
+                                  : request.company_name}
+                              </h3>
+                              <Badge
+                                className={
+                                  request.request_type === "join_existing"
+                                    ? "bg-blue-500"
+                                    : "bg-purple-500"
+                                }
+                              >
+                                {request.request_type === "join_existing"
+                                  ? "Join Request"
+                                  : "New Company"}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-gray-500">
+                              {request.full_name || request.email}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="ml-13 space-y-1 text-sm text-gray-600">
+                          <div className="flex items-center gap-2">
+                            <Mail className="w-4 h-4" />
+                            {request.request_type === "join_existing"
+                              ? request.existing_company_email || request.email
+                              : request.company_email}
+                          </div>
+                          {request.company_phone &&
+                            request.request_type === "create_new" && (
+                              <div className="flex items-center gap-2">
+                                <Phone className="w-4 h-4" />
+                                {request.company_phone}
+                              </div>
+                            )}
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4" />
+                            Requested:{" "}
+                            {new Date(
+                              request.requested_at,
+                            ).toLocaleDateString()}
+                          </div>
+                          {request.request_type === "join_existing" && (
+                            <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
+                              <strong>Request Type:</strong> User wants to
+                              become co-admin of this existing company
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleApproveRequest(request.id)}
+                          disabled={processingRequest === request.id}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          {processingRequest === request.id
+                            ? "Processing..."
+                            : "Approve"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => {
+                            setSelectedRequest(request);
+                            setShowRejectDialog(true);
+                          }}
+                          disabled={processingRequest === request.id}
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Company Admins Cards */}
         <Card className="mb-8 shadow-md hover:shadow-lg transition-shadow">
           <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
             <div className="flex items-center gap-2">
@@ -386,88 +645,108 @@ const SuperAdminDashboard = () => {
               <CardTitle>Company Admins</CardTitle>
             </div>
             <CardDescription>
-              All registered company administrators
+              All registered companies - click to view admins
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold">
-                      Company Name
-                    </TableHead>
-                    <TableHead className="font-semibold">Email</TableHead>
-                    <TableHead className="font-semibold">
-                      Wallet Balance
-                    </TableHead>
-                    <TableHead className="font-semibold">
-                      Organizations
-                    </TableHead>
-                    <TableHead className="font-semibold">Joined</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {companyAdmins.map((admin, index) => (
-                    <TableRow
-                      key={admin.id}
-                      className={`hover:bg-blue-50 transition-colors ${index % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
-                    >
-                      <TableCell className="font-medium">
+          <CardContent className="pt-6">
+            {companyAdmins.length === 0 ? (
+              <div className="text-center py-12">
+                <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">No company admins found</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {companyAdmins.map((admin, index) => (
+                  <Card
+                    key={`${admin.company_name}-${index}`}
+                    className="cursor-pointer hover:shadow-lg transition-all border-2 hover:border-blue-300"
+                    onClick={async () => {
+                      setSelectedCompany(admin);
+                      setShowCompanyAdminsDialog(true);
+                      setLoadingCompanyAdmins(true);
+                      try {
+                        const token = localStorage.getItem("super_admin_token");
+                        const apiUrl = import.meta.env.VITE_API_URL;
+                        const response = await fetch(
+                          `${apiUrl}/api/super-admin/company/${admin.company_name}/admins`,
+                          {
+                            headers: { Authorization: `Bearer ${token}` },
+                          },
+                        );
+                        const data = await response.json();
+                        if (data.success) {
+                          setCompanyAdminsList(data.admins);
+                        }
+                      } catch (error) {
+                        console.error("Error fetching company admins:", error);
+                      } finally {
+                        setLoadingCompanyAdmins(false);
+                      }
+                    }}
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <Building2 className="w-4 h-4 text-blue-600" />
-                          {admin.company_name}
+                          <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold">
+                            {admin.company_name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <CardTitle className="text-base">
+                              {admin.company_name}
+                            </CardTitle>
+                            <p className="text-xs text-gray-500">
+                              {admin.company_email}
+                            </p>
+                          </div>
                         </div>
-                      </TableCell>
-                      <TableCell className="text-gray-600">
-                        {admin.email}
-                      </TableCell>
-                      <TableCell>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">Admins:</span>
+                        <Badge
+                          variant="outline"
+                          className="bg-purple-50 text-purple-700 border-purple-200"
+                        >
+                          {admin.admins_count}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">Wallet:</span>
                         <Badge
                           variant="outline"
                           className="bg-green-50 text-green-700 border-green-200"
                         >
                           ${admin.wallet_balance.toFixed(2)}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">Teams:</span>
                         <Badge variant="secondary">
                           {admin.organizations_count}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {new Date(admin.created_at).toLocaleDateString()}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {companyAdmins.length === 0 && (
-                    <TableRow>
-                      <TableCell
-                        colSpan={5}
-                        className="text-center text-gray-500 py-8"
-                      >
-                        No company admins found
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs text-gray-500 pt-2">
+                        <Calendar className="w-3 h-3" />
+                        {new Date(admin.created_at).toLocaleDateString()}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Organizations Table */}
+        {/* Teams Table */}
         <Card className="mb-8 shadow-md hover:shadow-lg transition-shadow">
           <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50">
             <div className="flex items-center gap-2">
               <Globe className="w-5 h-5 text-green-600" />
-              <CardTitle>Organizations</CardTitle>
+              <CardTitle>Teams</CardTitle>
             </div>
             <CardDescription>
-              All organizations across all company admins
+              All teams across all company admins
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -475,14 +754,12 @@ const SuperAdminDashboard = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold">
-                      Organization Name
-                    </TableHead>
+                    <TableHead className="font-semibold">Team Name</TableHead>
                     <TableHead className="font-semibold">
                       Company Admin
                     </TableHead>
                     <TableHead className="font-semibold">
-                      Shared Balance
+                      Wallet Balance
                     </TableHead>
                     <TableHead className="font-semibold">Members</TableHead>
                     <TableHead className="font-semibold">Created</TableHead>
@@ -575,8 +852,8 @@ const SuperAdminDashboard = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold">Email</TableHead>
                     <TableHead className="font-semibold">Full Name</TableHead>
+                    <TableHead className="font-semibold">Email</TableHead>
                     <TableHead className="font-semibold">Country</TableHead>
                     <TableHead className="font-semibold">
                       Wallet Balance
@@ -591,13 +868,13 @@ const SuperAdminDashboard = () => {
                       className={`hover:bg-orange-50 transition-colors ${index % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
                     >
                       <TableCell className="font-medium">
+                        {user.full_name || "N/A"}
+                      </TableCell>
+                      <TableCell className="text-gray-600">
                         <div className="flex items-center gap-2">
                           <Mail className="w-4 h-4 text-orange-600" />
                           {user.email}
                         </div>
-                      </TableCell>
-                      <TableCell className="text-gray-600">
-                        {user.full_name || "N/A"}
                       </TableCell>
                       <TableCell className="text-gray-600">
                         <div className="flex items-center gap-1">
@@ -759,6 +1036,143 @@ const SuperAdminDashboard = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Request Dialog */}
+      <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-red-700">
+              Reject Admin Access Request
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to reject this request from{" "}
+              <strong>{selectedRequest?.company_name}</strong>?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 my-4">
+            <div className="p-4 bg-gray-50 rounded-lg border">
+              <div className="space-y-2 text-sm">
+                <div>
+                  <strong>Company:</strong> {selectedRequest?.company_name}
+                </div>
+                <div>
+                  <strong>Email:</strong> {selectedRequest?.company_email}
+                </div>
+                <div>
+                  <strong>User:</strong>{" "}
+                  {selectedRequest?.full_name || selectedRequest?.email}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="rejection_reason" className="text-sm font-medium">
+                Rejection Reason (Optional)
+              </Label>
+              <Textarea
+                id="rejection_reason"
+                placeholder="Provide a reason for rejection..."
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                rows={4}
+                className="w-full"
+              />
+              <p className="text-xs text-gray-500">
+                This reason will be visible to the user
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowRejectDialog(false);
+                setRejectionReason("");
+                setSelectedRequest(null);
+              }}
+              disabled={processingRequest !== null}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRejectRequest}
+              disabled={processingRequest !== null}
+            >
+              {processingRequest ? "Rejecting..." : "Reject Request"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Company Admins Dialog */}
+      <Dialog
+        open={showCompanyAdminsDialog}
+        onOpenChange={setShowCompanyAdminsDialog}
+      >
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-blue-600" />
+              {selectedCompany?.company_name} - Admins
+            </DialogTitle>
+            <DialogDescription>
+              All administrators who can manage this company
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            {loadingCompanyAdmins ? (
+              <div className="text-center py-8">
+                <RefreshCw className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">Loading admins...</p>
+              </div>
+            ) : companyAdminsList.length === 0 ? (
+              <div className="text-center py-8">
+                <Users className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                <p className="text-gray-500">No admins found</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {companyAdminsList.map((admin) => (
+                  <div
+                    key={admin.id}
+                    className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold">
+                        {admin.full_name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">
+                          {admin.full_name}
+                        </p>
+                        <p className="text-sm text-gray-600">{admin.email}</p>
+                      </div>
+                    </div>
+                    <Badge
+                      variant={admin.role === "Admin" ? "default" : "secondary"}
+                      className={
+                        admin.role === "Admin"
+                          ? "bg-gradient-to-r from-blue-600 to-indigo-600"
+                          : "bg-gradient-to-r from-purple-500 to-pink-500"
+                      }
+                    >
+                      {admin.role}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setShowCompanyAdminsDialog(false)}>
+              Close
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

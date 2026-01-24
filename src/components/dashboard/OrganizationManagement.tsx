@@ -61,6 +61,13 @@ interface CompanyAdmin {
   company_phone: string | null;
 }
 
+interface SearchUser {
+  id: string;
+  email: string;
+  full_name: string;
+  user_type: string;
+}
+
 export function OrganizationManagement({
   open,
   onClose,
@@ -86,6 +93,9 @@ export function OrganizationManagement({
   } | null>(null);
   const [companyAdmin, setCompanyAdmin] = useState<CompanyAdmin | null>(null);
   const [loadingCompanyInfo, setLoadingCompanyInfo] = useState(false);
+  const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searching, setSearching] = useState(false);
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -105,6 +115,50 @@ export function OrganizationManagement({
       fetchCompanyAdmin();
     }
   }, [open, organizationId]);
+
+  useEffect(() => {
+    const searchUsers = async () => {
+      if (!email || email.trim().length < 2) {
+        setSearchResults([]);
+        setShowSuggestions(false);
+        return;
+      }
+
+      setSearching(true);
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!session) return;
+
+        const response = await fetch(
+          `${
+            import.meta.env.VITE_API_URL || "http://localhost:5000"
+          }/api/users/search?email=${encodeURIComponent(email)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+            },
+          },
+        );
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setSearchResults(data.users || []);
+          setShowSuggestions(data.users && data.users.length > 0);
+        }
+      } catch (error) {
+        console.error("Error searching users:", error);
+      } finally {
+        setSearching(false);
+      }
+    };
+
+    const timeoutId = setTimeout(searchUsers, 300);
+    return () => clearTimeout(timeoutId);
+  }, [email]);
 
   const fetchCompanyAdmin = async () => {
     if (!organizationId) return;
@@ -400,15 +454,54 @@ export function OrganizationManagement({
               </h3>
             </div>
             <form onSubmit={handleInvite} className="flex gap-2">
-              <div className="flex-1">
+              <div className="flex-1 relative">
                 <Input
                   type="email"
                   placeholder="user@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onFocus={() => {
+                    if (searchResults.length > 0) setShowSuggestions(true);
+                  }}
                   disabled={loading}
                   className="w-full border-gray-200 focus:border-[#0891b2] focus:ring-[#0891b2]"
+                  autoComplete="off"
                 />
+                {searching && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                  </div>
+                )}
+                {showSuggestions && searchResults.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                    {searchResults.map((user) => (
+                      <button
+                        key={user.id}
+                        type="button"
+                        onClick={() => {
+                          setEmail(user.email);
+                          setShowSuggestions(false);
+                        }}
+                        className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#0891b2] to-[#06b6d4] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                            {user.full_name?.charAt(0)?.toUpperCase() ||
+                              user.email.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {user.full_name || "User"}
+                            </p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {user.email}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <Button
                 type="submit"
@@ -429,7 +522,8 @@ export function OrganizationManagement({
               </Button>
             </form>
             <p className="text-xs text-muted-foreground">
-              The user must be registered as a Normal User to accept the invite.
+              The user must be registered as a Normal User or Company User to
+              accept the invite.
             </p>
           </div>
 

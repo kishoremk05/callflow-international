@@ -3459,16 +3459,16 @@ app.get("/api/company-admin/wallet", authenticate, async (req, res, next) => {
   }
 });
 
-// Get all organizations under company
+// Get all admins (admin + co-admins) for the company
 app.get(
-  "/api/company-admin/organizations",
+  "/api/company-admin/all-admins",
   authenticate,
   async (req, res, next) => {
     try {
-      // Get company admin
+      // Get current company admin to find company_email
       const { data: companyAdmin } = await supabase
         .from("company_admins")
-        .select("id")
+        .select("company_email")
         .eq("user_id", req.user.id)
         .single();
 
@@ -3476,11 +3476,140 @@ app.get(
         return res.status(403).json({ error: "Not a company admin" });
       }
 
-      // Get organizations
+      // Get all company_admins with the same company_email
+      const { data: allAdmins, error } = await supabase
+        .from("company_admins")
+        .select("id, user_id, created_at")
+        .eq("company_email", companyAdmin.company_email)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+
+      // Get user profiles for each admin
+      const adminsWithProfiles = await Promise.all(
+        (allAdmins || []).map(async (admin, index) => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("email, full_name")
+            .eq("id", admin.user_id)
+            .single();
+
+          return {
+            id: admin.id,
+            email: profile?.email || "Unknown",
+            full_name: profile?.full_name || "Unknown",
+            role: index === 0 ? "Admin" : "Co-Admin",
+            joined_at: admin.created_at,
+          };
+        }),
+      );
+
+      res.json({ success: true, admins: adminsWithProfiles });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Leave company (admin leaves and promotes co-admin to admin)
+app.post(
+  "/api/company-admin/leave-company",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      // Get current company admin
+      const { data: companyAdmin } = await supabase
+        .from("company_admins")
+        .select("id, company_email, created_at")
+        .eq("user_id", req.user.id)
+        .single();
+
+      if (!companyAdmin) {
+        return res.status(403).json({ error: "Not a company admin" });
+      }
+
+      // Get all admins with the same company_email
+      const { data: allAdmins, error: fetchError } = await supabase
+        .from("company_admins")
+        .select("id, user_id, created_at")
+        .eq("company_email", companyAdmin.company_email)
+        .order("created_at", { ascending: true });
+
+      if (fetchError) throw fetchError;
+
+      if (!allAdmins || allAdmins.length === 0) {
+        return res.status(400).json({ error: "No admins found" });
+      }
+
+      // Check if current user is the first admin (Admin, not Co-Admin)
+      const isMainAdmin = allAdmins[0].user_id === req.user.id;
+
+      // If this is the last admin, they cannot leave
+      if (allAdmins.length === 1) {
+        return res.status(400).json({
+          error:
+            "Cannot leave company as the only admin. Please delete the company instead.",
+        });
+      }
+
+      // Delete the current admin's record
+      const { error: deleteError } = await supabase
+        .from("company_admins")
+        .delete()
+        .eq("user_id", req.user.id);
+
+      if (deleteError) throw deleteError;
+
+      // Update user profile to company type
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ user_type: "company" })
+        .eq("id", req.user.id);
+
+      if (profileError) throw profileError;
+
+      res.json({
+        success: true,
+        message: isMainAdmin
+          ? "You have left the company and the co-admin has been promoted to admin"
+          : "You have left the company",
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Get all organizations under company
+app.get(
+  "/api/company-admin/organizations",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      // Get company admin (need company_email for matching)
+      const { data: companyAdmin } = await supabase
+        .from("company_admins")
+        .select("id, company_email")
+        .eq("user_id", req.user.id)
+        .single();
+
+      if (!companyAdmin) {
+        return res.status(403).json({ error: "Not a company admin" });
+      }
+
+      // Get ALL company_admins with the same company_email (includes co-admins)
+      const { data: allCompanyAdmins } = await supabase
+        .from("company_admins")
+        .select("id")
+        .eq("company_email", companyAdmin.company_email);
+
+      const companyAdminIds = (allCompanyAdmins || []).map((ca) => ca.id);
+
+      // Get organizations for all admins of this company
       const { data: organizations, error: orgError } = await supabase
         .from("organizations")
         .select("*")
-        .eq("company_admin_id", companyAdmin.id)
+        .in("company_admin_id", companyAdminIds)
         .order("created_at", { ascending: false });
 
       if (orgError) throw orgError;
@@ -4148,7 +4277,7 @@ app.get("/api/company-admin/stats", authenticate, async (req, res, next) => {
   try {
     const { data: companyAdmin } = await supabase
       .from("company_admins")
-      .select("id")
+      .select("id, company_email")
       .eq("user_id", req.user.id)
       .single();
 
@@ -4156,17 +4285,25 @@ app.get("/api/company-admin/stats", authenticate, async (req, res, next) => {
       return res.status(403).json({ error: "Not a company admin" });
     }
 
-    // Get total organizations
+    // Get ALL company_admins with the same company_email (includes co-admins)
+    const { data: allCompanyAdmins } = await supabase
+      .from("company_admins")
+      .select("id")
+      .eq("company_email", companyAdmin.company_email);
+
+    const companyAdminIds = (allCompanyAdmins || []).map((ca) => ca.id);
+
+    // Get total organizations for all admins of this company
     const { count: totalOrganizations } = await supabase
       .from("organizations")
       .select("*", { count: "exact", head: true })
-      .eq("company_admin_id", companyAdmin.id);
+      .in("company_admin_id", companyAdminIds);
 
-    // Get total shared balance
+    // Get total shared balance for all admins of this company
     const { data: shares } = await supabase
       .from("wallet_shares")
       .select("shared_amount")
-      .eq("company_admin_id", companyAdmin.id);
+      .in("company_admin_id", companyAdminIds);
 
     const totalShared =
       shares?.reduce(
@@ -4178,7 +4315,7 @@ app.get("/api/company-admin/stats", authenticate, async (req, res, next) => {
     const { data: organizations } = await supabase
       .from("organizations")
       .select("id")
-      .eq("company_admin_id", companyAdmin.id);
+      .in("company_admin_id", companyAdminIds);
 
     let totalMembers = 0;
     if (organizations && organizations.length > 0) {
@@ -4286,17 +4423,32 @@ app.post("/api/organizations/create", authenticate, async (req, res, next) => {
       return res.status(400).json({ error: "Organization name is required" });
     }
 
-    // Check if user is a company user
+    // Check if user is a company user or company admin
     const { data: profile } = await supabase
       .from("profiles")
       .select("user_type")
       .eq("id", req.user.id)
       .single();
 
-    if (!profile || profile.user_type !== "company") {
-      return res
-        .status(403)
-        .json({ error: "Only company users can create organizations" });
+    if (
+      !profile ||
+      (profile.user_type !== "company" && profile.user_type !== "company_admin")
+    ) {
+      return res.status(403).json({
+        error: "Only company users and company admins can create organizations",
+      });
+    }
+
+    // Get company admin ID if user is a company admin
+    let companyAdminId = null;
+    if (profile.user_type === "company_admin") {
+      const { data: companyAdmin } = await supabase
+        .from("company_admins")
+        .select("id")
+        .eq("user_id", req.user.id)
+        .single();
+
+      companyAdminId = companyAdmin?.id || null;
     }
 
     // Create organization
@@ -4306,6 +4458,7 @@ app.post("/api/organizations/create", authenticate, async (req, res, next) => {
         name,
         description: description || null,
         owner_id: req.user.id,
+        company_admin_id: companyAdminId,
       })
       .select()
       .single();
@@ -4462,6 +4615,31 @@ app.get(
   },
 );
 
+// Search for normal users by email
+app.get("/api/users/search", authenticate, async (req, res, next) => {
+  try {
+    const { email } = req.query;
+
+    if (!email || typeof email !== "string" || email.trim().length < 2) {
+      return res.json({ success: true, users: [] });
+    }
+
+    // Search for normal and company users matching the email (exclude admins)
+    const { data: users, error } = await supabase
+      .from("profiles")
+      .select("id, email, full_name, user_type")
+      .in("user_type", ["normal", "company"])
+      .ilike("email", `%${email.trim()}%`)
+      .limit(5);
+
+    if (error) throw error;
+
+    res.json({ success: true, users: users || [] });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Send organization invite
 app.post(
   "/api/organizations/:organizationId/invite",
@@ -4475,17 +4653,52 @@ app.post(
         return res.status(400).json({ error: "Email is required" });
       }
 
-      // Verify user owns the organization
+      // Get the organization with owner details
       const { data: organization } = await supabase
         .from("organizations")
         .select("owner_id, name")
         .eq("id", organizationId)
         .single();
 
-      if (!organization || organization.owner_id !== req.user.id) {
+      if (!organization) {
+        return res.status(404).json({ error: "Organization not found" });
+      }
+
+      // Check if user is the owner
+      let isAuthorized = organization.owner_id === req.user.id;
+
+      // If not the owner, check if user is a co-admin with same company_email as owner
+      if (!isAuthorized) {
+        // Get owner's company_email
+        const { data: ownerAdmin } = await supabase
+          .from("company_admins")
+          .select("company_email")
+          .eq("user_id", organization.owner_id)
+          .single();
+
+        if (ownerAdmin) {
+          // Check if current user is a company admin with same company_email
+          const { data: currentUserAdmin } = await supabase
+            .from("company_admins")
+            .select("company_email")
+            .eq("user_id", req.user.id)
+            .single();
+
+          if (
+            currentUserAdmin &&
+            currentUserAdmin.company_email === ownerAdmin.company_email
+          ) {
+            isAuthorized = true;
+          }
+        }
+      }
+
+      if (!isAuthorized) {
         return res
           .status(403)
-          .json({ error: "Only organization owner can send invites" });
+          .json({
+            error: "Only organization owner or co-admins can send invites",
+          });
       }
 
       // Check if user exists
@@ -4501,11 +4714,16 @@ app.post(
           .json({ error: "User not found with this email" });
       }
 
-      // Check if user is normal user
-      if (invitedUser.user_type !== "normal") {
+      // Check if user is normal or company user (not admin/co-admin)
+      if (
+        invitedUser.user_type !== "normal" &&
+        invitedUser.user_type !== "company"
+      ) {
         return res
           .status(400)
-          .json({ error: "Can only invite normal users to organization" });
+          .json({
+            error: "Can only invite normal or company users to organization",
+          });
       }
 
       // Check if already a member
@@ -4583,17 +4801,52 @@ app.get(
     try {
       const { organizationId } = req.params;
 
-      // Verify user owns the organization
+      // Get the organization with owner details
       const { data: organization } = await supabase
         .from("organizations")
         .select("owner_id")
         .eq("id", organizationId)
         .single();
 
-      if (!organization || organization.owner_id !== req.user.id) {
+      if (!organization) {
+        return res.status(404).json({ error: "Organization not found" });
+      }
+
+      // Check if user is the owner
+      let isAuthorized = organization.owner_id === req.user.id;
+
+      // If not the owner, check if user is a co-admin with same company_email as owner
+      if (!isAuthorized) {
+        // Get owner's company_email
+        const { data: ownerAdmin } = await supabase
+          .from("company_admins")
+          .select("company_email")
+          .eq("user_id", organization.owner_id)
+          .single();
+
+        if (ownerAdmin) {
+          // Check if current user is a company admin with same company_email
+          const { data: currentUserAdmin } = await supabase
+            .from("company_admins")
+            .select("company_email")
+            .eq("user_id", req.user.id)
+            .single();
+
+          if (
+            currentUserAdmin &&
+            currentUserAdmin.company_email === ownerAdmin.company_email
+          ) {
+            isAuthorized = true;
+          }
+        }
+      }
+
+      if (!isAuthorized) {
         return res
           .status(403)
-          .json({ error: "Only organization owner can view members" });
+          .json({
+            error: "Only organization owner or co-admins can view members",
+          });
       }
 
       // Get organization members
@@ -4836,17 +5089,52 @@ app.delete(
     try {
       const { organizationId, memberId } = req.params;
 
-      // Verify user owns the organization
+      // Get the organization with owner details
       const { data: organization } = await supabase
         .from("organizations")
         .select("owner_id")
         .eq("id", organizationId)
         .single();
 
-      if (!organization || organization.owner_id !== req.user.id) {
+      if (!organization) {
+        return res.status(404).json({ error: "Organization not found" });
+      }
+
+      // Check if user is the owner
+      let isAuthorized = organization.owner_id === req.user.id;
+
+      // If not the owner, check if user is a co-admin with same company_email as owner
+      if (!isAuthorized) {
+        // Get owner's company_email
+        const { data: ownerAdmin } = await supabase
+          .from("company_admins")
+          .select("company_email")
+          .eq("user_id", organization.owner_id)
+          .single();
+
+        if (ownerAdmin) {
+          // Check if current user is a company admin with same company_email
+          const { data: currentUserAdmin } = await supabase
+            .from("company_admins")
+            .select("company_email")
+            .eq("user_id", req.user.id)
+            .single();
+
+          if (
+            currentUserAdmin &&
+            currentUserAdmin.company_email === ownerAdmin.company_email
+          ) {
+            isAuthorized = true;
+          }
+        }
+      }
+
+      if (!isAuthorized) {
         return res
           .status(403)
-          .json({ error: "Only organization owner can remove members" });
+          .json({
+            error: "Only organization owner or co-admins can remove members",
+          });
       }
 
       // Get the member's user_id and wallet balance before deleting
@@ -5435,6 +5723,225 @@ app.get(
 );
 
 // ============================================================================
+// ADMIN ACCESS REQUEST ROUTES
+// ============================================================================
+
+// Search existing companies for joining as co-admin
+app.get("/api/companies/search", authenticate, async (req, res, next) => {
+  try {
+    const { query } = req.query;
+
+    if (!query || typeof query !== "string" || query.trim().length < 2) {
+      return res.json({ success: true, companies: [] });
+    }
+
+    // Search for companies by name
+    const { data: companies, error } = await supabase
+      .from("company_admins")
+      .select("id, company_name, company_email")
+      .ilike("company_name", `%${query.trim()}%`)
+      .limit(10);
+
+    if (error) throw error;
+
+    res.json({ success: true, companies: companies || [] });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Create admin access request (company users requesting to become admin)
+app.post("/api/admin-access-request", authenticate, async (req, res, next) => {
+  try {
+    const {
+      company_name,
+      company_email,
+      company_phone,
+      company_id,
+      request_type,
+    } = req.body;
+
+    // Validate based on request type
+    if (request_type === "join_existing") {
+      if (!company_id) {
+        return res.status(400).json({
+          error: "Company selection is required for joining existing company",
+        });
+      }
+
+      // Verify company exists
+      const { data: companyExists } = await supabase
+        .from("company_admins")
+        .select("id, company_name, company_email")
+        .eq("id", company_id)
+        .single();
+
+      if (!companyExists) {
+        return res.status(404).json({
+          error: "Selected company not found",
+        });
+      }
+    } else {
+      // For creating new company
+      if (!company_name || !company_email) {
+        return res.status(400).json({
+          error: "Company name and email are required",
+        });
+      }
+    }
+
+    // Get user profile
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("email, full_name, user_type")
+      .eq("id", req.user.id)
+      .single();
+
+    // Check if user is already a company admin
+    if (profile?.user_type === "company_admin") {
+      return res.status(400).json({
+        error: "You are already a company admin",
+      });
+    }
+
+    // Check if user already has a pending or approved request
+    const { data: existingRequest } = await supabase
+      .from("admin_access_requests")
+      .select("id, status")
+      .eq("user_id", req.user.id)
+      .single();
+
+    if (existingRequest) {
+      if (existingRequest.status === "pending") {
+        return res.status(400).json({
+          error: "You already have a pending request",
+        });
+      } else if (existingRequest.status === "approved") {
+        return res.status(400).json({
+          error: "Your request was already approved",
+        });
+      } else if (existingRequest.status === "rejected") {
+        // Allow resubmission if rejected
+        const { error: updateError } = await supabase
+          .from("admin_access_requests")
+          .update({
+            company_name: company_name || null,
+            company_email: company_email || null,
+            company_phone: company_phone || null,
+            company_id: company_id || null,
+            request_type: request_type || "create_new",
+            status: "pending",
+            requested_at: new Date().toISOString(),
+            reviewed_at: null,
+            reviewed_by: null,
+            rejection_reason: null,
+          })
+          .eq("id", existingRequest.id);
+
+        if (updateError) throw updateError;
+
+        return res.json({
+          success: true,
+          message: "Request resubmitted successfully",
+        });
+      }
+    }
+
+    // Create new request
+    const { data: request, error: requestError } = await supabase
+      .from("admin_access_requests")
+      .insert({
+        user_id: req.user.id,
+        email: profile.email,
+        full_name: profile.full_name || "",
+        company_name: company_name || null,
+        company_email: company_email || null,
+        company_phone: company_phone || null,
+        company_id: company_id || null,
+        request_type: request_type || "create_new",
+        status: "pending",
+      })
+      .select()
+      .single();
+
+    if (requestError) throw requestError;
+
+    res.json({
+      success: true,
+      message: "Admin access request submitted successfully",
+      request,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get user's own admin access request status
+app.get(
+  "/api/admin-access-request/status",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { data: request, error } = await supabase
+        .from("admin_access_requests")
+        .select("*")
+        .eq("user_id", req.user.id)
+        .single();
+
+      if (error && error.code !== "PGRST116") {
+        throw error;
+      }
+
+      res.json({
+        success: true,
+        request: request || null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Cancel admin access request (only if pending)
+app.delete(
+  "/api/admin-access-request",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { data: request } = await supabase
+        .from("admin_access_requests")
+        .select("id, status")
+        .eq("user_id", req.user.id)
+        .single();
+
+      if (!request) {
+        return res.status(404).json({ error: "No request found" });
+      }
+
+      if (request.status !== "pending") {
+        return res.status(400).json({
+          error: "Only pending requests can be cancelled",
+        });
+      }
+
+      const { error: deleteError } = await supabase
+        .from("admin_access_requests")
+        .delete()
+        .eq("id", request.id);
+
+      if (deleteError) throw deleteError;
+
+      res.json({
+        success: true,
+        message: "Request cancelled successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// ============================================================================
 // SUPER ADMIN ROUTES
 // ============================================================================
 
@@ -5552,7 +6059,224 @@ app.get(
   },
 );
 
-// Get All Company Admins
+// Get All Admin Access Requests
+app.get(
+  "/api/super-admin/admin-access-requests",
+  authenticateSuperAdmin,
+  async (req, res, next) => {
+    try {
+      const { status } = req.query; // Filter by status if provided
+
+      let query = supabase
+        .from("admin_access_requests")
+        .select("*")
+        .order("requested_at", { ascending: false });
+
+      if (status) {
+        query = query.eq("status", status);
+      }
+
+      const { data: requests, error } = await query;
+
+      if (error) throw error;
+
+      // Enrich requests with existing company information for join_existing requests
+      const enrichedRequests = await Promise.all(
+        (requests || []).map(async (request) => {
+          if (request.request_type === "join_existing" && request.company_id) {
+            const { data: existingCompany } = await supabase
+              .from("company_admins")
+              .select("company_name, company_email")
+              .eq("id", request.company_id)
+              .single();
+
+            if (existingCompany) {
+              return {
+                ...request,
+                existing_company_name: existingCompany.company_name,
+                existing_company_email: existingCompany.company_email,
+              };
+            }
+          }
+          return request;
+        }),
+      );
+
+      res.json({ success: true, requests: enrichedRequests });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Approve Admin Access Request
+app.post(
+  "/api/super-admin/approve-admin-request/:requestId",
+  authenticateSuperAdmin,
+  async (req, res, next) => {
+    try {
+      const { requestId } = req.params;
+
+      // Get the request
+      const { data: request, error: requestError } = await supabase
+        .from("admin_access_requests")
+        .select("*")
+        .eq("id", requestId)
+        .single();
+
+      if (requestError || !request) {
+        return res.status(404).json({ error: "Request not found" });
+      }
+
+      if (request.status !== "pending") {
+        return res.status(400).json({
+          error: "Only pending requests can be approved",
+        });
+      }
+
+      let companyAdmin;
+
+      if (request.request_type === "join_existing" && request.company_id) {
+        // User wants to join existing company as co-admin
+
+        // Verify the company exists
+        const { data: existingCompany, error: companyError } = await supabase
+          .from("company_admins")
+          .select("*")
+          .eq("id", request.company_id)
+          .single();
+
+        if (companyError || !existingCompany) {
+          return res.status(404).json({ error: "Company not found" });
+        }
+
+        // Create company admin entry with same company details
+        const { data: newCoAdmin, error: adminError } = await supabase
+          .from("company_admins")
+          .insert({
+            user_id: request.user_id,
+            company_name: existingCompany.company_name,
+            company_email: existingCompany.company_email,
+            company_phone: existingCompany.company_phone,
+          })
+          .select()
+          .single();
+
+        if (adminError) {
+          if (adminError.code === "23505") {
+            return res.status(400).json({
+              error: "User is already a company admin",
+            });
+          }
+          throw adminError;
+        }
+
+        companyAdmin = newCoAdmin;
+      } else {
+        // User wants to create new company
+
+        const { data: newCompanyAdmin, error: adminError } = await supabase
+          .from("company_admins")
+          .insert({
+            user_id: request.user_id,
+            company_name: request.company_name,
+            company_email: request.company_email,
+            company_phone: request.company_phone,
+          })
+          .select()
+          .single();
+
+        if (adminError) {
+          if (adminError.code === "23505") {
+            return res.status(400).json({
+              error: "User is already a company admin",
+            });
+          }
+          throw adminError;
+        }
+
+        companyAdmin = newCompanyAdmin;
+      }
+
+      // Update user profile to company_admin type
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ user_type: "company_admin" })
+        .eq("id", request.user_id);
+
+      if (profileError) throw profileError;
+
+      // Update request status to approved
+      const { error: updateError } = await supabase
+        .from("admin_access_requests")
+        .update({
+          status: "approved",
+          reviewed_at: new Date().toISOString(),
+        })
+        .eq("id", requestId);
+
+      if (updateError) throw updateError;
+
+      res.json({
+        success: true,
+        message: `Admin access request approved successfully. User ${request.request_type === "join_existing" ? "added as co-admin" : "created new company"}`,
+        companyAdmin,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Reject Admin Access Request
+app.post(
+  "/api/super-admin/reject-admin-request/:requestId",
+  authenticateSuperAdmin,
+  async (req, res, next) => {
+    try {
+      const { requestId } = req.params;
+      const { reason } = req.body;
+
+      // Get the request
+      const { data: request, error: requestError } = await supabase
+        .from("admin_access_requests")
+        .select("*")
+        .eq("id", requestId)
+        .single();
+
+      if (requestError || !request) {
+        return res.status(404).json({ error: "Request not found" });
+      }
+
+      if (request.status !== "pending") {
+        return res.status(400).json({
+          error: "Only pending requests can be rejected",
+        });
+      }
+
+      // Update request status to rejected
+      const { error: updateError } = await supabase
+        .from("admin_access_requests")
+        .update({
+          status: "rejected",
+          reviewed_at: new Date().toISOString(),
+          rejection_reason: reason || null,
+        })
+        .eq("id", requestId);
+
+      if (updateError) throw updateError;
+
+      res.json({
+        success: true,
+        message: "Admin access request rejected",
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Get All Company Admins (Grouped by Company)
 app.get(
   "/api/super-admin/company-admins",
   authenticateSuperAdmin,
@@ -5560,49 +6284,114 @@ app.get(
     try {
       const { data: companyAdmins, error } = await supabase
         .from("company_admins")
-        .select("id, company_name, user_id, created_at")
-        .order("created_at", { ascending: false });
+        .select("id, company_name, company_email, user_id, created_at")
+        .order("created_at", { ascending: true });
 
       if (error) throw error;
 
-      // Get wallet balances, organization counts, and emails
-      const enrichedAdmins = await Promise.all(
-        companyAdmins.map(async (admin) => {
-          // Get email from profiles
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("email")
-            .eq("id", admin.user_id)
-            .single();
+      // Group by company name and company email
+      const companiesMap = new Map();
 
-          // Get wallet balance from wallets table (using user_id)
-          const { data: wallet } = await supabase
-            .from("wallets")
-            .select("balance")
-            .eq("user_id", admin.user_id)
-            .single();
+      for (const admin of companyAdmins) {
+        const key = `${admin.company_name}|${admin.company_email}`;
 
-          // Count organizations
+        if (!companiesMap.has(key)) {
+          companiesMap.set(key, {
+            company_name: admin.company_name,
+            company_email: admin.company_email,
+            created_at: admin.created_at,
+            admin_ids: [admin.id],
+            user_ids: [admin.user_id],
+          });
+        } else {
+          const company = companiesMap.get(key);
+          company.admin_ids.push(admin.id);
+          company.user_ids.push(admin.user_id);
+        }
+      }
+
+      // Get aggregated data for each unique company
+      const enrichedCompanies = await Promise.all(
+        Array.from(companiesMap.values()).map(async (company) => {
+          // Get total wallet balance from all admins of this company
+          const walletPromises = company.user_ids.map(async (userId) => {
+            const { data: wallet } = await supabase
+              .from("wallets")
+              .select("balance")
+              .eq("user_id", userId)
+              .single();
+            return wallet?.balance || 0;
+          });
+          const walletBalances = await Promise.all(walletPromises);
+          const totalWalletBalance = walletBalances.reduce(
+            (sum, balance) => sum + balance,
+            0,
+          );
+
+          // Count total organizations across all admins
           const { count: orgsCount } = await supabase
             .from("organizations")
             .select("*", { count: "exact", head: true })
-            .eq("company_admin_id", admin.id);
+            .in("company_admin_id", company.admin_ids);
 
           return {
-            id: admin.id,
-            company_name: admin.company_name,
-            email: profile?.email || "N/A",
-            wallet_balance: wallet?.balance || 0,
+            company_name: company.company_name,
+            company_email: company.company_email,
+            wallet_balance: totalWalletBalance,
             organizations_count: orgsCount || 0,
-            created_at: admin.created_at,
+            admins_count: company.admin_ids.length,
+            created_at: company.created_at,
           };
         }),
       );
 
       res.json({
         success: true,
-        companyAdmins: enrichedAdmins,
+        companyAdmins: enrichedCompanies,
       });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Get All Admins for a Specific Company
+app.get(
+  "/api/super-admin/company/:companyName/admins",
+  authenticateSuperAdmin,
+  async (req, res, next) => {
+    try {
+      const { companyName } = req.params;
+
+      // Get all company_admins with this company name
+      const { data: companyAdmins, error } = await supabase
+        .from("company_admins")
+        .select("id, user_id, created_at, company_email")
+        .eq("company_name", companyName)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+
+      // Get user profiles for each admin
+      const adminsWithProfiles = await Promise.all(
+        (companyAdmins || []).map(async (admin, index) => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("email, full_name")
+            .eq("id", admin.user_id)
+            .single();
+
+          return {
+            id: admin.id,
+            email: profile?.email || "Unknown",
+            full_name: profile?.full_name || "Unknown",
+            role: index === 0 ? "Admin" : "Co-Admin",
+            joined_at: admin.created_at,
+          };
+        }),
+      );
+
+      res.json({ success: true, admins: adminsWithProfiles });
     } catch (error) {
       next(error);
     }
@@ -5622,6 +6411,7 @@ app.get(
         id,
         name,
         shared_balance,
+        owner_id,
         created_at,
         company_admins!inner(company_name)
       `,
@@ -5630,7 +6420,7 @@ app.get(
 
       if (error) throw error;
 
-      // Count members for each organization
+      // Count members and get owner wallet for each organization
       const enrichedOrgs = await Promise.all(
         organizations.map(async (org) => {
           const { count: membersCount } = await supabase
@@ -5638,11 +6428,18 @@ app.get(
             .select("*", { count: "exact", head: true })
             .eq("organization_id", org.id);
 
+          // Get owner's wallet balance
+          const { data: ownerWallet } = await supabase
+            .from("wallets")
+            .select("balance")
+            .eq("user_id", org.owner_id)
+            .single();
+
           return {
             id: org.id,
             name: org.name,
             company_admin_name: org.company_admins.company_name,
-            shared_balance: org.shared_balance || 0,
+            shared_balance: ownerWallet?.balance || 0,
             members_count: membersCount || 0,
             created_at: org.created_at,
           };

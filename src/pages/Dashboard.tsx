@@ -14,7 +14,6 @@ import { WalletCard } from "@/components/dashboard/WalletCard";
 import { Dialer } from "@/components/dashboard/Dialer";
 import { RecentCalls } from "@/components/dashboard/RecentCalls";
 import { StatsCards } from "@/components/dashboard/StatsCards";
-import { CreateOrganizationModal } from "@/components/dashboard/CreateOrganizationModal";
 import { OrganizationManagement } from "@/components/dashboard/OrganizationManagement";
 import { InviteNotifications } from "@/components/dashboard/InviteNotifications";
 import { JoinedOrganizations } from "@/components/dashboard/JoinedOrganizations";
@@ -39,10 +38,22 @@ import {
   Building2,
   Bell,
   Upload,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 interface CallLog {
   id: string;
@@ -105,8 +116,69 @@ export default function Dashboard() {
   const [showCallQueueUpload, setShowCallQueueUpload] = useState(false);
   const [activeQueueId, setActiveQueueId] = useState<string | null>(null);
 
+  // Admin Access Request state (Company users only)
+  const [showAdminRequestModal, setShowAdminRequestModal] = useState(false);
+  const [adminRequestStatus, setAdminRequestStatus] = useState<any>(null);
+  const [requestFormData, setRequestFormData] = useState({
+    company_name: "",
+    company_email: "",
+    company_phone: "",
+    company_id: "",
+    request_type: "create_new", // 'create_new' or 'join_existing'
+  });
+  const [submittingRequest, setSubmittingRequest] = useState(false);
+  const [companySearchQuery, setCompanySearchQuery] = useState("");
+  const [searchedCompanies, setSearchedCompanies] = useState<any[]>([]);
+  const [searchingCompanies, setSearchingCompanies] = useState(false);
+  const [showCompanyDropdown, setShowCompanyDropdown] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<any>(null);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const callTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Company search effect
+  useEffect(() => {
+    const searchCompanies = async () => {
+      if (!companySearchQuery || companySearchQuery.trim().length < 2) {
+        setSearchedCompanies([]);
+        setShowCompanyDropdown(false);
+        return;
+      }
+
+      setSearchingCompanies(true);
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!session) return;
+
+        const apiUrl = import.meta.env.VITE_API_URL;
+        const response = await fetch(
+          `${apiUrl}/api/companies/search?query=${encodeURIComponent(companySearchQuery)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+            },
+          },
+        );
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setSearchedCompanies(data.companies || []);
+          setShowCompanyDropdown(data.companies && data.companies.length > 0);
+        }
+      } catch (error) {
+        console.error("Error searching companies:", error);
+      } finally {
+        setSearchingCompanies(false);
+      }
+    };
+
+    const timeoutId = setTimeout(searchCompanies, 300);
+    return () => clearTimeout(timeoutId);
+  }, [companySearchQuery]);
 
   // Entrance animations
   useLayoutEffect(() => {
@@ -174,6 +246,11 @@ export default function Dashboard() {
     if (user) {
       fetchData();
       if (userType === "company") {
+        fetchOrganizations();
+        checkCompanyLinking();
+        fetchAdminRequestStatus(); // Check admin request status
+      }
+      if (userType === "company_admin") {
         fetchOrganizations();
         checkCompanyLinking();
       }
@@ -368,7 +445,125 @@ export default function Dashboard() {
       setLoading(false);
     }
   };
+  const fetchAdminRequestStatus = async () => {
+    if (!user || userType !== "company") return;
 
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const response = await fetch(
+        `${apiUrl}/api/admin-access-request/status`,
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+      if (data.success) {
+        setAdminRequestStatus(data.request);
+      }
+    } catch (error) {
+      console.error("Error fetching admin request status:", error);
+    }
+  };
+
+  const handleManageClick = async () => {
+    // If user is already a company admin, go directly to dashboard
+    if (userType === "company_admin") {
+      navigate("/company-admin/dashboard");
+      return;
+    }
+
+    // For company users, check their request status
+    if (!adminRequestStatus) {
+      // No request exists, show modal to create one
+      setShowAdminRequestModal(true);
+    } else if (adminRequestStatus.status === "pending") {
+      toast.info("Your admin access request is pending approval", {
+        description: "The super admin will review your request soon.",
+      });
+    } else if (adminRequestStatus.status === "approved") {
+      // Navigate to company admin dashboard
+      navigate("/company-admin/dashboard");
+    } else if (adminRequestStatus.status === "rejected") {
+      toast.error("Your previous request was rejected", {
+        description:
+          adminRequestStatus.rejection_reason ||
+          "You can submit a new request.",
+      });
+      setShowAdminRequestModal(true);
+    }
+  };
+
+  const handleSubmitAdminRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validation based on request type
+    if (requestFormData.request_type === "join_existing") {
+      if (!requestFormData.company_id) {
+        toast.error("Please select a company to join");
+        return;
+      }
+    } else {
+      if (!requestFormData.company_name || !requestFormData.company_email) {
+        toast.error("Please fill in all required fields");
+        return;
+      }
+    }
+
+    setSubmittingRequest(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Please log in again");
+        return;
+      }
+
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const response = await fetch(`${apiUrl}/api/admin-access-request`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(requestFormData),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success("Admin access request submitted successfully!", {
+          description: "The super admin will review your request.",
+        });
+        setShowAdminRequestModal(false);
+        setRequestFormData({
+          company_name: "",
+          company_email: "",
+          company_phone: "",
+          company_id: "",
+          request_type: "create_new",
+        });
+        setSelectedCompany(null);
+        setCompanySearchQuery("");
+        fetchAdminRequestStatus(); // Refresh status
+      } else {
+        toast.error(data.error || "Failed to submit request");
+      }
+    } catch (error) {
+      console.error("Error submitting admin request:", error);
+      toast.error("Failed to submit request");
+    } finally {
+      setSubmittingRequest(false);
+    }
+  };
   const handleCall = async (number: string, countryCode: string) => {
     if (currentCall) {
       toast.error("Already on a call");
@@ -425,7 +620,16 @@ export default function Dashboard() {
 
   return (
     <div ref={containerRef} className="min-h-screen bg-slate-50">
-      <Header user={user} onSignOut={signOut} />
+      <Header
+        user={user}
+        onSignOut={signOut}
+        userType={userType}
+        onManageClick={
+          userType === "company" || userType === "company_admin"
+            ? handleManageClick
+            : undefined
+        }
+      />
 
       <main className="container py-6 px-4 md:px-6 lg:px-8">
         {/* Hero Section */}
@@ -475,35 +679,16 @@ export default function Dashboard() {
                 </>
               )}
 
-              {/* Organization Button for Company Users */}
+              {/* Call Queue Upload for Company Users */}
               {userType === "company" && (
-                <>
-                  <Button
-                    onClick={() => {
-                      if (organizations.length === 0) {
-                        setShowCreateOrgModal(true);
-                      } else {
-                        setSelectedOrg(organizations[0]);
-                        setShowOrgManagement(true);
-                      }
-                    }}
-                    className="flex items-center gap-2 bg-gradient-to-r from-[#0891b2] to-[#06b6d4] hover:from-[#0e7490] hover:to-[#0891b2] text-white"
-                  >
-                    <Building2 className="w-4 h-4" />
-                    {organizations.length === 0
-                      ? "Create Organization"
-                      : "Manage Organization"}
-                  </Button>
-
-                  <Button
-                    onClick={() => setShowCallQueueUpload(true)}
-                    variant="outline"
-                    className="flex items-center gap-2 border-purple-300 text-purple-600 hover:bg-purple-50"
-                  >
-                    <Upload className="w-4 h-4" />
-                    Upload Call Queue
-                  </Button>
-                </>
+                <Button
+                  onClick={() => setShowCallQueueUpload(true)}
+                  variant="outline"
+                  className="flex items-center gap-2 border-purple-300 text-purple-600 hover:bg-purple-50"
+                >
+                  <Upload className="w-4 h-4" />
+                  Upload Call Queue
+                </Button>
               )}
 
               {quickActions.map((action, index) => (
@@ -779,7 +964,11 @@ export default function Dashboard() {
                   setActiveQueueId(null);
                   toast.success("Call queue completed!");
                 }}
-                currentCallStatus={callStatus}
+                currentCallStatus={
+                  callState === "connecting"
+                    ? "ringing"
+                    : (callState as "ringing" | "idle" | "answered")
+                }
               />
             )}
 
@@ -834,23 +1023,6 @@ export default function Dashboard() {
       </main>
 
       {/* Modals */}
-      <CreateOrganizationModal
-        open={showCreateOrgModal}
-        onClose={() => setShowCreateOrgModal(false)}
-        onSuccess={() => {
-          fetchOrganizations();
-          // Open organization management modal automatically after org creation
-          setTimeout(() => {
-            fetchOrganizations().then(() => {
-              if (organizations.length > 0) {
-                setSelectedOrg(organizations[0]);
-                setShowOrgManagement(true);
-              }
-            });
-          }, 500);
-        }}
-      />
-
       {selectedOrg && (
         <OrganizationManagement
           open={showOrgManagement}
@@ -896,6 +1068,290 @@ export default function Dashboard() {
           setShowCallQueueUpload(false);
         }}
       />
+
+      {/* Admin Access Request Modal */}
+      <Dialog
+        open={showAdminRequestModal}
+        onOpenChange={setShowAdminRequestModal}
+      >
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <Building2 className="w-6 h-6 text-indigo-600" />
+              Request Company Admin Access
+            </DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Choose to create a new company or join an existing one as co-admin
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmitAdminRequest} className="space-y-6 mt-4">
+            {/* Request Type Toggle */}
+            <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
+              <button
+                type="button"
+                onClick={() => {
+                  setRequestFormData({
+                    ...requestFormData,
+                    request_type: "create_new",
+                    company_id: "",
+                  });
+                  setSelectedCompany(null);
+                  setCompanySearchQuery("");
+                }}
+                className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  requestFormData.request_type === "create_new"
+                    ? "bg-white text-indigo-600 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Create New Company
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setRequestFormData({
+                    ...requestFormData,
+                    request_type: "join_existing",
+                    company_name: "",
+                    company_email: "",
+                    company_phone: "",
+                  });
+                }}
+                className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  requestFormData.request_type === "join_existing"
+                    ? "bg-white text-indigo-600 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Join Existing Company
+              </button>
+            </div>
+
+            {/* Join Existing Company */}
+            {requestFormData.request_type === "join_existing" && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="company_search"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Search Company <span className="text-red-500">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="company_search"
+                      placeholder="Type company name..."
+                      value={
+                        selectedCompany
+                          ? selectedCompany.company_name
+                          : companySearchQuery
+                      }
+                      onChange={(e) => {
+                        setCompanySearchQuery(e.target.value);
+                        if (selectedCompany) {
+                          setSelectedCompany(null);
+                          setRequestFormData({
+                            ...requestFormData,
+                            company_id: "",
+                          });
+                        }
+                      }}
+                      onFocus={() => {
+                        if (searchedCompanies.length > 0)
+                          setShowCompanyDropdown(true);
+                      }}
+                      className="w-full"
+                      autoComplete="off"
+                    />
+                    {searchingCompanies && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                      </div>
+                    )}
+                    {showCompanyDropdown &&
+                      searchedCompanies.length > 0 &&
+                      !selectedCompany && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                          {searchedCompanies.map((company) => (
+                            <button
+                              key={company.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedCompany(company);
+                                setRequestFormData({
+                                  ...requestFormData,
+                                  company_id: company.id,
+                                });
+                                setShowCompanyDropdown(false);
+                                setCompanySearchQuery("");
+                              }}
+                              className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
+                                  {company.company_name.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 truncate">
+                                    {company.company_name}
+                                  </p>
+                                  <p className="text-xs text-gray-500 truncate">
+                                    {company.company_email}
+                                  </p>
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                  </div>
+                  {selectedCompany && (
+                    <div className="mt-2 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
+                            {selectedCompany.company_name
+                              .charAt(0)
+                              .toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-indigo-900">
+                              {selectedCompany.company_name}
+                            </p>
+                            <p className="text-xs text-indigo-600">
+                              {selectedCompany.company_email}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedCompany(null);
+                            setRequestFormData({
+                              ...requestFormData,
+                              company_id: "",
+                            });
+                          }}
+                          className="text-indigo-600 hover:text-indigo-700"
+                        >
+                          Change
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-800">
+                    <strong>Note:</strong> You'll become a co-admin of the
+                    selected company after super admin approval.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Create New Company */}
+            {requestFormData.request_type === "create_new" && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="company_name"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Company Name <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="company_name"
+                    placeholder="Enter your company name"
+                    value={requestFormData.company_name}
+                    onChange={(e) =>
+                      setRequestFormData({
+                        ...requestFormData,
+                        company_name: e.target.value,
+                      })
+                    }
+                    required
+                    className="w-full"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="company_email"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Company Email <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="company_email"
+                    type="email"
+                    placeholder="company@example.com"
+                    value={requestFormData.company_email}
+                    onChange={(e) =>
+                      setRequestFormData({
+                        ...requestFormData,
+                        company_email: e.target.value,
+                      })
+                    }
+                    required
+                    className="w-full"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="company_phone"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Company Phone (Optional)
+                  </Label>
+                  <Input
+                    id="company_phone"
+                    type="tel"
+                    placeholder="+1 234 567 8900"
+                    value={requestFormData.company_phone}
+                    onChange={(e) =>
+                      setRequestFormData({
+                        ...requestFormData,
+                        company_phone: e.target.value,
+                      })
+                    }
+                    className="w-full"
+                  />
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-800">
+                    <strong>Note:</strong> Once approved, you'll be able to
+                    access the Company Admin Dashboard to manage teams and share
+                    wallet balance.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter className="mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowAdminRequestModal(false)}
+                disabled={submittingRequest}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={submittingRequest}
+                className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
+              >
+                {submittingRequest ? "Submitting..." : "Submit Request"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

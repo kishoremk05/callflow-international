@@ -5,6 +5,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { CreateTeamModal } from "@/components/dashboard/CreateTeamModal";
+import { OrganizationManagement } from "@/components/dashboard/OrganizationManagement";
 import {
   Building2,
   Users,
@@ -16,6 +18,8 @@ import {
   Share2,
   Trash2,
   RefreshCw,
+  Home,
+  UserMinus,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -36,6 +40,14 @@ interface CompanyAdmin {
   company_email: string;
   company_phone: string | null;
   is_active: boolean;
+}
+
+interface Admin {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
+  joined_at: string;
 }
 
 interface Organization {
@@ -75,6 +87,7 @@ export default function CompanyAdminDashboard() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const [companyAdmin, setCompanyAdmin] = useState<CompanyAdmin | null>(null);
+  const [admins, setAdmins] = useState<Admin[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [stats, setStats] = useState<Stats>({
@@ -83,8 +96,11 @@ export default function CompanyAdminDashboard() {
     totalMembers: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [showCreateOrgModal, setShowCreateOrgModal] = useState(false);
+  const [showOrgManagement, setShowOrgManagement] = useState(false);
   const [showInviteOrgDialog, setShowInviteOrgDialog] = useState(false);
   const [showShareWalletDialog, setShowShareWalletDialog] = useState(false);
+  const [showAdminsDialog, setShowAdminsDialog] = useState(false);
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -117,22 +133,28 @@ export default function CompanyAdminDashboard() {
       const authHeader = { Authorization: `Bearer ${await token}` };
 
       // Fetch all data in parallel for faster loading
-      const [profileRes, walletRes, orgsRes, statsRes] = await Promise.all([
-        fetch(`${apiUrl}/api/company-admin/profile`, { headers: authHeader }),
-        fetch(`${apiUrl}/api/company-admin/wallet`, { headers: authHeader }),
-        fetch(`${apiUrl}/api/company-admin/organizations`, {
-          headers: authHeader,
-        }),
-        fetch(`${apiUrl}/api/company-admin/stats`, { headers: authHeader }),
-      ]);
+      const [profileRes, walletRes, orgsRes, statsRes, adminsRes] =
+        await Promise.all([
+          fetch(`${apiUrl}/api/company-admin/profile`, { headers: authHeader }),
+          fetch(`${apiUrl}/api/company-admin/wallet`, { headers: authHeader }),
+          fetch(`${apiUrl}/api/company-admin/organizations`, {
+            headers: authHeader,
+          }),
+          fetch(`${apiUrl}/api/company-admin/stats`, { headers: authHeader }),
+          fetch(`${apiUrl}/api/company-admin/all-admins`, {
+            headers: authHeader,
+          }),
+        ]);
 
       // Parse all responses in parallel
-      const [profileData, walletData, orgsData, statsData] = await Promise.all([
-        profileRes.json(),
-        walletRes.json(),
-        orgsRes.json(),
-        statsRes.json(),
-      ]);
+      const [profileData, walletData, orgsData, statsData, adminsData] =
+        await Promise.all([
+          profileRes.json(),
+          walletRes.json(),
+          orgsRes.json(),
+          statsRes.json(),
+          adminsRes.json(),
+        ]);
 
       // Check profile first for authorization
       if (!profileData.success && profileRes.status === 403) {
@@ -153,6 +175,9 @@ export default function CompanyAdminDashboard() {
       }
       if (statsData.success) {
         setStats(statsData.stats);
+      }
+      if (adminsData.success) {
+        setAdmins(adminsData.admins);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -413,6 +438,53 @@ export default function CompanyAdminDashboard() {
     setShowShareWalletDialog(true);
   };
 
+  const handleLeaveCompany = async () => {
+    if (
+      !confirm(
+        "Are you sure you want to leave this company? If you are the admin, the oldest co-admin will be promoted to admin.",
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      const token = (
+        await import("@/integrations/supabase/client")
+      ).supabase.auth
+        .getSession()
+        .then((res) => res.data.session?.access_token);
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/company-admin/leave-company`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${await token}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success(data.message || "You have left the company");
+        setShowAdminsDialog(false);
+        // Redirect to dashboard after leaving
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 1500);
+      } else {
+        toast.error(data.error || "Failed to leave company");
+      }
+    } catch (error) {
+      console.error("Error leaving company:", error);
+      toast.error("Failed to leave company");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -438,10 +510,28 @@ export default function CompanyAdminDashboard() {
                 <h1 className="text-xl font-bold text-gray-900">
                   {companyAdmin?.company_name || "Company Admin"}
                 </h1>
-                <p className="text-sm text-gray-500">Company Admin Portal</p>
+                <p className="text-sm text-gray-500">
+                  {companyAdmin?.company_email || "Company Admin Portal"}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                onClick={() => navigate("/dashboard")}
+                className="gap-2 border-blue-300 text-blue-700 hover:bg-blue-50 hover:text-blue-700"
+              >
+                <Home className="w-4 h-4" />
+                Dashboard
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => navigate("/payments")}
+                className="gap-2 border-green-300 text-green-700 hover:bg-green-50 hover:text-green-700"
+              >
+                <Wallet className="w-4 h-4" />
+                Wallet
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -485,35 +575,30 @@ export default function CompanyAdminDashboard() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Organizations
-              </CardTitle>
+              <CardTitle className="text-sm font-medium">Teams</CardTitle>
               <Building2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {stats.totalOrganizations}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Active organizations
-              </p>
+              <p className="text-xs text-muted-foreground">Active teams</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card
+            className="cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => setShowAdminsDialog(true)}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Total Shared
+                Company Admins
               </CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                ${stats.totalShared.toFixed(2)}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Shared with organizations
-              </p>
+              <div className="text-2xl font-bold">{admins.length}</div>
+              <p className="text-xs text-muted-foreground">Click to view all</p>
             </CardContent>
           </Card>
 
@@ -526,29 +611,27 @@ export default function CompanyAdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.totalMembers}</div>
-              <p className="text-xs text-muted-foreground">
-                Across all organizations
-              </p>
+              <p className="text-xs text-muted-foreground">Across all teams</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Organizations Section */}
+        {/* Teams Section */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Organizations</CardTitle>
+                <CardTitle>Teams</CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Manage organizations under your company
+                  Manage teams under your company
                 </p>
               </div>
               <Button
-                onClick={() => setShowInviteOrgDialog(true)}
-                className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                onClick={() => setShowCreateOrgModal(true)}
+                className="gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
               >
                 <Plus className="w-4 h-4" />
-                Invite Organization
+                Create Team
               </Button>
             </div>
           </CardHeader>
@@ -556,9 +639,9 @@ export default function CompanyAdminDashboard() {
             {organizations.length === 0 ? (
               <div className="text-center py-12">
                 <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No organizations yet</p>
+                <p className="text-gray-500">No teams yet</p>
                 <p className="text-sm text-gray-400 mt-1">
-                  Invite an organization owner to get started
+                  Create a team or invite an existing team to get started
                 </p>
               </div>
             ) : (
@@ -575,19 +658,25 @@ export default function CompanyAdminDashboard() {
                             </p>
                           )}
                         </div>
-                        <Badge variant="outline" className="ml-2">
-                          {org.organization_members?.length || 0} members
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">
+                            {org.organization_members?.length || 0} members
+                          </Badge>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 w-8 p-0 rounded-full"
+                            onClick={() => {
+                              setSelectedOrg(org);
+                              setShowOrgManagement(true);
+                            }}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Shared Balance:</span>
-                        <span className="font-semibold text-green-600">
-                          ${org.shared_balance?.toFixed(2) || "0.00"}
-                        </span>
-                      </div>
-
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-600">Owner Wallet:</span>
                         <span className="font-semibold text-blue-600">
@@ -608,23 +697,15 @@ export default function CompanyAdminDashboard() {
                           </div>
                         )}
 
-                      <div className="flex gap-2 pt-2">
+                      <div className="pt-2">
                         <Button
                           size="sm"
                           variant="outline"
-                          className="flex-1 gap-2"
-                          onClick={() => openShareDialog(org)}
-                        >
-                          <Share2 className="w-4 h-4" />
-                          Share Balance
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-red-600 hover:bg-red-50"
+                          className="text-red-600 hover:bg-red-50 w-full gap-2"
                           onClick={() => handleDeleteOrganization(org.id)}
                         >
                           <Trash2 className="w-4 h-4" />
+                          Delete Team
                         </Button>
                       </div>
                     </CardContent>
@@ -650,14 +731,14 @@ export default function CompanyAdminDashboard() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Invite Organization</DialogTitle>
+            <DialogTitle>Invite Team</DialogTitle>
             <DialogDescription>
-              Search and invite an organization owner to join your company
+              Search and invite a team owner to join your company
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2 relative">
-              <Label htmlFor="ownerEmail">Organization Owner Email</Label>
+              <Label htmlFor="ownerEmail">Team Owner Email</Label>
               <Input
                 id="ownerEmail"
                 type="email"
@@ -826,6 +907,93 @@ export default function CompanyAdminDashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Company Admins Dialog */}
+      <Dialog open={showAdminsDialog} onOpenChange={setShowAdminsDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-blue-600" />
+              Company Admins
+            </DialogTitle>
+            <DialogDescription>
+              All administrators who can manage this company
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-4">
+            {admins.map((admin) => (
+              <div
+                key={admin.id}
+                className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold">
+                    {admin.full_name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">
+                      {admin.full_name}
+                    </p>
+                    <p className="text-sm text-gray-600">{admin.email}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant={admin.role === "Admin" ? "default" : "secondary"}
+                    className={
+                      admin.role === "Admin"
+                        ? "bg-gradient-to-r from-blue-600 to-indigo-600"
+                        : "bg-gradient-to-r from-purple-500 to-pink-500"
+                    }
+                  >
+                    {admin.role}
+                  </Badge>
+                  {admin.email === user?.email && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleLeaveCompany}
+                      disabled={actionLoading}
+                      className="gap-1"
+                    >
+                      <UserMinus className="w-3 h-3" />
+                      Leave
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setShowAdminsDialog(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Team Modal */}
+      <CreateTeamModal
+        open={showCreateOrgModal}
+        onClose={() => setShowCreateOrgModal(false)}
+        onSuccess={() => {
+          fetchCompanyAdminData();
+          setShowCreateOrgModal(false);
+        }}
+      />
+
+      {/* Team Management Modal */}
+      {selectedOrg && (
+        <OrganizationManagement
+          open={showOrgManagement}
+          onClose={() => {
+            setShowOrgManagement(false);
+            setSelectedOrg(null);
+          }}
+          organizationId={selectedOrg.id}
+          organizationName={selectedOrg.name}
+          currentBalance={wallet?.balance || 0}
+          onBalanceUpdate={fetchCompanyAdminData}
+        />
+      )}
     </div>
   );
 }
