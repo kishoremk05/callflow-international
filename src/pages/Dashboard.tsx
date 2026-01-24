@@ -114,7 +114,14 @@ export default function Dashboard() {
 
   // Call Queue state (Company users only)
   const [showCallQueueUpload, setShowCallQueueUpload] = useState(false);
-  const [activeQueueId, setActiveQueueId] = useState<string | null>(null);
+  const [activeQueueId, setActiveQueueId] = useState<string | null>(() => {
+    // Restore active queue from localStorage on mount
+    if (typeof window !== "undefined") {
+      const savedQueueId = localStorage.getItem("activeQueueId");
+      return savedQueueId || null;
+    }
+    return null;
+  });
 
   // Admin Access Request state (Company users only)
   const [showAdminRequestModal, setShowAdminRequestModal] = useState(false);
@@ -260,6 +267,15 @@ export default function Dashboard() {
       }
     }
   }, [user, userType]);
+
+  // Persist activeQueueId to localStorage
+  useEffect(() => {
+    if (activeQueueId) {
+      localStorage.setItem("activeQueueId", activeQueueId);
+    } else {
+      localStorage.removeItem("activeQueueId");
+    }
+  }, [activeQueueId]);
 
   const checkCompanyLinking = async () => {
     try {
@@ -687,7 +703,7 @@ export default function Dashboard() {
                   className="flex items-center gap-2 border-purple-300 text-purple-600 hover:bg-purple-50"
                 >
                   <Upload className="w-4 h-4" />
-                  Upload Call Queue
+                  Upload Call Data
                 </Button>
               )}
 
@@ -857,108 +873,12 @@ export default function Dashboard() {
             {activeQueueId && (
               <CallQueueManager
                 queueId={activeQueueId}
-                onCall={(number, name) => {
-                  // Extract country code from number (first 2-3 digits)
-                  let countryCode = "+91"; // Default to India
-                  let cleanNumber = number;
-
-                  // Remove any spaces first
-                  const rawNumber = number.replace(/\s/g, "");
-
+                onCall={(number, countryCode) => {
+                  // CallQueueManager now extracts country code properly
                   console.log(
-                    "Original number from queue:",
-                    number,
-                    "Raw:",
-                    rawNumber,
-                    "Length:",
-                    rawNumber.length,
+                    `📞 Dashboard received: ${countryCode} ${number}`,
                   );
-
-                  // If number already has + symbol (like +91 9080222066)
-                  if (rawNumber.startsWith("+")) {
-                    // Try to match known country codes first
-                    if (rawNumber.startsWith("+91")) {
-                      countryCode = "+91";
-                      cleanNumber = rawNumber.substring(3); // Remove +91
-                      console.log("Detected +91 India");
-                    } else if (rawNumber.startsWith("+1")) {
-                      countryCode = "+1";
-                      cleanNumber = rawNumber.substring(2); // Remove +1
-                      console.log("Detected +1 US/Canada");
-                    } else if (rawNumber.startsWith("+44")) {
-                      countryCode = "+44";
-                      cleanNumber = rawNumber.substring(3); // Remove +44
-                      console.log("Detected +44 UK");
-                    } else if (rawNumber.startsWith("+971")) {
-                      countryCode = "+971";
-                      cleanNumber = rawNumber.substring(4); // Remove +971
-                      console.log("Detected +971 UAE");
-                    } else {
-                      // Generic extraction for other country codes
-                      const match = rawNumber.match(/^\+(\d{1,3})(\d+)$/);
-                      if (match) {
-                        countryCode = "+" + match[1];
-                        cleanNumber = match[2];
-                        console.log("Generic country code extraction");
-                      }
-                    }
-                  }
-                  // Check for Indian numbers (91 + 10 digits = 12 total)
-                  else if (
-                    rawNumber.startsWith("91") &&
-                    rawNumber.length === 12
-                  ) {
-                    countryCode = "+91";
-                    cleanNumber = rawNumber.substring(2); // Remove first 2 digits (91)
-                    console.log("Detected India number");
-                  }
-                  // Check for US/Canada numbers (1 + 10 digits = 11 total)
-                  else if (
-                    rawNumber.startsWith("1") &&
-                    rawNumber.length === 11
-                  ) {
-                    countryCode = "+1";
-                    cleanNumber = rawNumber.substring(1); // Remove first digit (1)
-                    console.log("Detected US/Canada number");
-                  }
-                  // Check for UK numbers (44 + 10 digits = 12 total)
-                  else if (
-                    rawNumber.startsWith("44") &&
-                    rawNumber.length === 12
-                  ) {
-                    countryCode = "+44";
-                    cleanNumber = rawNumber.substring(2);
-                    console.log("Detected UK number");
-                  }
-                  // Check for UAE numbers (971 + 9 digits = 12 total)
-                  else if (
-                    rawNumber.startsWith("971") &&
-                    rawNumber.length === 12
-                  ) {
-                    countryCode = "+971";
-                    cleanNumber = rawNumber.substring(3);
-                    console.log("Detected UAE number");
-                  }
-                  // If it's just 10 digits, assume India
-                  else if (rawNumber.length === 10) {
-                    countryCode = "+91";
-                    cleanNumber = rawNumber;
-                    console.log("10 digits, assuming India");
-                  }
-                  // Default: assume first 2 digits are country code
-                  else if (rawNumber.length > 10) {
-                    countryCode = "+" + rawNumber.substring(0, 2);
-                    cleanNumber = rawNumber.substring(2);
-                    console.log("Using first 2 digits as country code");
-                  }
-
-                  console.log(
-                    "Final: Country Code:",
-                    countryCode,
-                    "Clean Number:",
-                    cleanNumber,
-                  );
-                  handleCall(cleanNumber, countryCode);
+                  handleCall(number, countryCode);
                 }}
                 onComplete={() => {
                   setActiveQueueId(null);

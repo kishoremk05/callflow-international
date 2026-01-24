@@ -1,0 +1,21 @@
+================================================================================
+ 🔧 CRITICAL DATABASE FIX - RUN THIS SQL IN SUPABASE NOW
+================================================================================
+
+The backend is failing because the database functions reference columns that
+don't exist. You MUST run the SQL below to fix it.
+
+HOW TO RUN:
+1. Open Supabase Dashboard
+2. Go to SQL Editor
+3. Copy and paste the ENTIRE content from FIX_WALLET_BALANCE_FUNCTIONS.sql
+4. Click "RUN"
+
+After running the SQL, the errors will be fixed:
+✅ "column wallet_balance does not exist" - FIXED
+✅ "column organization_id does not exist" - FIXED  
+✅ Country code detection (Philippines → India) - FIXED in backend
+
+NO BACKEND RESTART NEEDED - Just run the SQL!
+
+================================================================================

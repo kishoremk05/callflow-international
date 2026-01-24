@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Phone,
   SkipForward,
@@ -11,8 +12,10 @@ import {
   XCircle,
   Clock,
   Users,
+  List,
 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface CallQueueManagerProps {
   queueId: string;
@@ -30,6 +33,7 @@ export function CallQueueManager({
   const [queue, setQueue] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showAllContacts, setShowAllContacts] = useState(false);
   const [stats, setStats] = useState({
     total: 0,
     completed: 0,
@@ -68,7 +72,7 @@ export function CallQueueManager({
           headers: {
             Authorization: `Bearer ${session.access_token}`,
           },
-        }
+        },
       );
 
       const data = await response.json();
@@ -86,7 +90,7 @@ export function CallQueueManager({
 
         // Find first pending contact
         const firstPending = data.queue?.findIndex(
-          (c: any) => c.status === "pending"
+          (c: any) => c.status === "pending",
         );
         if (firstPending >= 0) {
           setCurrentIndex(firstPending);
@@ -122,7 +126,7 @@ export function CallQueueManager({
             contactId: queue[currentIndex].id,
             status,
           }),
-        }
+        },
       );
 
       fetchQueue();
@@ -135,25 +139,107 @@ export function CallQueueManager({
     const contact = queue[currentIndex];
     if (!contact) return;
 
-    // Extract country code and number
-    // Format can be: "+91 6381179497" or "+916381179497"
-    let phoneNumber = contact.number;
+    // Extract country code and clean number separately
+    let countryCode = "+91"; // Default
+    let cleanNumber = contact.number;
 
-    // Check if there's a space (format: +91 6381179497)
-    if (contact.number.includes(" ")) {
-      const parts = contact.number.split(" ");
-      const countryCode = parts[0]; // +91
-      const localNumber = parts.slice(1).join(""); // 6381179497
+    // Remove spaces and dashes
+    const rawNumber = contact.number.replace(/[\s-]/g, "");
 
-      // Remove the + and combine for Twilio
-      phoneNumber = countryCode.replace("+", "") + localNumber;
-    } else {
-      // Format without space: +916381179497
-      phoneNumber = contact.number.replace(/^\+/, "");
+    // If number has + symbol
+    if (rawNumber.startsWith("+")) {
+      // Extract country code
+      if (rawNumber.startsWith("+91")) {
+        countryCode = "+91";
+        cleanNumber = rawNumber.substring(3);
+      } else if (rawNumber.startsWith("+1")) {
+        countryCode = "+1";
+        cleanNumber = rawNumber.substring(2);
+      } else if (rawNumber.startsWith("+44")) {
+        countryCode = "+44";
+        cleanNumber = rawNumber.substring(3);
+      } else if (rawNumber.startsWith("+971")) {
+        countryCode = "+971";
+        cleanNumber = rawNumber.substring(4);
+      } else {
+        // Generic extraction
+        const match = rawNumber.match(/^\+(\d{1,3})(\d+)$/);
+        if (match) {
+          countryCode = "+" + match[1];
+          cleanNumber = match[2];
+        }
+      }
+    } else if (rawNumber.startsWith("91") && rawNumber.length === 12) {
+      countryCode = "+91";
+      cleanNumber = rawNumber.substring(2);
+    } else if (rawNumber.startsWith("1") && rawNumber.length === 11) {
+      countryCode = "+1";
+      cleanNumber = rawNumber.substring(1);
+    } else if (rawNumber.length === 10) {
+      countryCode = "+91";
+      cleanNumber = rawNumber;
     }
 
-    onCall(phoneNumber, contact.name);
+    console.log(
+      `📞 Queue calling: ${countryCode} ${cleanNumber} (${contact.name})`,
+    );
+    onCall(cleanNumber, countryCode);
     updateCallStatus("calling");
+  };
+
+  const handleCallSpecific = (index: number) => {
+    const contact = queue[index];
+    if (!contact || contact.status !== "pending") return;
+
+    setCurrentIndex(index);
+
+    // Extract country code and clean number separately
+    let countryCode = "+91"; // Default
+    let cleanNumber = contact.number;
+
+    // Remove spaces and dashes
+    const rawNumber = contact.number.replace(/[\s-]/g, "");
+
+    // If number has + symbol
+    if (rawNumber.startsWith("+")) {
+      // Extract country code
+      if (rawNumber.startsWith("+91")) {
+        countryCode = "+91";
+        cleanNumber = rawNumber.substring(3);
+      } else if (rawNumber.startsWith("+1")) {
+        countryCode = "+1";
+        cleanNumber = rawNumber.substring(2);
+      } else if (rawNumber.startsWith("+44")) {
+        countryCode = "+44";
+        cleanNumber = rawNumber.substring(3);
+      } else if (rawNumber.startsWith("+971")) {
+        countryCode = "+971";
+        cleanNumber = rawNumber.substring(4);
+      } else {
+        // Generic extraction
+        const match = rawNumber.match(/^\+(\d{1,3})(\d+)$/);
+        if (match) {
+          countryCode = "+" + match[1];
+          cleanNumber = match[2];
+        }
+      }
+    } else if (rawNumber.startsWith("91") && rawNumber.length === 12) {
+      countryCode = "+91";
+      cleanNumber = rawNumber.substring(2);
+    } else if (rawNumber.startsWith("1") && rawNumber.length === 11) {
+      countryCode = "+1";
+      cleanNumber = rawNumber.substring(1);
+    } else if (rawNumber.length === 10) {
+      countryCode = "+91";
+      cleanNumber = rawNumber;
+    }
+
+    console.log(
+      `📞 Queue calling specific: ${countryCode} ${cleanNumber} (${contact.name})`,
+    );
+    onCall(cleanNumber, countryCode);
+    updateCallStatus("calling");
+    setShowAllContacts(false);
   };
 
   const handleSkip = async (type: "manual" | "auto" = "manual") => {
@@ -165,7 +251,7 @@ export function CallQueueManager({
 
     // Move to next
     const nextPending = queue.findIndex(
-      (c, idx) => idx > currentIndex && c.status === "pending"
+      (c, idx) => idx > currentIndex && c.status === "pending",
     );
 
     if (nextPending >= 0) {
@@ -247,9 +333,19 @@ export function CallQueueManager({
             <Users className="w-4 h-4 text-[#0891b2]" />
             <span>Call Queue</span>
           </div>
-          <Badge className="bg-[#0891b2] text-xs">
-            {currentIndex + 1} of {stats.total}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge className="bg-[#0891b2] text-xs">
+              {currentIndex + 1} of {stats.total}
+            </Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowAllContacts(!showAllContacts)}
+              className="h-7 px-2"
+            >
+              <List className="w-4 h-4" />
+            </Button>
+          </div>
         </CardTitle>
       </CardHeader>
 
@@ -272,45 +368,123 @@ export function CallQueueManager({
           </div>
         </div>
 
-        {/* Current Contact - Compact */}
-        <div className="p-3 bg-[#0891b2]/5 rounded-xl border border-[#0891b2]/20">
-          <p className="text-xs text-[#0891b2] font-medium mb-1">
-            CURRENT CONTACT
-          </p>
-          <p className="font-semibold text-[#1a365d] text-sm mb-0.5">
-            {currentContact.name}
-          </p>
-          <p className="text-xs text-gray-600 font-mono">
-            {formatNumber(currentContact.number)}
-          </p>
-        </div>
-
-        {/* Action Buttons - Compact */}
-        <div className="flex gap-2">
-          <Button
-            onClick={handleCall}
-            className="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 h-9 text-sm"
-          >
-            <Phone className="w-3 h-3 mr-1.5" />
-            Call Now
-          </Button>
-          <Button
-            onClick={() => handleSkip("manual")}
-            variant="outline"
-            className="border-orange-300 text-orange-600 hover:bg-orange-50 h-9 px-3"
-          >
-            <SkipForward className="w-3 h-3" />
-          </Button>
-        </div>
-
-        {/* Next Up Preview - Compact */}
-        {queue[currentIndex + 1] && (
-          <div className="p-2 bg-gray-50 rounded-lg">
-            <p className="text-xs text-gray-500 mb-1">Next Up:</p>
-            <p className="text-xs font-medium text-[#1a365d]">
-              {queue[currentIndex + 1].name}
-            </p>
+        {/* All Contacts List - Expandable */}
+        {showAllContacts ? (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium text-[#0891b2]">ALL CONTACTS</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAllContacts(false)}
+                className="h-6 text-xs"
+              >
+                Show Current Only
+              </Button>
+            </div>
+            <ScrollArea className="h-[300px] pr-4">
+              <div className="space-y-2">
+                {queue.map((contact, index) => (
+                  <div
+                    key={contact.id}
+                    className={cn(
+                      "p-3 rounded-lg border transition-all cursor-pointer",
+                      index === currentIndex && contact.status === "pending"
+                        ? "bg-[#0891b2]/10 border-[#0891b2] shadow-sm"
+                        : contact.status === "answered"
+                          ? "bg-green-50 border-green-200"
+                          : contact.status === "skipped"
+                            ? "bg-orange-50 border-orange-200"
+                            : "bg-white border-gray-200 hover:border-[#0891b2]/50 hover:shadow-sm",
+                    )}
+                    onClick={() => handleCallSpecific(index)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-semibold text-sm text-[#1a365d]">
+                            {contact.name}
+                          </p>
+                          {index === currentIndex &&
+                            contact.status === "pending" && (
+                              <Badge className="bg-[#0891b2] text-xs h-4">
+                                Current
+                              </Badge>
+                            )}
+                        </div>
+                        <p className="text-xs text-gray-600 font-mono">
+                          {formatNumber(contact.number)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {contact.status === "answered" && (
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                        )}
+                        {contact.status === "skipped" && (
+                          <XCircle className="w-4 h-4 text-orange-600" />
+                        )}
+                        {contact.status === "pending" && (
+                          <Button
+                            size="sm"
+                            className="h-7 text-xs bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCallSpecific(index);
+                            }}
+                          >
+                            <Phone className="w-3 h-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
           </div>
+        ) : (
+          <>
+            {/* Current Contact - Compact */}
+            <div className="p-3 bg-[#0891b2]/5 rounded-xl border border-[#0891b2]/20">
+              <p className="text-xs text-[#0891b2] font-medium mb-1">
+                CURRENT CONTACT
+              </p>
+              <p className="font-semibold text-[#1a365d] text-sm mb-0.5">
+                {currentContact.name}
+              </p>
+              <p className="text-xs text-gray-600 font-mono">
+                {formatNumber(currentContact.number)}
+              </p>
+            </div>
+
+            {/* Action Buttons - Compact */}
+            <div className="flex gap-2">
+              <Button
+                onClick={handleCall}
+                className="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 h-9 text-sm"
+              >
+                <Phone className="w-3 h-3 mr-1.5" />
+                Call Now
+              </Button>
+              <Button
+                onClick={() => handleSkip("manual")}
+                variant="outline"
+                className="border-orange-300 text-orange-600 hover:bg-orange-50 h-9 px-3"
+              >
+                <SkipForward className="w-3 h-3" />
+              </Button>
+            </div>
+
+            {/* Next Up Preview - Compact */}
+            {queue[currentIndex + 1] && (
+              <div className="p-2 bg-gray-50 rounded-lg">
+                <p className="text-xs text-gray-500 mb-1">Next Up:</p>
+                <p className="text-xs font-medium text-[#1a365d]">
+                  {queue[currentIndex + 1].name}
+                </p>
+              </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>

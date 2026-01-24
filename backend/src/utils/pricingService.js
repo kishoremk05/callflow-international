@@ -263,7 +263,7 @@ async function updateCallCostRecord(callSid, updateData) {
  */
 async function getWalletBalance(userId, organizationId = null) {
   try {
-    let query = supabase.from("wallets").select("wallet_balance, currency");
+    let query = supabase.from("wallets").select("balance, currency");
 
     if (organizationId) {
       query = query.eq("organization_id", organizationId);
@@ -277,7 +277,7 @@ async function getWalletBalance(userId, organizationId = null) {
 
     return {
       success: true,
-      balance: parseFloat(data.wallet_balance || 0),
+      balance: parseFloat(data.balance || 0),
       currency: data.currency || "USD",
     };
   } catch (error) {

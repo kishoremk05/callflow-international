@@ -27,7 +27,7 @@ export function CallQueueUpload({
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<{ name: string; number: string }[]>(
-    []
+    [],
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -50,14 +50,14 @@ export function CallQueueUpload({
         const name = String(row[0] || "").trim();
         const number = String(row[1] || "").trim();
 
-        // Validate phone number (allows format: +91 6381179497 or +916381179497)
-        if (name && number.match(/^\+?[0-9]{2,3}\s?[0-9]{8,12}$/)) {
+        // Validate phone number (allows format: +91 6381179497 or +91-6381179497 or +916381179497)
+        if (name && number.match(/^\+?[0-9]{2,3}[\s-]?[0-9]{8,12}$/)) {
           contacts.push({ name, number });
         }
       } else if (row.length === 1) {
         // Just number, no name
         const number = String(row[0] || "").trim();
-        if (number.match(/^\+?[0-9]{2,3}\s?[0-9]{8,12}$/)) {
+        if (number.match(/^\+?[0-9]{2,3}[\s-]?[0-9]{8,12}$/)) {
           contacts.push({ name: "Unknown", number });
         }
       }
@@ -147,7 +147,7 @@ export function CallQueueUpload({
                 Authorization: `Bearer ${session.access_token}`,
               },
               body: JSON.stringify({ contacts }),
-            }
+            },
           );
 
           const data = await response.json();
@@ -179,11 +179,11 @@ export function CallQueueUpload({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[550px]">
+      <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-[#1a365d]">
             <Upload className="w-5 h-5 text-[#0891b2]" />
-            Upload Call Queue
+            Upload Call Data
           </DialogTitle>
           <DialogDescription>
             Upload an XLSX file with customer names and phone numbers to create
@@ -207,10 +207,13 @@ export function CallQueueUpload({
                   <div className="bg-white/50 p-2 rounded text-xs font-mono">
                     <strong>Column A: Name | Column B: Number</strong>
                     <br />
-                    John Doe | +916381179491
+                    John Doe | +91 63xxxxxxx
                     <br />
-                    Jane Smith | +919876543210
+                    Jane Smith | +91-9876543210
                   </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Supports both space and dash (-) to separate country code
+                  </p>
                 </div>
               </div>
             </CardContent>

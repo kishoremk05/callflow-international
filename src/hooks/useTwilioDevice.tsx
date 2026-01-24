@@ -428,15 +428,11 @@ export function useTwilioDevice() {
       // Show cost to user after call ends
       if (result.success && result.billedAmount > 0) {
         const minutes = Math.ceil(durationSeconds / 60);
-        const profitInfo =
-          result.profitMargin > 0
-            ? ` | Profit: $${result.profitMargin.toFixed(4)}`
-            : "";
 
         // Show detailed cost breakdown
         const costMessage = result.costBreakdown
-          ? `Call ended: ${result.costBreakdown.billedMinutes} min × $${parseFloat(result.costBreakdown.finalRate).toFixed(4)}/min = $${result.billedAmount.toFixed(4)}${profitInfo}`
-          : `Call cost: $${result.billedAmount.toFixed(4)} (${minutes} min)${profitInfo}`;
+          ? `Call ended: ${result.costBreakdown.billedMinutes} min × $${parseFloat(result.costBreakdown.finalRate).toFixed(4)}/min = $${result.billedAmount.toFixed(4)}`
+          : `Call cost: $${result.billedAmount.toFixed(4)} (${minutes} min)`;
 
         toast.success(costMessage, { duration: 6000 });
 

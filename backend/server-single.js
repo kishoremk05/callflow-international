@@ -482,11 +482,11 @@ app.post("/api/pricing/check-balance", authenticate, async (req, res, next) => {
     // Check balance
     const { data: wallet } = await supabase
       .from("wallets")
-      .select("wallet_balance")
+      .select("balance")
       .eq("user_id", req.user.id)
       .single();
 
-    const currentBalance = parseFloat(wallet?.wallet_balance || 0);
+    const currentBalance = parseFloat(wallet?.balance || 0);
     const requiredAmount = costEstimate.estimation.estimatedCost;
     const hasSufficientFunds = currentBalance >= requiredAmount;
 
@@ -979,10 +979,15 @@ app.post("/api/calls/initiate", authenticate, async (req, res, next) => {
       return res.status(400).json({ error: "Destination number is required" });
     }
 
-    console.log(`📞 Initiating call to ${toNumber}`);
+    // Combine country code and number for proper pricing lookup
+    const fullNumber = toCountryCode ? `${toCountryCode}${toNumber}` : toNumber;
 
-    // Get pricing using new system
-    const costEstimate = await estimateCallCost(toNumber, 5); // 5-minute estimate
+    console.log(
+      `📞 Initiating call to ${toCountryCode || "(no code)"} ${toNumber} (Full: ${fullNumber})`,
+    );
+
+    // Get pricing using new system - MUST use fullNumber with country code
+    const costEstimate = await estimateCallCost(fullNumber, 5); // 5-minute estimate
 
     if (!costEstimate.success) {
       return res.status(400).json({ error: "Failed to estimate call cost" });
@@ -995,18 +1000,18 @@ app.post("/api/calls/initiate", authenticate, async (req, res, next) => {
     // Check wallet balance
     const { data: wallet } = await supabase
       .from("wallets")
-      .select("wallet_balance")
+      .select("balance")
       .eq("user_id", req.user.id)
       .single();
 
     if (
       !wallet ||
-      parseFloat(wallet.wallet_balance) < costEstimate.estimation.estimatedCost
+      parseFloat(wallet.balance) < costEstimate.estimation.estimatedCost
     ) {
       return res.status(400).json({
         error: "Insufficient balance",
         required: costEstimate.estimation.estimatedCost,
-        available: parseFloat(wallet?.wallet_balance || 0),
+        available: parseFloat(wallet?.balance || 0),
       });
     }
 
@@ -1271,11 +1276,11 @@ app.post("/api/calls/end", authenticate, async (req, res, next) => {
       if (billedAmount > 0) {
         const { data: wallet } = await supabase
           .from("wallets")
-          .select("wallet_balance")
+          .select("balance")
           .eq("user_id", req.user.id)
           .single();
 
-        const oldBalance = parseFloat(wallet.wallet_balance);
+        const oldBalance = parseFloat(wallet.balance);
         const newBalance = oldBalance - billedAmount;
 
         console.log(
@@ -1284,7 +1289,7 @@ app.post("/api/calls/end", authenticate, async (req, res, next) => {
 
         await supabase
           .from("wallets")
-          .update({ wallet_balance: Math.max(0, newBalance) })
+          .update({ balance: Math.max(0, newBalance) })
           .eq("user_id", req.user.id);
       }
     }
@@ -4694,11 +4699,9 @@ app.post(
       }
 
       if (!isAuthorized) {
-        return res
-          .status(403)
-          .json({
-            error: "Only organization owner or co-admins can send invites",
-          });
+        return res.status(403).json({
+          error: "Only organization owner or co-admins can send invites",
+        });
       }
 
       // Check if user exists
@@ -4719,11 +4722,9 @@ app.post(
         invitedUser.user_type !== "normal" &&
         invitedUser.user_type !== "company"
       ) {
-        return res
-          .status(400)
-          .json({
-            error: "Can only invite normal or company users to organization",
-          });
+        return res.status(400).json({
+          error: "Can only invite normal or company users to organization",
+        });
       }
 
       // Check if already a member
@@ -4842,11 +4843,9 @@ app.get(
       }
 
       if (!isAuthorized) {
-        return res
-          .status(403)
-          .json({
-            error: "Only organization owner or co-admins can view members",
-          });
+        return res.status(403).json({
+          error: "Only organization owner or co-admins can view members",
+        });
       }
 
       // Get organization members
@@ -5130,11 +5129,9 @@ app.delete(
       }
 
       if (!isAuthorized) {
-        return res
-          .status(403)
-          .json({
-            error: "Only organization owner or co-admins can remove members",
-          });
+        return res.status(403).json({
+          error: "Only organization owner or co-admins can remove members",
+        });
       }
 
       // Get the member's user_id and wallet balance before deleting

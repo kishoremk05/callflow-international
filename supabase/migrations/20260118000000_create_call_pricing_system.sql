@@ -166,10 +166,10 @@ DECLARE
   v_current_balance DECIMAL(10, 4);
   v_new_balance DECIMAL(10, 4);
 BEGIN
-  -- Get current wallet balance
-  SELECT COALESCE(wallet_balance, 0) INTO v_current_balance
+  -- Get current wallet balance (wallets table only has user_id)
+  SELECT COALESCE(balance, 0) INTO v_current_balance
   FROM wallets
-  WHERE (user_id = p_user_id OR organization_id = p_organization_id)
+  WHERE user_id = p_user_id
   LIMIT 1;
   
   -- Check if sufficient balance
@@ -205,11 +205,11 @@ BEGIN
     NOW()
   ) RETURNING id INTO v_transaction_id;
   
-  -- Update wallet balance
+  -- Update wallet balance (only by user_id)
   UPDATE wallets
-  SET wallet_balance = v_new_balance,
+  SET balance = v_new_balance,
       updated_at = NOW()
-  WHERE (user_id = p_user_id OR organization_id = p_organization_id);
+  WHERE user_id = p_user_id;
   
   RETURN v_transaction_id;
 END;
@@ -244,10 +244,10 @@ BEGIN
   -- Calculate refund if reserved more than actual
   v_refund_amount := ABS(v_reserve_transaction.amount) - p_actual_cost;
   
-  -- Get current balance
-  SELECT COALESCE(wallet_balance, 0) INTO v_current_balance
+  -- Get current balance (wallets table only has user_id)
+  SELECT COALESCE(balance, 0) INTO v_current_balance
   FROM wallets
-  WHERE (user_id = v_reserve_transaction.user_id OR organization_id = v_reserve_transaction.organization_id)
+  WHERE user_id = v_reserve_transaction.user_id
   LIMIT 1;
   
   IF v_refund_amount > 0 THEN
@@ -280,11 +280,11 @@ BEGIN
       NOW()
     ) RETURNING id INTO v_settle_transaction_id;
     
-    -- Update wallet balance
+    -- Update wallet balance (only by user_id)
     UPDATE wallets
-    SET wallet_balance = v_new_balance,
+    SET balance = v_new_balance,
         updated_at = NOW()
-    WHERE (user_id = v_reserve_transaction.user_id OR organization_id = v_reserve_transaction.organization_id);
+    WHERE user_id = v_reserve_transaction.user_id;
     
   ELSIF v_refund_amount < 0 THEN
     -- Charge additional amount (rare case where actual > estimate)
@@ -316,11 +316,11 @@ BEGIN
       NOW()
     ) RETURNING id INTO v_settle_transaction_id;
     
-    -- Update wallet balance
+    -- Update wallet balance (only by user_id)
     UPDATE wallets
-    SET wallet_balance = v_new_balance,
+    SET balance = v_new_balance,
         updated_at = NOW()
-    WHERE (user_id = v_reserve_transaction.user_id OR organization_id = v_reserve_transaction.organization_id);
+    WHERE user_id = v_reserve_transaction.user_id;
   ELSE
     -- Exact match, just record settlement
     INSERT INTO wallet_transactions (

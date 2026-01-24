@@ -170,7 +170,7 @@ export function Dialer({
   const [audioLevel, setAudioLevel] = useState(0);
   const [isBluetoothConnected, setIsBluetoothConnected] = useState(false);
   const [activeTab, setActiveTab] = useState<"keypad" | "contacts" | "recents">(
-    "keypad"
+    "keypad",
   );
 
   // Country code search state
@@ -227,7 +227,7 @@ export function Dialer({
           headers: {
             Authorization: `Bearer ${session.access_token}`,
           },
-        }
+        },
       );
 
       if (response.ok) {
@@ -275,7 +275,7 @@ export function Dialer({
             email: contactEmail?.trim() || null,
             company: contactCompany?.trim() || null,
           }),
-        }
+        },
       );
 
       const data = await response.json();
@@ -312,7 +312,7 @@ export function Dialer({
           headers: {
             Authorization: `Bearer ${session.access_token}`,
           },
-        }
+        },
       );
 
       if (response.ok) {
@@ -341,8 +341,9 @@ export function Dialer({
   const playDTMFTone = (digit: string) => {
     // Create audio context for DTMF tones
     try {
-      const audioContext = new (window.AudioContext ||
-        (window as any).webkitAudioContext)();
+      const audioContext = new (
+        window.AudioContext || (window as any).webkitAudioContext
+      )();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
 
@@ -670,7 +671,7 @@ export function Dialer({
               <polyline points="17 8 12 3 7 8" />
               <line x1="12" y1="3" x2="12" y2="15" />
             </svg>
-            Upload Call Queue (XLSX)
+            Upload Call Data (XLSX)
           </button>
         )}
 
@@ -749,7 +750,7 @@ export function Dialer({
                         .includes(countrySearchQuery.toLowerCase()) ||
                       c.code
                         .toLowerCase()
-                        .includes(countrySearchQuery.toLowerCase())
+                        .includes(countrySearchQuery.toLowerCase()),
                   )
                   .map((c) => (
                     <SelectItem key={c.code} value={c.code}>
@@ -769,7 +770,7 @@ export function Dialer({
                       .includes(countrySearchQuery.toLowerCase()) ||
                     c.code
                       .toLowerCase()
-                      .includes(countrySearchQuery.toLowerCase())
+                      .includes(countrySearchQuery.toLowerCase()),
                 ).length === 0 && (
                   <div className="p-4 text-center text-gray-500 text-sm">
                     No countries found
