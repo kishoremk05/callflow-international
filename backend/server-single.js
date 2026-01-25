@@ -4004,6 +4004,15 @@ app.get(
     try {
       const { organizationId } = req.params;
 
+      // Check if user is super admin
+      const { data: userProfile } = await supabase
+        .from("profiles")
+        .select("user_type")
+        .eq("id", req.user.id)
+        .single();
+
+      const isSuperAdmin = userProfile?.user_type === "super_admin";
+
       // Get organization details
       const { data: org, error: orgError } = await supabase
         .from("organizations")
@@ -4017,16 +4026,18 @@ app.get(
         return res.json({ companyAdmin: null });
       }
 
-      // Verify user is owner or member of this organization
-      const { data: membership } = await supabase
-        .from("organization_members")
-        .select("id")
-        .eq("organization_id", organizationId)
-        .eq("user_id", req.user.id)
-        .single();
+      // Verify user is super admin, owner or member of this organization
+      if (!isSuperAdmin) {
+        const { data: membership } = await supabase
+          .from("organization_members")
+          .select("id")
+          .eq("organization_id", organizationId)
+          .eq("user_id", req.user.id)
+          .single();
 
-      if (org.owner_id !== req.user.id && !membership) {
-        return res.status(403).json({ error: "Access denied" });
+        if (org.owner_id !== req.user.id && !membership) {
+          return res.status(403).json({ error: "Access denied" });
+        }
       }
 
       // Get company admin details
