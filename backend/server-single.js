@@ -336,6 +336,12 @@ app.get("/", (req, res) => {
 });
 
 // ============================================================================
+// SUPER ADMIN CREDENTIALS (defined early for use in authenticate middleware)
+// ============================================================================
+const SUPER_ADMIN_EMAIL = "admin@gmail.com";
+const SUPER_ADMIN_PASSWORD = "admin@2026";
+
+// ============================================================================
 // MIDDLEWARE FUNCTIONS
 // ============================================================================
 
@@ -347,6 +353,21 @@ const authenticate = async (req, res, next) => {
     }
 
     const token = authHeader.substring(7);
+    
+    // Check if this is a super-admin token first
+    const superAdminToken = Buffer.from(SUPER_ADMIN_EMAIL).toString("base64");
+    if (token === superAdminToken) {
+      // Create a mock user object for super-admin
+      req.user = { 
+        id: "super-admin", 
+        email: SUPER_ADMIN_EMAIL,
+        isSuperAdmin: true 
+      };
+      req.isSuperAdmin = true;
+      return next();
+    }
+    
+    // Otherwise validate as Supabase token
     const {
       data: { user },
       error,
@@ -4004,19 +4025,11 @@ app.get(
     try {
       const { organizationId } = req.params;
 
-      // Check if user is super admin (either via token or user_type)
-      const token = req.headers.authorization?.split(" ")[1];
-      const isSuperAdminToken = token === Buffer.from(SUPER_ADMIN_EMAIL).toString("base64");
+      // Check if user is super admin (via middleware flag or user_type)
+      const isSuperAdmin = req.isSuperAdmin === true;
       
-      const { data: userProfile } = await supabase
-        .from("profiles")
-        .select("user_type")
-        .eq("id", req.user.id)
-        .single();
-
-      const isSuperAdmin = isSuperAdminToken || userProfile?.user_type === "super_admin";
       console.log(
-        `🔍 company-admin check: user=${req.user.id}, type=${userProfile?.user_type}, hasToken=${isSuperAdminToken}, isSuperAdmin=${isSuperAdmin}`,
+        `🔍 company-admin check: user=${req.user.id}, isSuperAdmin=${isSuperAdmin}`,
       );
 
       // Get organization details
@@ -4825,19 +4838,11 @@ app.get(
     try {
       const { organizationId } = req.params;
 
-      // Check if user is super admin (either via token or user_type)
-      const token = req.headers.authorization?.split(" ")[1];
-      const isSuperAdminToken = token === Buffer.from(SUPER_ADMIN_EMAIL).toString("base64");
+      // Check if user is super admin (via middleware flag)
+      const isSuperAdmin = req.isSuperAdmin === true;
       
-      const { data: userProfile } = await supabase
-        .from("profiles")
-        .select("user_type")
-        .eq("id", req.user.id)
-        .single();
-
-      const isSuperAdmin = isSuperAdminToken || userProfile?.user_type === "super_admin";
       console.log(
-        `🔍 pending-invites check: user=${req.user.id}, type=${userProfile?.user_type}, hasToken=${isSuperAdminToken}, isSuperAdmin=${isSuperAdmin}`,
+        `🔍 pending-invites check: user=${req.user.id}, isSuperAdmin=${isSuperAdmin}`,
       );
 
       // Verify user has access to this organization
@@ -4901,19 +4906,11 @@ app.get(
     try {
       const { organizationId } = req.params;
 
-      // Check if user is super admin (either via token or user_type)
-      const token = req.headers.authorization?.split(" ")[1];
-      const isSuperAdminToken = token === Buffer.from(SUPER_ADMIN_EMAIL).toString("base64");
+      // Check if user is super admin (via middleware flag)
+      const isSuperAdmin = req.isSuperAdmin === true;
       
-      const { data: userProfile } = await supabase
-        .from("profiles")
-        .select("user_type")
-        .eq("id", req.user.id)
-        .single();
-
-      const isSuperAdmin = isSuperAdminToken || userProfile?.user_type === "super_admin";
       console.log(
-        `🔍 members check: user=${req.user.id}, type=${userProfile?.user_type}, hasToken=${isSuperAdminToken}, isSuperAdmin=${isSuperAdmin}`,
+        `🔍 members check: user=${req.user.id}, isSuperAdmin=${isSuperAdmin}`,
       );
 
       // Get the organization with owner details
@@ -6069,9 +6066,7 @@ app.delete(
 // SUPER ADMIN ROUTES
 // ============================================================================
 
-// Super Admin credentials (temporary hardcoded)
-const SUPER_ADMIN_EMAIL = "admin@gmail.com";
-const SUPER_ADMIN_PASSWORD = "admin@2026";
+// Note: SUPER_ADMIN_EMAIL and SUPER_ADMIN_PASSWORD are defined at the top of the file
 
 // Super Admin middleware
 const authenticateSuperAdmin = (req, res, next) => {
