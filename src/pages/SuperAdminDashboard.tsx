@@ -54,6 +54,7 @@ interface CompanyAdmin {
   company_name: string;
   company_email: string;
   wallet_balance: number;
+  available_balance: number;
   organizations_count: number;
   admins_count: number;
   created_at: string;
@@ -782,12 +783,14 @@ const SuperAdminDashboard = () => {
                         </Badge>
                       </div>
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Wallet:</span>
+                        <span className="text-gray-600">
+                          Available Balance:
+                        </span>
                         <Badge
                           variant="outline"
                           className="bg-green-50 text-green-700 border-green-200"
                         >
-                          ${admin.wallet_balance.toFixed(2)}
+                          ${(admin.available_balance || 0).toFixed(2)}
                         </Badge>
                       </div>
                       <div className="flex items-center justify-between text-sm">
@@ -1223,13 +1226,13 @@ const SuperAdminDashboard = () => {
               <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm text-gray-600">
-                    Wallet Balance
+                    Available Balance
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold text-green-600">
                     $
-                    {selectedCompanyForTeams?.wallet_balance?.toFixed(2) ||
+                    {selectedCompanyForTeams?.available_balance?.toFixed(2) ||
                       "0.00"}
                   </div>
                 </CardContent>
@@ -1278,7 +1281,8 @@ const SuperAdminDashboard = () => {
                   {companyTeams.map((team) => (
                     <Card
                       key={team.id}
-                      className="border-2 border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50"
+                      className="border-2 border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50 cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => setSelectedOrg(team)}
                     >
                       <CardContent className="py-3">
                         <div className="flex items-center justify-between">
@@ -1298,14 +1302,6 @@ const SuperAdminDashboard = () => {
                                 {new Date(team.created_at).toLocaleDateString()}
                               </p>
                             </div>
-                          </div>
-                          <div className="text-right">
-                            <Badge
-                              variant="outline"
-                              className="bg-white text-green-700 border-green-200"
-                            >
-                              ${team.shared_balance.toFixed(2)}
-                            </Badge>
                           </div>
                         </div>
                       </CardContent>

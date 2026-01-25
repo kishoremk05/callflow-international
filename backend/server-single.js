@@ -6573,6 +6573,19 @@ app.get(
             0,
           );
 
+          // Get all organizations for this company and sum their shared_balance
+          const { data: organizations } = await supabase
+            .from("organizations")
+            .select("shared_balance")
+            .in("company_admin_id", company.admin_ids);
+
+          const totalShared = (organizations || []).reduce(
+            (sum, org) => sum + (org.shared_balance || 0),
+            0,
+          );
+
+          const availableBalance = totalWalletBalance - totalShared;
+
           // Count total organizations across all admins
           const { count: orgsCount } = await supabase
             .from("organizations")
@@ -6583,6 +6596,7 @@ app.get(
             company_name: company.company_name,
             company_email: company.company_email,
             wallet_balance: totalWalletBalance,
+            available_balance: availableBalance,
             organizations_count: orgsCount || 0,
             admins_count: company.admin_ids.length,
             created_at: company.created_at,
