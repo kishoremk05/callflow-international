@@ -513,8 +513,10 @@ export default function Dashboard() {
       );
 
       const data = await response.json();
-      if (data.success) {
+      if (data.request) {
         setAdminRequestStatus(data.request);
+      } else {
+        setAdminRequestStatus(null);
       }
     } catch (error) {
       console.error("Error fetching admin request status:", error);
@@ -522,27 +524,60 @@ export default function Dashboard() {
   };
 
   const handleManageClick = async () => {
-    // If user is already a company admin, go directly to dashboard
-    if (userType === "company_admin") {
+    // Always do a fresh check from database to ensure we have current user_type
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("user_type")
+      .eq("id", user?.id)
+      .single();
+
+    const currentUserType = profile?.user_type;
+
+    // If user is actually a company admin in the database, go to dashboard
+    if (currentUserType === "company_admin") {
       navigate("/company-admin/dashboard");
       return;
     }
 
-    // For company users, check their request status
-    if (!adminRequestStatus) {
+    // For company users, fetch fresh admin request status
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      toast.error("Please log in again");
+      return;
+    }
+
+    const apiUrl = import.meta.env.VITE_API_URL;
+    const response = await fetch(`${apiUrl}/api/admin-access-request/status`, {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
+
+    const data = await response.json();
+    const currentRequestStatus = data.request;
+
+    // Update the state with fresh data
+    setAdminRequestStatus(currentRequestStatus || null);
+
+    // Check their request status
+    if (!currentRequestStatus) {
       // No request exists, show modal to create one
       setShowAdminRequestModal(true);
-    } else if (adminRequestStatus.status === "pending") {
+    } else if (currentRequestStatus.status === "pending") {
       toast.info("Your admin access request is pending approval", {
         description: "The super admin will review your request soon.",
       });
-    } else if (adminRequestStatus.status === "approved") {
-      // Navigate to company admin dashboard
-      navigate("/company-admin/dashboard");
-    } else if (adminRequestStatus.status === "rejected") {
+    } else if (currentRequestStatus.status === "approved") {
+      // This shouldn't happen since we already checked user_type above
+      // But if it does, something is out of sync - show modal
+      setShowAdminRequestModal(true);
+    } else if (currentRequestStatus.status === "rejected") {
       toast.error("Your previous request was rejected", {
         description:
-          adminRequestStatus.rejection_reason ||
+          currentRequestStatus.rejection_reason ||
           "You can submit a new request.",
       });
       setShowAdminRequestModal(true);

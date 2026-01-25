@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -113,6 +113,7 @@ export default function CompanyAdminDashboard() {
   const [showAdminsDialog, setShowAdminsDialog] = useState(false);
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const hasRedirected = useRef(false);
 
   // Invite organization form
   const [ownerEmail, setOwnerEmail] = useState("");
@@ -136,6 +137,63 @@ export default function CompanyAdminDashboard() {
   useEffect(() => {
     fetchCompanyAdminData();
   }, []);
+
+  // Real-time subscription to user type changes - redirect if no longer company admin
+  useEffect(() => {
+    if (!user?.id || hasRedirected.current) return;
+
+    const setupUserTypeMonitor = async () => {
+      const { supabase } = await import("@/integrations/supabase/client");
+
+      // Initial check
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("user_type")
+        .eq("id", user.id)
+        .single();
+
+      if (
+        profile &&
+        profile.user_type !== "company_admin" &&
+        !hasRedirected.current
+      ) {
+        hasRedirected.current = true;
+        toast.error("You no longer have company admin access");
+        navigate("/dashboard");
+        return;
+      }
+
+      // Real-time monitoring
+      const channel = supabase
+        .channel(`user-type-monitor-${user.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "profiles",
+            filter: `id=eq.${user.id}`,
+          },
+          (payload) => {
+            if (
+              payload.new.user_type !== "company_admin" &&
+              !hasRedirected.current
+            ) {
+              hasRedirected.current = true;
+              toast.error("You no longer have company admin access");
+              navigate("/dashboard");
+            }
+          },
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+
+    setupUserTypeMonitor();
+  }, [user?.id, navigate]);
 
   // Real-time wallet synchronization - ensures wallet stays in sync across all dashboards
   useEffect(() => {
@@ -531,9 +589,13 @@ export default function CompanyAdminDashboard() {
       if (response.ok) {
         toast.success(data.message || "You have left the company");
         setShowAdminsDialog(false);
+        // Reload user session to update user_type
+        const { supabase } = await import("@/integrations/supabase/client");
+        await supabase.auth.refreshSession();
         // Redirect to dashboard after leaving
         setTimeout(() => {
           navigate("/dashboard");
+          window.location.reload(); // Force reload to update authentication state
         }, 1500);
       } else {
         toast.error(data.error || "Failed to leave company");

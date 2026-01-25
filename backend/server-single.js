@@ -3573,6 +3573,12 @@ app.post(
 
       if (profileError) throw profileError;
 
+      // Delete or reset any approved admin access requests so they can request again
+      await supabase
+        .from("admin_access_requests")
+        .delete()
+        .eq("user_id", req.user.id);
+
       res.json({
         success: true,
         message: isMainAdmin

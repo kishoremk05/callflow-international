@@ -42,6 +42,34 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Real-time subscription to profile changes
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel(`profile-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "profiles",
+          filter: `id=eq.${user.id}`,
+        },
+        (payload) => {
+          const newUserType = payload.new.user_type;
+          if (newUserType && newUserType !== userType) {
+            setUserType(newUserType);
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, userType]);
+
   const fetchUserProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
