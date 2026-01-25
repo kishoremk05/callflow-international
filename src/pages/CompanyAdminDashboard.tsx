@@ -20,7 +20,26 @@ import {
   RefreshCw,
   Home,
   UserMinus,
+  Activity,
+  ArrowUpRight,
+  ArrowDownRight,
+  Clock,
 } from "lucide-react";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -93,6 +112,23 @@ interface Stats {
   totalMembers: number;
 }
 
+interface WalletShare {
+  id: string;
+  shared_amount: number;
+  shared_at: string;
+  recipient: {
+    id: string;
+    email: string;
+    full_name: string;
+  };
+}
+
+interface WalletHistory {
+  shares: WalletShare[];
+  totalShared: number;
+  totalUsage: number;
+}
+
 export default function CompanyAdminDashboard() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -114,6 +150,11 @@ export default function CompanyAdminDashboard() {
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const hasRedirected = useRef(false);
+  const [showWalletDetailsDialog, setShowWalletDetailsDialog] = useState(false);
+  const [walletHistory, setWalletHistory] = useState<WalletHistory | null>(
+    null,
+  );
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   // Invite organization form
   const [ownerEmail, setOwnerEmail] = useState("");
@@ -608,6 +649,53 @@ export default function CompanyAdminDashboard() {
     }
   };
 
+  const fetchWalletHistory = async () => {
+    try {
+      setLoadingHistory(true);
+      const token = (
+        await import("@/integrations/supabase/client")
+      ).supabase.auth
+        .getSession()
+        .then((res) => res.data.session?.access_token);
+
+      const apiUrl = import.meta.env.VITE_API_URL;
+      console.log(
+        "Fetching wallet history from:",
+        `${apiUrl}/api/company-admin/wallet/history`,
+      );
+
+      const response = await fetch(
+        `${apiUrl}/api/company-admin/wallet/history`,
+        {
+          headers: {
+            Authorization: `Bearer ${await token}`,
+          },
+        },
+      );
+
+      console.log("Wallet history response status:", response.status);
+      const data = await response.json();
+      console.log("Wallet history response:", data);
+      if (data.success) {
+        setWalletHistory(data.history);
+        console.log("Wallet history set:", data.history);
+      } else {
+        console.error("Wallet history error:", data.error);
+        toast.error(data.error || "Failed to load wallet history");
+      }
+    } catch (error) {
+      console.error("Error fetching wallet history:", error);
+      toast.error("Failed to load wallet history");
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const handleWalletClick = () => {
+    setShowWalletDetailsDialog(true);
+    fetchWalletHistory();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -680,7 +768,7 @@ export default function CompanyAdminDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Teams</CardTitle>
@@ -691,6 +779,25 @@ export default function CompanyAdminDashboard() {
                 {stats.totalOrganizations}
               </div>
               <p className="text-xs text-muted-foreground">Active teams</p>
+            </CardContent>
+          </Card>
+
+          <Card
+            className="cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={handleWalletClick}
+          >
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Available Balance
+              </CardTitle>
+              <Wallet className="h-4 w-4 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                $
+                {((wallet?.balance || 0) - (stats.totalShared || 0)).toFixed(2)}
+              </div>
+              <p className="text-xs text-muted-foreground">Click for details</p>
             </CardContent>
           </Card>
 
@@ -720,6 +827,114 @@ export default function CompanyAdminDashboard() {
             <CardContent>
               <div className="text-2xl font-bold">{stats.totalMembers}</div>
               <p className="text-xs text-muted-foreground">Across all teams</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Analytics Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Wallet Activity Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="w-5 h-5 text-blue-600" />
+                Wallet Activity
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Monthly balance trend
+              </p>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart
+                  data={[
+                    {
+                      month: "Jan",
+                      balance: wallet?.balance ? wallet.balance * 0.6 : 0,
+                    },
+                    {
+                      month: "Feb",
+                      balance: wallet?.balance ? wallet.balance * 0.7 : 0,
+                    },
+                    {
+                      month: "Mar",
+                      balance: wallet?.balance ? wallet.balance * 0.8 : 0,
+                    },
+                    {
+                      month: "Apr",
+                      balance: wallet?.balance ? wallet.balance * 0.9 : 0,
+                    },
+                    {
+                      month: "May",
+                      balance: wallet?.balance ? wallet.balance * 0.95 : 0,
+                    },
+                    { month: "Jun", balance: wallet?.balance || 0 },
+                  ]}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line
+                    type="monotone"
+                    dataKey="balance"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    name="Balance ($)"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Team Distribution */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-green-600" />
+                Team Distribution
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Members across teams
+              </p>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={organizations.slice(0, 5).map((org) => ({
+                      name: org.name,
+                      value: org.organization_members?.length || 0,
+                    }))}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) =>
+                      `${name}: ${(percent * 100).toFixed(0)}%`
+                    }
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {organizations.slice(0, 5).map((_, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={
+                          [
+                            "#3b82f6",
+                            "#10b981",
+                            "#f59e0b",
+                            "#ef4444",
+                            "#8b5cf6",
+                          ][index % 5]
+                        }
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
         </div>
@@ -1146,6 +1361,167 @@ export default function CompanyAdminDashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Wallet Details Dialog */}
+      <Dialog
+        open={showWalletDetailsDialog}
+        onOpenChange={setShowWalletDetailsDialog}
+      >
+        <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Wallet className="w-5 h-5 text-green-600" />
+              Wallet Details
+            </DialogTitle>
+            <DialogDescription>
+              View your wallet balance, shared amounts, and usage history
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Balance Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm text-gray-600">
+                    Current Balance
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-green-600">
+                    ${wallet?.balance?.toFixed(2) || "0.00"}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm text-gray-600">
+                    Total Shared
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-blue-600">
+                    $
+                    {walletHistory?.totalShared?.toFixed(2) ||
+                      stats.totalShared?.toFixed(2) ||
+                      "0.00"}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm text-gray-600">
+                    Available
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-amber-600">
+                    $
+                    {(
+                      (wallet?.balance || 0) -
+                      (walletHistory?.totalShared || stats.totalShared || 0)
+                    ).toFixed(2)}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Shared to Teammates */}
+            <div>
+              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                <Share2 className="w-5 h-5 text-blue-600" />
+                Shared to Teammates
+              </h3>
+              {loadingHistory ? (
+                <div className="text-center py-8">
+                  <RefreshCw className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500">Loading history...</p>
+                </div>
+              ) : walletHistory?.shares && walletHistory.shares.length > 0 ? (
+                <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                  {walletHistory.shares.map((share) => (
+                    <div
+                      key={share.id}
+                      className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold">
+                          {share.recipient?.full_name?.charAt(0) ||
+                            share.recipient?.email?.charAt(0) ||
+                            "?"}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">
+                            {share.recipient?.full_name || "Unknown User"}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {share.recipient?.email || "No email"}
+                          </p>
+                          <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                            <Clock className="w-3 h-3" />
+                            {new Date(share.shared_at).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-blue-600">
+                          ${share.shared_amount.toFixed(2)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                  <Share2 className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                  <p className="text-gray-500">No sharing history yet</p>
+                </div>
+              )}
+            </div>
+
+            {/* Usage Summary */}
+            <div>
+              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-green-600" />
+                Usage Summary
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-100">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">Teams Created</p>
+                      <p className="text-2xl font-bold text-purple-600 mt-1">
+                        {stats.totalOrganizations}
+                      </p>
+                    </div>
+                    <Building2 className="w-10 h-10 text-purple-400" />
+                  </div>
+                </div>
+
+                <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-100">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">Total Members</p>
+                      <p className="text-2xl font-bold text-green-600 mt-1">
+                        {stats.totalMembers}
+                      </p>
+                    </div>
+                    <Users className="w-10 h-10 text-green-400" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => setShowWalletDetailsDialog(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

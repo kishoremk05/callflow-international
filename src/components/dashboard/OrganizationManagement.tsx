@@ -734,12 +734,16 @@ export function OrganizationManagement({
                               <p className="text-xs text-gray-500">
                                 Joined {formatDate(member.joined_at)}
                               </p>
-                              <div className="flex items-center gap-1 text-xs">
-                                <span className="text-gray-500">Balance:</span>
-                                <span className="font-semibold text-green-600">
-                                  ${(member.wallet_balance || 0).toFixed(2)}
-                                </span>
-                              </div>
+                              {member.role !== "owner" && (
+                                <div className="flex items-center gap-1 text-xs">
+                                  <span className="text-gray-500">
+                                    Balance:
+                                  </span>
+                                  <span className="font-semibold text-green-600">
+                                    ${(member.wallet_balance || 0).toFixed(2)}
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>

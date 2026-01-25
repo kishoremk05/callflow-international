@@ -85,6 +85,7 @@ export default function Dashboard() {
     retryConnection,
   } = useTwilioDevice();
   const [wallet, setWallet] = useState<Wallet>({ balance: 0, currency: "USD" });
+  const [totalShared, setTotalShared] = useState(0);
   const [calls, setCalls] = useState<CallLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -252,6 +253,9 @@ export default function Dashboard() {
   useEffect(() => {
     if (user) {
       fetchData();
+      if (userType === "company_admin") {
+        fetchTotalShared(); // Fetch total shared for company admins
+      }
       if (userType === "company") {
         fetchOrganizations();
         checkCompanyLinking();
@@ -426,6 +430,33 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error("Error fetching joined organizations:", error);
+    }
+  };
+
+  const fetchTotalShared = async () => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch(
+        `${
+          import.meta.env.VITE_API_URL || "http://localhost:5000"
+        }/api/company-admin/wallet/history`,
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+      if (data.success && data.history) {
+        setTotalShared(data.history.totalShared || 0);
+      }
+    } catch (error) {
+      console.error("Error fetching total shared:", error);
     }
   };
 
@@ -934,7 +965,14 @@ export default function Dashboard() {
 
           {/* Right Column - Wallet & Quick Stats */}
           <div className="lg:col-span-3 space-y-6" data-animate="sidebar">
-            <WalletCard balance={wallet.balance} currency={wallet.currency} />
+            <WalletCard
+              balance={
+                userType === "company_admin"
+                  ? wallet.balance - totalShared
+                  : wallet.balance
+              }
+              currency={wallet.currency}
+            />
 
             {/* Call Queue Manager */}
             {activeQueueId && (

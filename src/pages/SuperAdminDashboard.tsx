@@ -40,6 +40,8 @@ import {
   RefreshCw,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Search,
   Calendar,
   Wallet,
@@ -134,6 +136,11 @@ const SuperAdminDashboard = () => {
   const [loadingCompanyAdmins, setLoadingCompanyAdmins] = useState(false);
   const [showDeleteCompanyDialog, setShowDeleteCompanyDialog] = useState(false);
   const [deletingCompany, setDeletingCompany] = useState(false);
+  const [showCompanyTeamsDialog, setShowCompanyTeamsDialog] = useState(false);
+  const [selectedCompanyForTeams, setSelectedCompanyForTeams] =
+    useState<CompanyAdmin | null>(null);
+  const [companyTeams, setCompanyTeams] = useState<Organization[]>([]);
+  const [loadingTeams, setLoadingTeams] = useState(false);
   const usersPerPage = 5;
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -397,6 +404,68 @@ const SuperAdminDashboard = () => {
     }
   };
 
+  const fetchCompanyTeams = async (companyName: string) => {
+    try {
+      setLoadingTeams(true);
+      const token = localStorage.getItem("super_admin_token");
+      const apiUrl = import.meta.env.VITE_API_URL;
+
+      const response = await fetch(
+        `${apiUrl}/api/super-admin/company/${encodeURIComponent(companyName)}/teams`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      const data = await response.json();
+      if (data.success) {
+        setCompanyTeams(data.teams || []);
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Failed to load teams",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching company teams:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load teams",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingTeams(false);
+    }
+  };
+
+  const fetchCompanyAdmins = async (companyName: string) => {
+    try {
+      const token = localStorage.getItem("super_admin_token");
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const response = await fetch(
+        `${apiUrl}/api/super-admin/company/${companyName}/admins`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      const data = await response.json();
+      if (data.success) {
+        setCompanyAdminsList(data.admins);
+      }
+    } catch (error) {
+      console.error("Error fetching company admins:", error);
+    } finally {
+      setLoadingCompanyAdmins(false);
+    }
+  };
+
+  const openCompanyTeamsDialog = async (company: CompanyAdmin) => {
+    setSelectedCompanyForTeams(company);
+    setShowCompanyTeamsDialog(true);
+    await fetchCompanyTeams(company.company_name);
+  };
+
   // Filter users based on search query
   const filteredUsers = normalUsers.filter(
     (user) =>
@@ -480,18 +549,7 @@ const SuperAdminDashboard = () => {
             </CardHeader>
           </Card>
 
-          <Card
-            className="hover:shadow-lg transition-all duration-300 border border-gray-200 cursor-pointer"
-            onClick={() => {
-              const teamsSection = document.getElementById("teams-section");
-              if (teamsSection) {
-                teamsSection.scrollIntoView({
-                  behavior: "smooth",
-                  block: "start",
-                });
-              }
-            }}
-          >
+          <Card className="hover:shadow-lg transition-all duration-300 border border-gray-200">
             <CardHeader className="pb-6">
               <div className="flex items-center justify-between mb-3">
                 <CardDescription className="text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -666,7 +724,7 @@ const SuperAdminDashboard = () => {
               <CardTitle>Company Admins</CardTitle>
             </div>
             <CardDescription>
-              All registered companies - click to view admins
+              All registered companies - click card to view details and teams
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
@@ -681,29 +739,7 @@ const SuperAdminDashboard = () => {
                   <Card
                     key={`${admin.company_name}-${index}`}
                     className="cursor-pointer hover:shadow-lg transition-all border-2 hover:border-blue-300"
-                    onClick={async () => {
-                      setSelectedCompany(admin);
-                      setShowCompanyAdminsDialog(true);
-                      setLoadingCompanyAdmins(true);
-                      try {
-                        const token = localStorage.getItem("super_admin_token");
-                        const apiUrl = import.meta.env.VITE_API_URL;
-                        const response = await fetch(
-                          `${apiUrl}/api/super-admin/company/${admin.company_name}/admins`,
-                          {
-                            headers: { Authorization: `Bearer ${token}` },
-                          },
-                        );
-                        const data = await response.json();
-                        if (data.success) {
-                          setCompanyAdminsList(data.admins);
-                        }
-                      } catch (error) {
-                        console.error("Error fetching company admins:", error);
-                      } finally {
-                        setLoadingCompanyAdmins(false);
-                      }
-                    }}
+                    onClick={() => openCompanyTeamsDialog(admin)}
                   >
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
@@ -720,6 +756,19 @@ const SuperAdminDashboard = () => {
                             </p>
                           </div>
                         </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedCompany(admin);
+                            setShowCompanyAdminsDialog(true);
+                            setLoadingCompanyAdmins(true);
+                            fetchCompanyAdmins(admin.company_name);
+                          }}
+                        >
+                          <Users className="w-4 h-4" />
+                        </Button>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-2">
@@ -756,83 +805,6 @@ const SuperAdminDashboard = () => {
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
-
-        {/* Teams Table */}
-        <Card
-          id="teams-section"
-          className="mb-8 shadow-md hover:shadow-lg transition-shadow"
-        >
-          <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50">
-            <div className="flex items-center gap-2">
-              <Globe className="w-5 h-5 text-green-600" />
-              <CardTitle>Teams</CardTitle>
-            </div>
-            <CardDescription>
-              All teams across all company admins
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold">Team Name</TableHead>
-                    <TableHead className="font-semibold">
-                      Company Admin
-                    </TableHead>
-                    <TableHead className="font-semibold">
-                      Wallet Balance
-                    </TableHead>
-                    <TableHead className="font-semibold">Created</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {organizations.map((org, index) => (
-                    <TableRow
-                      key={org.id}
-                      className={`hover:bg-green-50 transition-colors cursor-pointer ${index % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
-                      onClick={() => setSelectedOrg(org)}
-                    >
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          <Globe className="w-4 h-4 text-green-600" />
-                          {org.name}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-gray-600">
-                        {org.company_admin_name}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className="bg-blue-50 text-blue-700 border-blue-200"
-                        >
-                          ${org.shared_balance.toFixed(2)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {new Date(org.created_at).toLocaleDateString()}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {organizations.length === 0 && (
-                    <TableRow>
-                      <TableCell
-                        colSpan={4}
-                        className="text-center text-gray-500 py-8"
-                      >
-                        No organizations found
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
           </CardContent>
         </Card>
 
@@ -996,7 +968,9 @@ const SuperAdminDashboard = () => {
           organizationName={selectedOrg.name}
           hideInviteSection={true}
           hideShareButton={true}
-          superAdminToken={localStorage.getItem("super_admin_token") || undefined}
+          superAdminToken={
+            localStorage.getItem("super_admin_token") || undefined
+          }
         />
       )}
 
@@ -1209,6 +1183,147 @@ const SuperAdminDashboard = () => {
               ) : (
                 "Delete Company"
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Company Teams Dialog */}
+      <Dialog
+        open={showCompanyTeamsDialog}
+        onOpenChange={setShowCompanyTeamsDialog}
+      >
+        <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-blue-600" />
+              {selectedCompanyForTeams?.company_name} - Company Details
+            </DialogTitle>
+            <DialogDescription>
+              View company information and all associated teams
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Company Info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm text-gray-600">
+                    Admins
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-blue-600">
+                    {selectedCompanyForTeams?.admins_count || 0}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm text-gray-600">
+                    Wallet Balance
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-green-600">
+                    $
+                    {selectedCompanyForTeams?.wallet_balance?.toFixed(2) ||
+                      "0.00"}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm text-gray-600">
+                    Total Teams
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-purple-600">
+                    {selectedCompanyForTeams?.organizations_count || 0}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm text-gray-600">
+                    Contact
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-sm font-medium text-amber-700 break-all">
+                    {selectedCompanyForTeams?.company_email || "N/A"}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Teams List */}
+            <div>
+              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                <Globe className="w-5 h-5 text-green-600" />
+                Teams
+              </h3>
+              {loadingTeams ? (
+                <div className="text-center py-8">
+                  <RefreshCw className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500">Loading teams...</p>
+                </div>
+              ) : companyTeams.length > 0 ? (
+                <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                  {companyTeams.map((team) => (
+                    <Card
+                      key={team.id}
+                      className="border-2 border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50"
+                    >
+                      <CardContent className="py-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
+                              <Globe className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-gray-900">
+                                {team.name}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {team.members_count} members
+                              </p>
+                              <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                                <Calendar className="w-3 h-3" />
+                                {new Date(team.created_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <Badge
+                              variant="outline"
+                              className="bg-white text-green-700 border-green-200"
+                            >
+                              ${team.shared_balance.toFixed(2)}
+                            </Badge>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                  <Globe className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                  <p className="text-gray-500">No teams found</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => setShowCompanyTeamsDialog(false)}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -353,20 +353,20 @@ const authenticate = async (req, res, next) => {
     }
 
     const token = authHeader.substring(7);
-    
+
     // Check if this is a super-admin token first
     const superAdminToken = Buffer.from(SUPER_ADMIN_EMAIL).toString("base64");
     if (token === superAdminToken) {
       // Create a mock user object for super-admin
-      req.user = { 
-        id: "super-admin", 
+      req.user = {
+        id: "super-admin",
         email: SUPER_ADMIN_EMAIL,
-        isSuperAdmin: true 
+        isSuperAdmin: true,
       };
       req.isSuperAdmin = true;
       return next();
     }
-    
+
     // Otherwise validate as Supabase token
     const {
       data: { user },
@@ -594,6 +594,13 @@ app.post("/api/wallet/share-credit", authenticate, async (req, res, next) => {
       return res.status(400).json({ error: "Invalid request" });
     }
 
+    // Check if sender is a company admin
+    const { data: companyAdmin } = await supabase
+      .from("company_admins")
+      .select("id")
+      .eq("user_id", req.user.id)
+      .single();
+
     // Get sender's wallet
     const { data: senderWallet } = await supabase
       .from("wallets")
@@ -636,6 +643,16 @@ app.post("/api/wallet/share-credit", authenticate, async (req, res, next) => {
       .eq("user_id", recipient_user_id);
 
     if (addError) throw addError;
+
+    // If sender is company admin, track in company_admin_shares table
+    if (companyAdmin) {
+      await supabase.from("company_admin_shares").insert({
+        company_admin_id: companyAdmin.id,
+        recipient_user_id: recipient_user_id,
+        shared_amount: amount,
+        shared_by: req.user.id,
+      });
+    }
 
     // Log transaction for sender
     await supabase.from("payments").insert({
@@ -4027,7 +4044,7 @@ app.get(
 
       // Check if user is super admin (via middleware flag or user_type)
       const isSuperAdmin = req.isSuperAdmin === true;
-      
+
       console.log(
         `🔍 company-admin check: user=${req.user.id}, isSuperAdmin=${isSuperAdmin}`,
       );
@@ -4307,6 +4324,88 @@ app.get(
       if (error) throw error;
 
       res.json({ success: true, shares: shares || [] });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Get wallet history (shares and usage)
+app.get(
+  "/api/company-admin/wallet/history",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { data: companyAdmin } = await supabase
+        .from("company_admins")
+        .select("id")
+        .eq("user_id", req.user.id)
+        .single();
+
+      if (!companyAdmin) {
+        return res.status(403).json({ error: "Not a company admin" });
+      }
+
+      // Get credit shares to individual teammates
+      const { data: shares, error: sharesError } = await supabase
+        .from("company_admin_shares")
+        .select(
+          `
+        id,
+        shared_amount,
+        shared_at,
+        recipient_user_id,
+        profiles!company_admin_shares_recipient_user_id_fkey(
+          id,
+          email,
+          full_name
+        )
+      `,
+        )
+        .eq("company_admin_id", companyAdmin.id)
+        .order("shared_at", { ascending: false })
+        .limit(50);
+
+      if (sharesError) {
+        console.error("Error fetching shares:", sharesError);
+        // If table doesn't exist yet, return empty
+        return res.json({
+          success: true,
+          history: {
+            shares: [],
+            totalShared: 0,
+            totalUsage: 0,
+          },
+        });
+      }
+
+      // Calculate total shared
+      const totalShared =
+        shares?.reduce(
+          (sum, share) => sum + parseFloat(share.shared_amount),
+          0,
+        ) || 0;
+
+      // Format shares for frontend - show individual teammates
+      const formattedShares = (shares || []).map((share) => ({
+        id: share.id,
+        shared_amount: parseFloat(share.shared_amount),
+        shared_at: share.shared_at,
+        recipient: {
+          id: share.profiles?.id || share.recipient_user_id,
+          email: share.profiles?.email || "Unknown",
+          full_name: share.profiles?.full_name || "Unknown User",
+        },
+      }));
+
+      res.json({
+        success: true,
+        history: {
+          shares: formattedShares,
+          totalShared: totalShared,
+          totalUsage: 0,
+        },
+      });
     } catch (error) {
       next(error);
     }
@@ -4840,7 +4939,7 @@ app.get(
 
       // Check if user is super admin (via middleware flag)
       const isSuperAdmin = req.isSuperAdmin === true;
-      
+
       console.log(
         `🔍 pending-invites check: user=${req.user.id}, isSuperAdmin=${isSuperAdmin}`,
       );
@@ -4908,7 +5007,7 @@ app.get(
 
       // Check if user is super admin (via middleware flag)
       const isSuperAdmin = req.isSuperAdmin === true;
-      
+
       console.log(
         `🔍 members check: user=${req.user.id}, isSuperAdmin=${isSuperAdmin}`,
       );
@@ -4994,11 +5093,38 @@ app.get(
             wallet = newWallet;
           }
 
+          let displayBalance = wallet?.balance || 0;
+
+          // If this member is a company admin (owner role), calculate available balance
+          if (member.role === "owner") {
+            const { data: companyAdmin } = await supabase
+              .from("company_admins")
+              .select("id")
+              .eq("user_id", member.user_id)
+              .single();
+
+            if (companyAdmin) {
+              // Get total shared from company_admin_shares table
+              const { data: shares } = await supabase
+                .from("company_admin_shares")
+                .select("shared_amount")
+                .eq("company_admin_id", companyAdmin.id);
+
+              const totalShared =
+                shares?.reduce(
+                  (sum, share) => sum + parseFloat(share.shared_amount),
+                  0,
+                ) || 0;
+
+              displayBalance = (wallet?.balance || 0) - totalShared;
+            }
+          }
+
           return {
             ...member,
             full_name: profile?.full_name || "Unknown User",
             email: profile?.email || "",
-            wallet_balance: wallet?.balance || 0,
+            wallet_balance: displayBalance,
           };
         }),
       );
@@ -6511,6 +6637,61 @@ app.get(
       );
 
       res.json({ success: true, admins: adminsWithProfiles });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Get All Teams for a Specific Company
+app.get(
+  "/api/super-admin/company/:companyName/teams",
+  authenticateSuperAdmin,
+  async (req, res, next) => {
+    try {
+      const { companyName } = req.params;
+
+      // Get all company_admins with this company name
+      const { data: companyAdmins, error: adminError } = await supabase
+        .from("company_admins")
+        .select("id")
+        .eq("company_name", companyName);
+
+      if (adminError) throw adminError;
+
+      if (!companyAdmins || companyAdmins.length === 0) {
+        return res.json({ success: true, teams: [] });
+      }
+
+      const companyAdminIds = companyAdmins.map((admin) => admin.id);
+
+      // Get all organizations for these company admins
+      const { data: organizations, error: orgsError } = await supabase
+        .from("organizations")
+        .select(
+          `
+        id,
+        name,
+        shared_balance,
+        created_at,
+        organization_members (count)
+      `,
+        )
+        .in("company_admin_id", companyAdminIds)
+        .order("created_at", { ascending: false });
+
+      if (orgsError) throw orgsError;
+
+      // Format teams for frontend
+      const teams = (organizations || []).map((org) => ({
+        id: org.id,
+        name: org.name,
+        shared_balance: org.shared_balance || 0,
+        members_count: org.organization_members?.[0]?.count || 0,
+        created_at: org.created_at,
+      }));
+
+      res.json({ success: true, teams });
     } catch (error) {
       next(error);
     }
