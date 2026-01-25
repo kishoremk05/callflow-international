@@ -155,6 +155,7 @@ export default function CompanyAdminDashboard() {
     null,
   );
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [totalSharedToTeammates, setTotalSharedToTeammates] = useState(0);
 
   // Invite organization form
   const [ownerEmail, setOwnerEmail] = useState("");
@@ -177,6 +178,7 @@ export default function CompanyAdminDashboard() {
 
   useEffect(() => {
     fetchCompanyAdminData();
+    fetchTotalSharedToTeammates();
   }, []);
 
   // Real-time subscription to user type changes - redirect if no longer company admin
@@ -649,6 +651,33 @@ export default function CompanyAdminDashboard() {
     }
   };
 
+  const fetchTotalSharedToTeammates = async () => {
+    try {
+      const token = (
+        await import("@/integrations/supabase/client")
+      ).supabase.auth
+        .getSession()
+        .then((res) => res.data.session?.access_token);
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/company-admin/wallet/history`,
+        {
+          headers: {
+            Authorization: `Bearer ${await token}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      if (data.success && data.history) {
+        setTotalSharedToTeammates(data.history.totalShared || 0);
+      }
+    } catch (error) {
+      console.error("Error fetching total shared:", error);
+    }
+  };
+
   const fetchWalletHistory = async () => {
     try {
       setLoadingHistory(true);
@@ -678,6 +707,7 @@ export default function CompanyAdminDashboard() {
       console.log("Wallet history response:", data);
       if (data.success) {
         setWalletHistory(data.history);
+        setTotalSharedToTeammates(data.history?.totalShared || 0);
         console.log("Wallet history set:", data.history);
       } else {
         console.error("Wallet history error:", data.error);
@@ -794,8 +824,7 @@ export default function CompanyAdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                $
-                {((wallet?.balance || 0) - (stats.totalShared || 0)).toFixed(2)}
+                ${((wallet?.balance || 0) - totalSharedToTeammates).toFixed(2)}
               </div>
               <p className="text-xs text-muted-foreground">Click for details</p>
             </CardContent>
