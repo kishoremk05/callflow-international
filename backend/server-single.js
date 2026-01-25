@@ -4004,15 +4004,20 @@ app.get(
     try {
       const { organizationId } = req.params;
 
-      // Check if user is super admin
+      // Check if user is super admin (either via token or user_type)
+      const token = req.headers.authorization?.split(" ")[1];
+      const isSuperAdminToken = token === Buffer.from(SUPER_ADMIN_EMAIL).toString("base64");
+      
       const { data: userProfile } = await supabase
         .from("profiles")
         .select("user_type")
         .eq("id", req.user.id)
         .single();
 
-      const isSuperAdmin = userProfile?.user_type === "super_admin";
-      console.log(`🔍 company-admin check: user=${req.user.id}, type=${userProfile?.user_type}, isSuperAdmin=${isSuperAdmin}`);
+      const isSuperAdmin = isSuperAdminToken || userProfile?.user_type === "super_admin";
+      console.log(
+        `🔍 company-admin check: user=${req.user.id}, type=${userProfile?.user_type}, hasToken=${isSuperAdminToken}, isSuperAdmin=${isSuperAdmin}`,
+      );
 
       // Get organization details
       const { data: org, error: orgError } = await supabase
@@ -4820,15 +4825,20 @@ app.get(
     try {
       const { organizationId } = req.params;
 
-      // Check if user is super admin
+      // Check if user is super admin (either via token or user_type)
+      const token = req.headers.authorization?.split(" ")[1];
+      const isSuperAdminToken = token === Buffer.from(SUPER_ADMIN_EMAIL).toString("base64");
+      
       const { data: userProfile } = await supabase
         .from("profiles")
         .select("user_type")
         .eq("id", req.user.id)
         .single();
 
-      const isSuperAdmin = userProfile?.user_type === "super_admin";
-      console.log(`🔍 pending-invites check: user=${req.user.id}, type=${userProfile?.user_type}, isSuperAdmin=${isSuperAdmin}`);
+      const isSuperAdmin = isSuperAdminToken || userProfile?.user_type === "super_admin";
+      console.log(
+        `🔍 pending-invites check: user=${req.user.id}, type=${userProfile?.user_type}, hasToken=${isSuperAdminToken}, isSuperAdmin=${isSuperAdmin}`,
+      );
 
       // Verify user has access to this organization
       const { data: organization } = await supabase
@@ -4891,15 +4901,20 @@ app.get(
     try {
       const { organizationId } = req.params;
 
-      // Check if user is super admin
+      // Check if user is super admin (either via token or user_type)
+      const token = req.headers.authorization?.split(" ")[1];
+      const isSuperAdminToken = token === Buffer.from(SUPER_ADMIN_EMAIL).toString("base64");
+      
       const { data: userProfile } = await supabase
         .from("profiles")
         .select("user_type")
         .eq("id", req.user.id)
         .single();
 
-      const isSuperAdmin = userProfile?.user_type === "super_admin";
-      console.log(`🔍 members check: user=${req.user.id}, type=${userProfile?.user_type}, isSuperAdmin=${isSuperAdmin}`);
+      const isSuperAdmin = isSuperAdminToken || userProfile?.user_type === "super_admin";
+      console.log(
+        `🔍 members check: user=${req.user.id}, type=${userProfile?.user_type}, hasToken=${isSuperAdminToken}, isSuperAdmin=${isSuperAdmin}`,
+      );
 
       // Get the organization with owner details
       const { data: organization } = await supabase
