@@ -4808,6 +4808,15 @@ app.get(
     try {
       const { organizationId } = req.params;
 
+      // Check if user is super admin
+      const { data: userProfile } = await supabase
+        .from("profiles")
+        .select("user_type")
+        .eq("id", req.user.id)
+        .single();
+
+      const isSuperAdmin = userProfile?.user_type === "super_admin";
+
       // Verify user has access to this organization
       const { data: organization } = await supabase
         .from("organizations")
@@ -4819,8 +4828,8 @@ app.get(
         return res.status(404).json({ error: "Organization not found" });
       }
 
-      // Check if user is owner or company admin
-      let hasAccess = organization.owner_id === req.user.id;
+      // Check if user is owner or company admin or super admin
+      let hasAccess = isSuperAdmin || organization.owner_id === req.user.id;
 
       if (!hasAccess && organization.company_admin_id) {
         const { data: companyAdmins } = await supabase
@@ -4869,6 +4878,15 @@ app.get(
     try {
       const { organizationId } = req.params;
 
+      // Check if user is super admin
+      const { data: userProfile } = await supabase
+        .from("profiles")
+        .select("user_type")
+        .eq("id", req.user.id)
+        .single();
+
+      const isSuperAdmin = userProfile?.user_type === "super_admin";
+
       // Get the organization with owner details
       const { data: organization } = await supabase
         .from("organizations")
@@ -4880,10 +4898,10 @@ app.get(
         return res.status(404).json({ error: "Organization not found" });
       }
 
-      // Check if user is the owner
-      let isAuthorized = organization.owner_id === req.user.id;
+      // Check if user is the owner or super admin
+      let isAuthorized = isSuperAdmin || organization.owner_id === req.user.id;
 
-      // If not the owner, check if user is a co-admin with same company_email as owner
+      // If not the owner or super admin, check if user is a co-admin with same company_email as owner
       if (!isAuthorized) {
         // Get owner's company_email
         const { data: ownerAdmin } = await supabase
