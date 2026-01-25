@@ -824,7 +824,8 @@ export default function CompanyAdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                ${((wallet?.balance || 0) - totalSharedToTeammates).toFixed(2)}
+                $
+                {((wallet?.balance || 0) - (stats.totalShared || 0)).toFixed(2)}
               </div>
               <p className="text-xs text-muted-foreground">Click for details</p>
             </CardContent>
@@ -1403,60 +1404,11 @@ export default function CompanyAdminDashboard() {
               Wallet Details
             </DialogTitle>
             <DialogDescription>
-              View your wallet balance, shared amounts, and usage history
+              View your wallet shared amounts and usage history
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
-            {/* Balance Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm text-gray-600">
-                    Current Balance
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-green-600">
-                    ${wallet?.balance?.toFixed(2) || "0.00"}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm text-gray-600">
-                    Total Shared
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-blue-600">
-                    $
-                    {walletHistory?.totalShared?.toFixed(2) ||
-                      stats.totalShared?.toFixed(2) ||
-                      "0.00"}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm text-gray-600">
-                    Available
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-amber-600">
-                    $
-                    {(
-                      (wallet?.balance || 0) -
-                      (walletHistory?.totalShared || stats.totalShared || 0)
-                    ).toFixed(2)}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
             {/* Shared to Teammates */}
             <div>
               <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">

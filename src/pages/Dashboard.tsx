@@ -443,7 +443,7 @@ export default function Dashboard() {
       const response = await fetch(
         `${
           import.meta.env.VITE_API_URL || "http://localhost:5000"
-        }/api/company-admin/wallet/history`,
+        }/api/company-admin/stats`,
         {
           headers: {
             Authorization: `Bearer ${session.access_token}`,
@@ -452,8 +452,8 @@ export default function Dashboard() {
       );
 
       const data = await response.json();
-      if (data.success && data.history) {
-        setTotalShared(data.history.totalShared || 0);
+      if (data.success && data.stats) {
+        setTotalShared(data.stats.totalShared || 0);
       }
     } catch (error) {
       console.error("Error fetching total shared:", error);
