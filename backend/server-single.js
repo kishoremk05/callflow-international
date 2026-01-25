@@ -6657,6 +6657,77 @@ app.get(
   },
 );
 
+// Remove Admin from Company
+app.delete(
+  "/api/super-admin/company/:companyName/admin/:adminId",
+  authenticateSuperAdmin,
+  async (req, res, next) => {
+    try {
+      const { companyName, adminId } = req.params;
+
+      // Get all admins for this company
+      const { data: allAdmins, error: fetchError } = await supabase
+        .from("company_admins")
+        .select("id, user_id, created_at")
+        .eq("company_name", companyName)
+        .order("created_at", { ascending: true });
+
+      if (fetchError) throw fetchError;
+
+      if (!allAdmins || allAdmins.length === 0) {
+        return res.status(404).json({ error: "Company not found" });
+      }
+
+      // Check if trying to remove the only admin
+      if (allAdmins.length === 1) {
+        return res.status(400).json({
+          error: "Cannot remove the only admin. Delete the company instead.",
+        });
+      }
+
+      // Find the admin to remove
+      const adminToRemove = allAdmins.find((admin) => admin.id === adminId);
+      if (!adminToRemove) {
+        return res.status(404).json({ error: "Admin not found" });
+      }
+
+      // Check if this is the main admin (first created)
+      const isMainAdmin = allAdmins[0].id === adminId;
+
+      // Get the admin's user_id before deletion
+      const removedUserId = adminToRemove.user_id;
+
+      // Delete the admin from company_admins table
+      const { error: deleteError } = await supabase
+        .from("company_admins")
+        .delete()
+        .eq("id", adminId);
+
+      if (deleteError) throw deleteError;
+
+      // Update the user's profile to remove company_admin type
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ user_type: "company" })
+        .eq("id", removedUserId);
+
+      if (profileError) {
+        console.error("Error updating profile:", profileError);
+      }
+
+      res.json({
+        success: true,
+        message: isMainAdmin
+          ? "Admin removed. A co-admin has been promoted to admin."
+          : "Co-admin removed successfully",
+        wasMainAdmin: isMainAdmin,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
 // Get All Teams for a Specific Company
 app.get(
   "/api/super-admin/company/:companyName/teams",

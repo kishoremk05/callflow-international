@@ -48,6 +48,7 @@ import {
   Globe,
   Phone,
   Bell,
+  Trash2,
 } from "lucide-react";
 
 interface CompanyAdmin {
@@ -137,6 +138,7 @@ const SuperAdminDashboard = () => {
   const [loadingCompanyAdmins, setLoadingCompanyAdmins] = useState(false);
   const [showDeleteCompanyDialog, setShowDeleteCompanyDialog] = useState(false);
   const [deletingCompany, setDeletingCompany] = useState(false);
+  const [removingAdminId, setRemovingAdminId] = useState<string | null>(null);
   const [showCompanyTeamsDialog, setShowCompanyTeamsDialog] = useState(false);
   const [selectedCompanyForTeams, setSelectedCompanyForTeams] =
     useState<CompanyAdmin | null>(null);
@@ -458,6 +460,70 @@ const SuperAdminDashboard = () => {
       console.error("Error fetching company admins:", error);
     } finally {
       setLoadingCompanyAdmins(false);
+    }
+  };
+
+  const handleRemoveAdmin = async (
+    adminId: string,
+    adminName: string,
+    adminRole: string,
+  ) => {
+    if (companyAdminsList.length === 1) {
+      toast({
+        title: "Cannot Remove",
+        description:
+          "Cannot remove the only admin. Delete the company instead.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const confirmMessage =
+      adminRole === "Admin"
+        ? `Remove ${adminName} as admin? A co-admin will be promoted to admin.`
+        : `Remove ${adminName} as co-admin?`;
+
+    if (!confirm(confirmMessage)) return;
+
+    setRemovingAdminId(adminId);
+    try {
+      const token = localStorage.getItem("super_admin_token");
+      const apiUrl = import.meta.env.VITE_API_URL;
+
+      const response = await fetch(
+        `${apiUrl}/api/super-admin/company/${encodeURIComponent(selectedCompany?.company_name || "")}/admin/${adminId}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast({
+          title: "Success",
+          description: data.message,
+        });
+        // Refresh the admins list
+        if (selectedCompany) {
+          setLoadingCompanyAdmins(true);
+          await fetchCompanyAdmins(selectedCompany.company_name);
+        }
+        // Refresh dashboard to update counts
+        fetchDashboardData();
+      } else {
+        throw new Error(data.error || "Failed to remove admin");
+      }
+    } catch (error: any) {
+      console.error("Error removing admin:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to remove admin",
+        variant: "destructive",
+      });
+    } finally {
+      setRemovingAdminId(null);
     }
   };
 
@@ -1091,16 +1157,39 @@ const SuperAdminDashboard = () => {
                         <p className="text-sm text-gray-600">{admin.email}</p>
                       </div>
                     </div>
-                    <Badge
-                      variant={admin.role === "Admin" ? "default" : "secondary"}
-                      className={
-                        admin.role === "Admin"
-                          ? "bg-gradient-to-r from-blue-600 to-indigo-600"
-                          : "bg-gradient-to-r from-purple-500 to-pink-500"
-                      }
-                    >
-                      {admin.role}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant={
+                          admin.role === "Admin" ? "default" : "secondary"
+                        }
+                        className={
+                          admin.role === "Admin"
+                            ? "bg-gradient-to-r from-blue-600 to-indigo-600"
+                            : "bg-gradient-to-r from-purple-500 to-pink-500"
+                        }
+                      >
+                        {admin.role}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          handleRemoveAdmin(
+                            admin.id,
+                            admin.full_name,
+                            admin.role,
+                          )
+                        }
+                        disabled={removingAdminId === admin.id}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        {removingAdminId === admin.id ? (
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1210,7 +1299,17 @@ const SuperAdminDashboard = () => {
           <div className="space-y-6 py-4">
             {/* Company Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+              <Card
+                className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 cursor-pointer hover:shadow-lg transition-all"
+                onClick={() => {
+                  if (selectedCompanyForTeams) {
+                    setSelectedCompany(selectedCompanyForTeams);
+                    setShowCompanyAdminsDialog(true);
+                    setLoadingCompanyAdmins(true);
+                    fetchCompanyAdmins(selectedCompanyForTeams.company_name);
+                  }
+                }}
+              >
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm text-gray-600">
                     Admins
@@ -1220,6 +1319,7 @@ const SuperAdminDashboard = () => {
                   <div className="text-3xl font-bold text-blue-600">
                     {selectedCompanyForTeams?.admins_count || 0}
                   </div>
+                  <p className="text-xs text-blue-600 mt-2">Click to view</p>
                 </CardContent>
               </Card>
 
