@@ -996,6 +996,7 @@ const SuperAdminDashboard = () => {
           organizationName={selectedOrg.name}
           hideInviteSection={true}
           hideShareButton={true}
+          superAdminToken={localStorage.getItem("super_admin_token") || undefined}
         />
       )}
 

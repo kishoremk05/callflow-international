@@ -45,6 +45,7 @@ interface OrganizationManagementProps {
   onBalanceUpdate?: () => void;
   hideInviteSection?: boolean;
   hideShareButton?: boolean;
+  superAdminToken?: string; // Optional super-admin token
 }
 
 interface Member {
@@ -86,6 +87,7 @@ export function OrganizationManagement({
   onBalanceUpdate,
   hideInviteSection = false,
   hideShareButton = false,
+  superAdminToken,
 }: OrganizationManagementProps) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -179,11 +181,15 @@ export function OrganizationManagement({
 
     setLoadingCompanyInfo(true);
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session) return;
+      // Use super-admin token if provided, otherwise use Supabase session
+      let authToken = superAdminToken;
+      if (!authToken) {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!session) return;
+        authToken = session.access_token;
+      }
 
       // Use backend API to get company admin info
       const response = await fetch(
@@ -192,7 +198,7 @@ export function OrganizationManagement({
         }/api/organizations/${organizationId}/company-admin`,
         {
           headers: {
-            Authorization: `Bearer ${session.access_token}`,
+            Authorization: `Bearer ${authToken}`,
           },
         },
       );
@@ -217,11 +223,15 @@ export function OrganizationManagement({
 
     setLoadingInvites(true);
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session) return;
+      // Use super-admin token if provided, otherwise use Supabase session
+      let authToken = superAdminToken;
+      if (!authToken) {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!session) return;
+        authToken = session.access_token;
+      }
 
       const response = await fetch(
         `${
@@ -229,7 +239,7 @@ export function OrganizationManagement({
         }/api/organizations/${organizationId}/pending-invites`,
         {
           headers: {
-            Authorization: `Bearer ${session.access_token}`,
+            Authorization: `Bearer ${authToken}`,
           },
         },
       );
@@ -251,11 +261,15 @@ export function OrganizationManagement({
 
     setLoadingMembers(true);
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session) return;
+      // Use super-admin token if provided, otherwise use Supabase session
+      let authToken = superAdminToken;
+      if (!authToken) {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!session) return;
+        authToken = session.access_token;
+      }
 
       const response = await fetch(
         `${
@@ -263,7 +277,7 @@ export function OrganizationManagement({
         }/api/organizations/${organizationId}/members`,
         {
           headers: {
-            Authorization: `Bearer ${session.access_token}`,
+            Authorization: `Bearer ${authToken}`,
           },
         },
       );
