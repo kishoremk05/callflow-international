@@ -6,11 +6,11 @@
     "type": "git",
     "url": "https://github.com/kishoremk05/callflow-international.git"
   },
-  "main": "src/server.js",
+  "main": "server-single.js",
   "type": "module",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
+    "start": "node server-single.js",
+    "dev": "nodemon server-single.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
