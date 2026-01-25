@@ -103,7 +103,7 @@ export function Header({
             );
           })}
 
-          {/* Manage Button - For Company Users and Company Admins */}
+          {/* Admin Button - For Company Users and Company Admins */}
           {(userType === "company" || userType === "company_admin") &&
             onManageClick && (
               <button
@@ -111,7 +111,7 @@ export function Header({
                 className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
               >
                 <Building2 className="w-4 h-4" />
-                Manage
+                Admin
               </button>
             )}
         </nav>

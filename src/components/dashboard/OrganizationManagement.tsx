@@ -43,6 +43,8 @@ interface OrganizationManagementProps {
   organizationName: string | null;
   currentBalance?: number;
   onBalanceUpdate?: () => void;
+  hideInviteSection?: boolean;
+  hideShareButton?: boolean;
 }
 
 interface Member {
@@ -68,6 +70,13 @@ interface SearchUser {
   user_type: string;
 }
 
+interface PendingInvite {
+  id: string;
+  invited_email: string;
+  invited_at: string;
+  status: string;
+}
+
 export function OrganizationManagement({
   open,
   onClose,
@@ -75,6 +84,8 @@ export function OrganizationManagement({
   organizationName,
   currentBalance = 0,
   onBalanceUpdate,
+  hideInviteSection = false,
+  hideShareButton = false,
 }: OrganizationManagementProps) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -96,6 +107,8 @@ export function OrganizationManagement({
   const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [searching, setSearching] = useState(false);
+  const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
+  const [loadingInvites, setLoadingInvites] = useState(false);
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -113,6 +126,7 @@ export function OrganizationManagement({
     if (open && organizationId) {
       fetchMembers();
       fetchCompanyAdmin();
+      fetchPendingInvites();
     }
   }, [open, organizationId]);
 
@@ -195,6 +209,40 @@ export function OrganizationManagement({
       setCompanyAdmin(null);
     } finally {
       setLoadingCompanyInfo(false);
+    }
+  };
+
+  const fetchPendingInvites = async () => {
+    if (!organizationId) return;
+
+    setLoadingInvites(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) return;
+
+      const response = await fetch(
+        `${
+          import.meta.env.VITE_API_URL || "http://localhost:5000"
+        }/api/organizations/${organizationId}/pending-invites`,
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setPendingInvites(data.invites || []);
+      }
+    } catch (error) {
+      console.error("Error fetching pending invites:", error);
+    } finally {
+      setLoadingInvites(false);
     }
   };
 
@@ -281,7 +329,8 @@ export function OrganizationManagement({
 
       toast.success(data.message || "Invitation sent successfully!");
       setEmail("");
-      // Refresh members list after a short delay to allow the invite to be accepted
+      // Refresh pending invites and members list
+      fetchPendingInvites();
       setTimeout(fetchMembers, 1000);
     } catch (error: any) {
       console.error("Error sending invite:", error);
@@ -446,86 +495,139 @@ export function OrganizationManagement({
           )}
 
           {/* Invite Section */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Mail className="w-4 h-4 text-[#0891b2]" />
-              <h3 className="font-semibold text-sm text-[#1a365d]">
-                Invite Member
-              </h3>
-            </div>
-            <form onSubmit={handleInvite} className="flex gap-2">
-              <div className="flex-1 relative">
-                <Input
-                  type="email"
-                  placeholder="user@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onFocus={() => {
-                    if (searchResults.length > 0) setShowSuggestions(true);
-                  }}
-                  disabled={loading}
-                  className="w-full border-gray-200 focus:border-[#0891b2] focus:ring-[#0891b2]"
-                  autoComplete="off"
-                />
-                {searching && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-                  </div>
-                )}
-                {showSuggestions && searchResults.length > 0 && (
-                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
-                    {searchResults.map((user) => (
-                      <button
-                        key={user.id}
-                        type="button"
-                        onClick={() => {
-                          setEmail(user.email);
-                          setShowSuggestions(false);
-                        }}
-                        className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#0891b2] to-[#06b6d4] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
-                            {user.full_name?.charAt(0)?.toUpperCase() ||
-                              user.email.charAt(0).toUpperCase()}
+          {!hideInviteSection && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-[#0891b2]" />
+                <h3 className="font-semibold text-sm text-[#1a365d]">
+                  Invite Member
+                </h3>
+              </div>
+              <form onSubmit={handleInvite} className="flex gap-2">
+                <div className="flex-1 relative">
+                  <Input
+                    type="email"
+                    placeholder="user@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onFocus={() => {
+                      if (searchResults.length > 0) setShowSuggestions(true);
+                    }}
+                    disabled={loading}
+                    className="w-full border-gray-200 focus:border-[#0891b2] focus:ring-[#0891b2]"
+                    autoComplete="off"
+                  />
+                  {searching && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                    </div>
+                  )}
+                  {showSuggestions && searchResults.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                      {searchResults.map((user) => (
+                        <button
+                          key={user.id}
+                          type="button"
+                          onClick={() => {
+                            setEmail(user.email);
+                            setShowSuggestions(false);
+                          }}
+                          className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#0891b2] to-[#06b6d4] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                              {user.full_name?.charAt(0)?.toUpperCase() ||
+                                user.email.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {user.full_name || "User"}
+                              </p>
+                              <p className="text-xs text-gray-500 truncate">
+                                {user.email}
+                              </p>
+                            </div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
-                              {user.full_name || "User"}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="bg-gradient-to-r from-[#0891b2] to-[#06b6d4] hover:from-[#0e7490] hover:to-[#0891b2]"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="w-4 h-4 mr-2" />
+                      Invite
+                    </>
+                  )}
+                </Button>
+              </form>
+              <p className="text-xs text-muted-foreground">
+                The user must be registered as a Normal User or Company User to
+                accept the invite.
+              </p>
+            </div>
+          )}
+
+          {/* Pending Invitations Section */}
+          {!hideInviteSection && pendingInvites.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-amber-600" />
+                <h3 className="font-semibold text-sm text-[#1a365d]">
+                  Pending Invitations
+                </h3>
+                <Badge
+                  variant="secondary"
+                  className="ml-2 bg-amber-100 text-amber-700"
+                >
+                  {pendingInvites.length}
+                </Badge>
+              </div>
+              <div className="space-y-2">
+                {pendingInvites.map((invite) => (
+                  <Card
+                    key={invite.id}
+                    className="border-amber-200 bg-amber-50/30 hover:shadow-sm transition-all"
+                  >
+                    <CardContent className="p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="w-9 h-9 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 flex items-center justify-center text-white font-semibold text-sm shadow-sm">
+                            {invite.invited_email.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-sm text-gray-900">
+                              {invite.invited_email}
                             </p>
-                            <p className="text-xs text-gray-500 truncate">
-                              {user.email}
+                            <p className="text-xs text-amber-700">
+                              Invited {formatDate(invite.invited_at)} • Waiting
+                              for response
                             </p>
                           </div>
                         </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                        <Badge
+                          variant="outline"
+                          className="bg-amber-100 text-amber-700 border-amber-300"
+                        >
+                          Pending
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-              <Button
-                type="submit"
-                disabled={loading}
-                className="bg-gradient-to-r from-[#0891b2] to-[#06b6d4] hover:from-[#0e7490] hover:to-[#0891b2]"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Sending...
-                  </>
-                ) : (
-                  <>
-                    <Mail className="w-4 h-4 mr-2" />
-                    Invite
-                  </>
-                )}
-              </Button>
-            </form>
-            <p className="text-xs text-muted-foreground">
-              The user must be registered as a Normal User or Company User to
-              accept the invite.
-            </p>
-          </div>
+            </div>
+          )}
 
           {/* Divider */}
           <div className="border-t pt-4" />
@@ -548,11 +650,14 @@ export function OrganizationManagement({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={fetchMembers}
-                disabled={loadingMembers}
+                onClick={() => {
+                  fetchMembers();
+                  fetchPendingInvites();
+                }}
+                disabled={loadingMembers || loadingInvites}
                 className="text-[#0891b2] hover:text-[#0e7490] hover:bg-[#0891b2]/10"
               >
-                {loadingMembers ? (
+                {loadingMembers || loadingInvites ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   "Refresh"
@@ -627,18 +732,20 @@ export function OrganizationManagement({
                         <div className="flex items-center gap-2">
                           {member.role !== "owner" && (
                             <>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setSelectedMember(member);
-                                  setShowShareCredit(true);
-                                }}
-                                className="text-[#0891b2] border-[#0891b2]/30 hover:bg-[#0891b2]/10 hover:text-[#0e7490]"
-                              >
-                                <ArrowRightLeft className="w-3 h-3 mr-1" />
-                                Share Credit
-                              </Button>
+                              {!hideShareButton && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedMember(member);
+                                    setShowShareCredit(true);
+                                  }}
+                                  className="text-[#0891b2] border-[#0891b2]/30 hover:bg-[#0891b2]/10 hover:text-[#0e7490]"
+                                >
+                                  <ArrowRightLeft className="w-3 h-3 mr-1" />
+                                  Share Credit
+                                </Button>
+                              )}
                               {member.user_id === currentUserId ? (
                                 <Button
                                   size="sm"

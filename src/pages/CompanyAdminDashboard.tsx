@@ -30,6 +30,16 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -114,11 +124,62 @@ export default function CompanyAdminDashboard() {
 
   // Share wallet form
   const [shareAmount, setShareAmount] = useState("");
-  const [shareNotes, setShareNotes] = useState("");
+  const [shareNotes, setShareNotes] = useState<string>("");
+
+  // Delete organization confirmation
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [orgToDelete, setOrgToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   useEffect(() => {
     fetchCompanyAdminData();
   }, []);
+
+  // Real-time wallet synchronization - ensures wallet stays in sync across all dashboards
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const setupRealtimeSync = async () => {
+      const { supabase } = await import("@/integrations/supabase/client");
+
+      const channel = supabase
+        .channel(`wallet-company-admin-${user.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "wallets",
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            console.log(
+              "Wallet updated in real-time (Company Admin):",
+              payload,
+            );
+            if (payload.new && "balance" in payload.new && wallet) {
+              const newBalance = parseFloat(payload.new.balance);
+              setWallet({
+                ...wallet,
+                balance: newBalance,
+                available: wallet.total_shared
+                  ? newBalance - wallet.total_shared
+                  : newBalance,
+              });
+            }
+          },
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+
+    setupRealtimeSync();
+  }, [user]);
 
   const fetchCompanyAdminData = async () => {
     try {
@@ -391,15 +452,15 @@ export default function CompanyAdminDashboard() {
     }
   };
 
-  const handleDeleteOrganization = async (orgId: string) => {
-    if (
-      !confirm(
-        "Are you sure you want to delete this organization? This action cannot be undone.",
-      )
-    ) {
-      return;
-    }
+  const handleDeleteOrganization = (orgId: string, orgName: string) => {
+    setOrgToDelete({ id: orgId, name: orgName });
+    setShowDeleteDialog(true);
+  };
 
+  const confirmDeleteOrganization = async () => {
+    if (!orgToDelete) return;
+
+    setShowDeleteDialog(false);
     try {
       const token = (
         await import("@/integrations/supabase/client")
@@ -410,7 +471,7 @@ export default function CompanyAdminDashboard() {
       const response = await fetch(
         `${
           import.meta.env.VITE_API_URL
-        }/api/company-admin/organizations/${orgId}`,
+        }/api/company-admin/organizations/${orgToDelete.id}`,
         {
           method: "DELETE",
           headers: {
@@ -557,22 +618,7 @@ export default function CompanyAdminDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Wallet Balance
-              </CardTitle>
-              <Wallet className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                ${wallet?.available.toFixed(2) || "0.00"}
-              </div>
-              <p className="text-xs text-muted-foreground">Available balance</p>
-            </CardContent>
-          </Card>
-
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Teams</CardTitle>
@@ -677,13 +723,6 @@ export default function CompanyAdminDashboard() {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Owner Wallet:</span>
-                        <span className="font-semibold text-blue-600">
-                          ${org.owner_wallet_balance?.toFixed(2) || "0.00"}
-                        </span>
-                      </div>
-
                       {org.organization_members &&
                         org.organization_members.length > 0 && (
                           <div className="text-sm">
@@ -702,7 +741,9 @@ export default function CompanyAdminDashboard() {
                           size="sm"
                           variant="outline"
                           className="text-red-600 hover:bg-red-50 w-full gap-2"
-                          onClick={() => handleDeleteOrganization(org.id)}
+                          onClick={() =>
+                            handleDeleteOrganization(org.id, org.name)
+                          }
                         >
                           <Trash2 className="w-4 h-4" />
                           Delete Team
@@ -994,6 +1035,55 @@ export default function CompanyAdminDashboard() {
           onBalanceUpdate={fetchCompanyAdminData}
         />
       )}
+
+      {/* Delete Organization Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <AlertDialogTitle className="text-[#1a365d]">
+                  Delete Team
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-sm text-gray-600 mt-1">
+                  This action cannot be undone
+                </AlertDialogDescription>
+              </div>
+            </div>
+          </AlertDialogHeader>
+
+          <div className="py-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="text-sm">
+                  <p className="font-medium text-red-800 mb-1">
+                    Are you sure you want to delete "{orgToDelete?.name}"?
+                  </p>
+                  <p className="text-red-700">
+                    All team data and member associations will be permanently
+                    removed.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-gray-300">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteOrganization}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete Team
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

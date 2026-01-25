@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { OrganizationManagement } from "@/components/dashboard/OrganizationManagement";
 import {
   Table,
   TableBody,
@@ -110,10 +111,6 @@ const SuperAdminDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
-  const [orgMembers, setOrgMembers] = useState<
-    Array<{ email: string; name: string }>
-  >([]);
-  const [loadingMembers, setLoadingMembers] = useState(false);
   const [processingRequest, setProcessingRequest] = useState<string | null>(
     null,
   );
@@ -135,6 +132,8 @@ const SuperAdminDashboard = () => {
     }>
   >([]);
   const [loadingCompanyAdmins, setLoadingCompanyAdmins] = useState(false);
+  const [showDeleteCompanyDialog, setShowDeleteCompanyDialog] = useState(false);
+  const [deletingCompany, setDeletingCompany] = useState(false);
   const usersPerPage = 5;
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -356,34 +355,45 @@ const SuperAdminDashboard = () => {
     }
   };
 
-  const fetchOrgMembers = async (org: Organization) => {
-    try {
-      setLoadingMembers(true);
-      setSelectedOrg(org);
+  const handleDeleteCompany = async () => {
+    if (!selectedCompany) return;
 
+    setDeletingCompany(true);
+    try {
       const token = localStorage.getItem("super_admin_token");
       const apiUrl = import.meta.env.VITE_API_URL;
 
       const response = await fetch(
-        `${apiUrl}/api/super-admin/organizations/${org.id}/members`,
+        `${apiUrl}/api/super-admin/company/${encodeURIComponent(selectedCompany.company_name)}`,
         {
+          method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
         },
       );
 
       const data = await response.json();
+
       if (data.success) {
-        setOrgMembers(data.members);
+        toast({
+          title: "Success",
+          description: `Company "${selectedCompany.company_name}" has been deleted`,
+        });
+        setShowDeleteCompanyDialog(false);
+        setShowCompanyAdminsDialog(false);
+        setSelectedCompany(null);
+        fetchDashboardData();
+      } else {
+        throw new Error(data.error || "Failed to delete company");
       }
-    } catch (error) {
-      console.error("Error fetching organization members:", error);
+    } catch (error: any) {
+      console.error("Error deleting company:", error);
       toast({
         title: "Error",
-        description: "Failed to load organization members",
+        description: error.message || "Failed to delete company",
         variant: "destructive",
       });
     } finally {
-      setLoadingMembers(false);
+      setDeletingCompany(false);
     }
   };
 
@@ -470,11 +480,22 @@ const SuperAdminDashboard = () => {
             </CardHeader>
           </Card>
 
-          <Card className="hover:shadow-lg transition-all duration-300 border border-gray-200">
+          <Card
+            className="hover:shadow-lg transition-all duration-300 border border-gray-200 cursor-pointer"
+            onClick={() => {
+              const teamsSection = document.getElementById("teams-section");
+              if (teamsSection) {
+                teamsSection.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                });
+              }
+            }}
+          >
             <CardHeader className="pb-6">
               <div className="flex items-center justify-between mb-3">
                 <CardDescription className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                  Organizations
+                  Teams
                 </CardDescription>
                 <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
                   <Globe className="w-5 h-5 text-gray-600" />
@@ -739,7 +760,10 @@ const SuperAdminDashboard = () => {
         </Card>
 
         {/* Teams Table */}
-        <Card className="mb-8 shadow-md hover:shadow-lg transition-shadow">
+        <Card
+          id="teams-section"
+          className="mb-8 shadow-md hover:shadow-lg transition-shadow"
+        >
           <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50">
             <div className="flex items-center gap-2">
               <Globe className="w-5 h-5 text-green-600" />
@@ -761,7 +785,6 @@ const SuperAdminDashboard = () => {
                     <TableHead className="font-semibold">
                       Wallet Balance
                     </TableHead>
-                    <TableHead className="font-semibold">Members</TableHead>
                     <TableHead className="font-semibold">Created</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -770,7 +793,7 @@ const SuperAdminDashboard = () => {
                     <TableRow
                       key={org.id}
                       className={`hover:bg-green-50 transition-colors cursor-pointer ${index % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
-                      onClick={() => fetchOrgMembers(org)}
+                      onClick={() => setSelectedOrg(org)}
                     >
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
@@ -789,12 +812,6 @@ const SuperAdminDashboard = () => {
                           ${org.shared_balance.toFixed(2)}
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          <Users className="w-3 h-3 mr-1" />
-                          {org.members_count}
-                        </Badge>
-                      </TableCell>
                       <TableCell className="text-gray-600">
                         <div className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
@@ -806,7 +823,7 @@ const SuperAdminDashboard = () => {
                   {organizations.length === 0 && (
                     <TableRow>
                       <TableCell
-                        colSpan={5}
+                        colSpan={4}
                         className="text-center text-gray-500 py-8"
                       >
                         No organizations found
@@ -970,74 +987,17 @@ const SuperAdminDashboard = () => {
         </Card>
       </div>
 
-      {/* Organization Members Dialog */}
-      <Dialog
-        open={!!selectedOrg}
-        onOpenChange={(open) => !open && setSelectedOrg(null)}
-      >
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Globe className="w-5 h-5 text-green-600" />
-              {selectedOrg?.name} - Members
-            </DialogTitle>
-            <DialogDescription>
-              Email addresses of all members in this organization
-            </DialogDescription>
-          </DialogHeader>
-
-          {loadingMembers ? (
-            <div className="flex items-center justify-center py-8">
-              <RefreshCw className="w-6 h-6 animate-spin text-green-600" />
-            </div>
-          ) : (
-            <div className="mt-4">
-              {orgMembers.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Users className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                  <p>No members found in this organization</p>
-                </div>
-              ) : (
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {orgMembers.map((member, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-3 p-3 bg-gray-50 hover:bg-green-50 rounded-lg transition-colors"
-                    >
-                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                        <Mail className="w-5 h-5 text-green-600" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900">
-                          {member.name}
-                        </p>
-                        <p className="text-sm text-gray-600">{member.email}</p>
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className="bg-green-50 text-green-700 border-green-200"
-                      >
-                        Member
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="mt-4 pt-4 border-t">
-                <div className="flex items-center justify-between text-sm text-gray-600">
-                  <span>
-                    Total Members: <strong>{orgMembers.length}</strong>
-                  </span>
-                  <span>
-                    Organization: <strong>{selectedOrg?.name}</strong>
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Organization Members Modal */}
+      {selectedOrg && (
+        <OrganizationManagement
+          open={!!selectedOrg}
+          onClose={() => setSelectedOrg(null)}
+          organizationId={selectedOrg.id}
+          organizationName={selectedOrg.name}
+          hideInviteSection={true}
+          hideShareButton={true}
+        />
+      )}
 
       {/* Reject Request Dialog */}
       <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
@@ -1169,8 +1129,85 @@ const SuperAdminDashboard = () => {
             )}
           </div>
           <DialogFooter>
+            <Button
+              variant="outline"
+              className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700"
+              onClick={() => setShowDeleteCompanyDialog(true)}
+            >
+              Delete Company
+            </Button>
             <Button onClick={() => setShowCompanyAdminsDialog(false)}>
               Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Company Confirmation Dialog */}
+      <Dialog
+        open={showDeleteCompanyDialog}
+        onOpenChange={setShowDeleteCompanyDialog}
+      >
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-red-700 flex items-center gap-2">
+              <Building2 className="w-6 h-6" />
+              Delete Company
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this company? This action cannot
+              be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 my-4">
+            <div className="p-4 bg-red-50 rounded-lg border-2 border-red-200">
+              <div className="space-y-2 text-sm">
+                <div>
+                  <strong>Company:</strong> {selectedCompany?.company_name}
+                </div>
+                <div>
+                  <strong>Email:</strong> {selectedCompany?.company_email}
+                </div>
+                <div>
+                  <strong>Teams:</strong> {selectedCompany?.organizations_count}
+                </div>
+                <div>
+                  <strong>Admins:</strong> {selectedCompany?.admins_count}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm text-amber-800">
+                <strong>⚠️ Warning:</strong> Deleting this company will also
+                delete all associated teams, admin accounts, and data.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteCompanyDialog(false)}
+              disabled={deletingCompany}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteCompany}
+              disabled={deletingCompany}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deletingCompany ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Company"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

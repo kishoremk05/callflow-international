@@ -4794,6 +4794,67 @@ app.post(
   },
 );
 
+// Get pending invites for an organization
+app.get(
+  "/api/organizations/:organizationId/pending-invites",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { organizationId } = req.params;
+
+      // Verify user has access to this organization
+      const { data: organization } = await supabase
+        .from("organizations")
+        .select("owner_id, company_admin_id")
+        .eq("id", organizationId)
+        .single();
+
+      if (!organization) {
+        return res.status(404).json({ error: "Organization not found" });
+      }
+
+      // Check if user is owner or company admin
+      let hasAccess = organization.owner_id === req.user.id;
+
+      if (!hasAccess && organization.company_admin_id) {
+        const { data: companyAdmins } = await supabase
+          .from("company_admins")
+          .select("user_id")
+          .eq("id", organization.company_admin_id);
+
+        if (companyAdmins && companyAdmins.length > 0) {
+          hasAccess = companyAdmins.some(
+            (admin) => admin.user_id === req.user.id,
+          );
+        }
+      }
+
+      if (!hasAccess) {
+        return res
+          .status(403)
+          .json({ error: "Access denied to this organization" });
+      }
+
+      // Fetch pending invites (status = 'pending')
+      const { data: invites, error } = await supabase
+        .from("organization_invites")
+        .select("id, invited_email, invited_at, status")
+        .eq("organization_id", organizationId)
+        .eq("status", "pending")
+        .order("invited_at", { ascending: false });
+
+      if (error) throw error;
+
+      res.json({
+        success: true,
+        invites: invites || [],
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
 // Get organization members
 app.get(
   "/api/organizations/:organizationId/members",
@@ -6402,6 +6463,92 @@ app.get(
       );
 
       res.json({ success: true, admins: adminsWithProfiles });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Delete a Company
+app.delete(
+  "/api/super-admin/company/:companyName",
+  authenticateSuperAdmin,
+  async (req, res, next) => {
+    try {
+      const { companyName } = req.params;
+
+      // Get all company admins for this company
+      const { data: companyAdmins, error: adminError } = await supabase
+        .from("company_admins")
+        .select("id, user_id")
+        .eq("company_name", companyName);
+
+      if (adminError) throw adminError;
+
+      if (!companyAdmins || companyAdmins.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: "Company not found",
+        });
+      }
+
+      // Delete all company admins
+      const { error: deleteAdminsError } = await supabase
+        .from("company_admins")
+        .delete()
+        .eq("company_name", companyName);
+
+      if (deleteAdminsError) throw deleteAdminsError;
+
+      // Update user_type back to 'company' for all affected users
+      for (const admin of companyAdmins) {
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({ user_type: "company" })
+          .eq("id", admin.user_id);
+
+        if (updateError) {
+          console.error("Error updating user type:", updateError);
+        }
+      }
+
+      // Get all organizations owned by this company
+      const { data: organizations, error: orgsError } = await supabase
+        .from("organizations")
+        .select("id")
+        .in(
+          "owner_id",
+          companyAdmins.map((admin) => admin.user_id),
+        );
+
+      if (orgsError) throw orgsError;
+
+      // Delete all organization-related data
+      if (organizations && organizations.length > 0) {
+        const orgIds = organizations.map((org) => org.id);
+
+        // Delete organization members
+        await supabase
+          .from("organization_members")
+          .delete()
+          .in("organization_id", orgIds);
+
+        // Delete organization invites
+        await supabase
+          .from("organization_invites")
+          .delete()
+          .in("organization_id", orgIds);
+
+        // Delete organizations
+        await supabase.from("organizations").delete().in("id", orgIds);
+      }
+
+      res.json({
+        success: true,
+        message: `Company "${companyName}" and all associated data have been deleted`,
+        deletedAdmins: companyAdmins.length,
+        deletedOrganizations: organizations?.length || 0,
+      });
     } catch (error) {
       next(error);
     }

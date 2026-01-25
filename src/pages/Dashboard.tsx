@@ -268,6 +268,38 @@ export default function Dashboard() {
     }
   }, [user, userType]);
 
+  // Real-time wallet synchronization - ensures all dashboards show same balance
+  useEffect(() => {
+    if (!user) return;
+
+    // Subscribe to wallet changes for this user
+    const channel = supabase
+      .channel(`wallet-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "wallets",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log("Wallet updated in real-time:", payload);
+          if (payload.new && "balance" in payload.new) {
+            setWallet({
+              balance: payload.new.balance,
+              currency: payload.new.currency || "USD",
+            });
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   // Persist activeQueueId to localStorage
   useEffect(() => {
     if (activeQueueId) {
