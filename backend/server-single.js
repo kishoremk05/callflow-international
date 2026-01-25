@@ -4012,6 +4012,7 @@ app.get(
         .single();
 
       const isSuperAdmin = userProfile?.user_type === "super_admin";
+      console.log(`🔍 company-admin check: user=${req.user.id}, type=${userProfile?.user_type}, isSuperAdmin=${isSuperAdmin}`);
 
       // Get organization details
       const { data: org, error: orgError } = await supabase
@@ -4827,6 +4828,7 @@ app.get(
         .single();
 
       const isSuperAdmin = userProfile?.user_type === "super_admin";
+      console.log(`🔍 pending-invites check: user=${req.user.id}, type=${userProfile?.user_type}, isSuperAdmin=${isSuperAdmin}`);
 
       // Verify user has access to this organization
       const { data: organization } = await supabase
@@ -4897,6 +4899,7 @@ app.get(
         .single();
 
       const isSuperAdmin = userProfile?.user_type === "super_admin";
+      console.log(`🔍 members check: user=${req.user.id}, type=${userProfile?.user_type}, isSuperAdmin=${isSuperAdmin}`);
 
       // Get the organization with owner details
       const { data: organization } = await supabase
