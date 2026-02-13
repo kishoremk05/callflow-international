@@ -371,7 +371,7 @@ export default function Landing() {
               }}
             >
               <img
-                style={{backgroundImage: `url(${cardImage})`}}
+                src={cardImage}
                 alt="GlobalConnect dashboard - Call analytics, wallet balance, and communication tools"
                 className="w-full h-auto object-cover object-top"
                 loading="eager"
