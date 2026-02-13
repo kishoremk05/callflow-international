@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useScrollAnimation } from "@/hooks/useGsapAnimations";
 import bgImage from "@/assets/images/bg.png";
+import cardImage from "@/assets/images/dashboard-screenshot.png";
 
 // ============================================================================
 // DATA CONSTANTS
@@ -370,7 +371,7 @@ export default function Landing() {
               }}
             >
               <img
-                src="/dashboard-screenshot.png"
+                style={{backgroundImage: `url(${cardImage})`}}
                 alt="GlobalConnect dashboard - Call analytics, wallet balance, and communication tools"
                 className="w-full h-auto object-cover object-top"
                 loading="eager"
