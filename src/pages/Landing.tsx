@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useScrollAnimation } from "@/hooks/useGsapAnimations";
+import bgImage from "@/assets/images/bg.png";
 
 // ============================================================================
 // DATA CONSTANTS
@@ -209,7 +210,7 @@ export default function Landing() {
       <div
         className="fixed inset-0 -z-20 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: "url(/bg.png)",
+          backgroundImage: `url(${bgImage})`,
           backgroundSize: "cover",
           backgroundAttachment: "fixed",
         }}
@@ -1912,8 +1913,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
-      
 
       {/* ============================================================================ */}
       {/* FOOTER */}
