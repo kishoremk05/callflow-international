@@ -14,17 +14,29 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CreditCard, DollarSign, History, Wallet, ArrowUpRight } from "lucide-react";
+import {
+  CreditCard,
+  DollarSign,
+  History,
+  Wallet,
+  ArrowUpRight,
+} from "lucide-react";
 import { gsap } from "gsap";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export default function Payments() {
   const { user, signOut } = useAuth();
-  const [wallet, setWallet] = useState({ balance: 0, currency: "USD" });
+  const [wallet, setWallet] = useState({
+    balance: 0,
+    currency: "USD",
+    availableBalance: 0,
+  });
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [payments, setPayments] = useState([]);
+  const [totalShared, setTotalShared] = useState(0);
+  const [isCompanyAdmin, setIsCompanyAdmin] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -74,6 +86,17 @@ export default function Payments() {
 
   const fetchWalletAndPayments = async () => {
     try {
+      // Check if user is company admin
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("user_type")
+        .eq("id", user?.id)
+        .single();
+
+      const userIsCompanyAdmin = profileData?.user_type === "company_admin";
+      setIsCompanyAdmin(userIsCompanyAdmin);
+
+      // Fetch wallet data
       const { data: walletData } = await supabase
         .from("wallets")
         .select("balance, currency")
@@ -81,7 +104,39 @@ export default function Payments() {
         .single();
 
       if (walletData) {
-        setWallet(walletData);
+        let availableBalance = walletData.balance;
+        let shared = 0;
+
+        // If user is company admin, fetch shared amounts to calculate available balance
+        if (userIsCompanyAdmin) {
+          try {
+            const {
+              data: { session },
+            } = await supabase.auth.getSession();
+            const apiUrl = import.meta.env.VITE_API_URL;
+            const response = await fetch(`${apiUrl}/api/company-admin/stats`, {
+              headers: {
+                Authorization: `Bearer ${session?.access_token}`,
+              },
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              if (data.success) {
+                shared = data.stats.totalShared || 0;
+                setTotalShared(shared);
+                availableBalance = walletData.balance - shared;
+              }
+            }
+          } catch (error) {
+            console.error("Error fetching shared amounts:", error);
+          }
+        }
+
+        setWallet({
+          ...walletData,
+          availableBalance: availableBalance,
+        });
       }
 
       const { data: paymentsData } = await supabase
@@ -195,10 +250,11 @@ export default function Payments() {
                           <button
                             key={amt}
                             onClick={() => setAmount(amt.toString())}
-                            className={`py-3 rounded-xl font-semibold text-sm transition-all ${amount === amt.toString()
+                            className={`py-3 rounded-xl font-semibold text-sm transition-all ${
+                              amount === amt.toString()
                                 ? "bg-[#0891b2] text-white shadow-lg"
                                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                              }`}
+                            }`}
                           >
                             ${amt}
                           </button>
@@ -247,7 +303,8 @@ export default function Payments() {
                     </div>
 
                     <p className="text-sm text-gray-500 text-center">
-                      Stripe for international payments • Razorpay for Indian users
+                      Stripe for international payments • Razorpay for Indian
+                      users
                     </p>
                   </CardContent>
                 </Card>
@@ -267,7 +324,9 @@ export default function Payments() {
                         <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                           <CreditCard className="w-8 h-8 text-gray-400" />
                         </div>
-                        <p className="text-gray-500 font-medium">No payment history yet</p>
+                        <p className="text-gray-500 font-medium">
+                          No payment history yet
+                        </p>
                         <p className="text-gray-400 text-sm mt-1">
                           Your transactions will appear here
                         </p>
@@ -288,18 +347,21 @@ export default function Payments() {
                                   {payment.currency} {payment.amount}
                                 </p>
                                 <p className="text-sm text-gray-500">
-                                  {new Date(payment.created_at).toLocaleString()}
+                                  {new Date(
+                                    payment.created_at,
+                                  ).toLocaleString()}
                                 </p>
                               </div>
                             </div>
                             <div className="text-right">
                               <span
-                                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${payment.status === "completed"
+                                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+                                  payment.status === "completed"
                                     ? "bg-green-100 text-green-700"
                                     : payment.status === "pending"
                                       ? "bg-amber-100 text-amber-700"
                                       : "bg-red-100 text-red-700"
-                                  }`}
+                                }`}
                               >
                                 {payment.status}
                               </span>
@@ -329,23 +391,23 @@ export default function Payments() {
                 <div className="text-center py-6">
                   <div className="text-5xl font-bold text-[#1a365d] mb-2">
                     {wallet.currency === "USD" ? "$" : wallet.currency}
-                    {wallet.balance.toFixed(2)}
+                    {wallet.availableBalance.toFixed(2)}
                   </div>
-                  <p className="text-gray-500">
-                    Available for calls
-                  </p>
+                  <p className="text-gray-500">Available for calls</p>
                 </div>
 
                 <div className="mt-4 p-4 bg-slate-50 rounded-xl">
                   <div className="flex items-center justify-between text-sm mb-2">
                     <span className="text-gray-600">Estimated calls</span>
                     <span className="font-semibold text-[#1a365d]">
-                      ~{Math.floor(wallet.balance / 0.02)} min (USA)
+                      ~{Math.floor(wallet.availableBalance / 0.02)} min (USA)
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">Rate to USA</span>
-                    <span className="font-semibold text-[#0891b2]">$0.02/min</span>
+                    <span className="font-semibold text-[#0891b2]">
+                      $0.02/min
+                    </span>
                   </div>
                 </div>
               </CardContent>

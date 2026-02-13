@@ -21,6 +21,7 @@ import {
   UserCircle,
   ArrowLeft,
 } from "lucide-react";
+import { FcGoogle } from "react-icons/fc";
 
 export function AuthForm() {
   const navigate = useNavigate();
@@ -30,6 +31,30 @@ export function AuthForm() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [userType, setUserType] = useState<"normal" | "company">("normal");
+
+  const handleSocialLogin = async (provider: "google") => {
+    setLoading(true);
+    try {
+      // Use current origin for redirect (localhost in dev, production in prod)
+      const redirectUrl = `${window.location.origin}/auth/callback`;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: provider,
+        options: {
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: false,
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
+        },
+      });
+
+      if (error) throw error;
+    } catch (error: any) {
+      toast.error(error.message);
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -245,6 +270,33 @@ export function AuthForm() {
                     : "Create Account"}
               </Button>
             </form>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-gray-500">
+                  Or continue with
+                </span>
+              </div>
+            </div>
+
+            {/* Social Login Buttons */}
+            <div className="flex justify-center">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleSocialLogin("google")}
+                disabled={loading}
+                className="w-full border-2 hover:bg-gray-50 transition-all"
+              >
+                <FcGoogle className="w-5 h-5 mr-2" />
+                Continue with Google
+              </Button>
+            </div>
+
             <div className="mt-6 space-y-3">
               <div className="text-center">
                 <button
