@@ -569,7 +569,7 @@ export default function Landing() {
                         navigate("/signup");
                       }}
                     >
-                      Start Calling Free
+                      Start Calling
                     </a>
                   </div>
 
