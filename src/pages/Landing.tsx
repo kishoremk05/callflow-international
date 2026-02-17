@@ -141,22 +141,22 @@ const plans = [
 
 const articles = [
   {
-    title: "Top 10 digital agency software",
-    tag: "Tools",
+    title: "How to reduce international calling costs by 70%",
+    tag: "Cost Savings",
     image:
-      "https://framerusercontent.com/images/WkcfohGmGxdaZXOQkB8urlpwXg.png?width=1200&height=750",
+      "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=750&fit=crop",
   },
   {
-    title: "A complete guide to project success in 2026",
-    tag: "Insight",
+    title: "Setting up virtual numbers for your business",
+    tag: "Guide",
     image:
-      "https://framerusercontent.com/images/gxb6A1j9Y0wXrhIBrMQD21JI.png?width=1200&height=1200",
+      "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1200&h=1200&fit=crop",
   },
   {
-    title: "What Are Billable Hours",
-    tag: "Management",
+    title: "Best practices for remote team communication",
+    tag: "Teams",
     image:
-      "https://framerusercontent.com/images/6MWnqkgs4vXAeKOFbYmLtdJtL8.png?width=904&height=1200",
+      "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=900&h=1200&fit=crop",
   },
 ];
 
@@ -409,14 +409,29 @@ export default function Landing() {
                 : "opacity-0 translate-y-8"
             }`}
           >
-            <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-              Browser-Based Communication
+            <span className="text-xs font-semibold text-[#0891b2] uppercase tracking-wider mb-2 block">
+              🌐 Browser-Based Communication
             </span>
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground mt-4 leading-tight">
-              Call from anywhere,
-              <br />
-              stay connected
-            </h2>
+            <div className="flex items-start justify-center gap-3 mt-4">
+              <svg
+                className="w-10 h-10 text-foreground flex-shrink-0 mt-1"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                />
+              </svg>
+              <h2 className="text-4xl md:text-5xl font-bold text-foreground leading-tight">
+                Call from anywhere,
+                <br />
+                stay connected
+              </h2>
+            </div>
             <p className="text-muted-foreground text-lg mt-4 max-w-2xl mx-auto">
               Experience seamless global communication directly from your
               browser — no downloads needed
@@ -426,7 +441,7 @@ export default function Landing() {
           {/* Single unified platform card */}
           <div className="max-w-5xl mx-auto">
             <div
-              className={`group relative rounded-3xl overflow-hidden bg-gradient-to-br from-slate-900 to-black border border-slate-800 shadow-2xl hover:shadow-3xl transition-all duration-500 ${
+              className={`group relative rounded-3xl overflow-hidden bg-gradient-to-br from-white/[0.12] via-white/[0.08] to-white/[0.04] backdrop-blur-xl border border-white/20 shadow-2xl hover:shadow-3xl transition-all duration-500 ${
                 devicesRef.isVisible
                   ? "opacity-100 translate-y-0"
                   : "opacity-0 translate-y-12"
@@ -440,18 +455,33 @@ export default function Landing() {
                     <div className="flex items-center gap-2 mb-6">
                       <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
                       <span className="text-green-400 text-xs font-medium uppercase tracking-wider">
-                        Live Platform
+                        💻 Live Platform
                       </span>
                     </div>
 
-                    <h3 className="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">
-                      One Platform,
-                      <br />
-                      <span className="text-[#0891b2]">
-                        Endless Possibilities
-                      </span>
-                    </h3>
-                    <p className="text-slate-400 mb-8 leading-relaxed">
+                    <div className="flex items-start gap-3 mb-4">
+                      <svg
+                        className="w-8 h-8 text-slate-900 flex-shrink-0 mt-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+                        />
+                      </svg>
+                      <h3 className="text-3xl md:text-4xl font-bold text-slate-900 leading-tight">
+                        One Platform,
+                        <br />
+                        <span className="text-[#0891b2]">
+                          Endless Possibilities
+                        </span>
+                      </h3>
+                    </div>
+                    <p className="text-slate-700 mb-8 leading-relaxed font-medium">
                       Access all features directly from your browser. Make HD
                       calls, manage teams, track analytics, and handle billing —
                       all in one powerful web platform.
@@ -475,10 +505,10 @@ export default function Landing() {
                           </svg>
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-white">
+                          <p className="text-sm font-semibold text-slate-900">
                             Instant Access
                           </p>
-                          <p className="text-xs text-slate-400">
+                          <p className="text-xs text-slate-700">
                             No installation. Open your browser and start
                             calling.
                           </p>
@@ -501,10 +531,10 @@ export default function Landing() {
                           </svg>
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-white">
+                          <p className="text-sm font-semibold text-slate-900">
                             Real-Time Dashboard
                           </p>
-                          <p className="text-xs text-slate-400">
+                          <p className="text-xs text-slate-700">
                             Full analytics, call history, and team management.
                           </p>
                         </div>
@@ -526,10 +556,10 @@ export default function Landing() {
                           </svg>
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-white">
+                          <p className="text-sm font-semibold text-slate-900">
                             Enterprise Security
                           </p>
-                          <p className="text-xs text-slate-400">
+                          <p className="text-xs text-slate-700">
                             End-to-end encryption on every single call.
                           </p>
                         </div>
@@ -551,10 +581,10 @@ export default function Landing() {
                           </svg>
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-white">
+                          <p className="text-sm font-semibold text-slate-900">
                             70+ Countries
                           </p>
-                          <p className="text-xs text-slate-400">
+                          <p className="text-xs text-slate-700">
                             Crystal-clear calls to destinations worldwide.
                           </p>
                         </div>
@@ -575,16 +605,16 @@ export default function Landing() {
 
                   {/* Right - Browser Window Mockup */}
                   <div className="relative">
-                    <div className="bg-slate-800 rounded-xl overflow-hidden border border-slate-700 shadow-2xl">
+                    <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-900/40 rounded-xl overflow-hidden border border-white/20 shadow-2xl backdrop-blur-xl">
                       {/* Browser Chrome */}
-                      <div className="flex items-center gap-2 px-4 py-3 bg-slate-800 border-b border-slate-700">
+                      <div className="flex items-center gap-2 px-4 py-3 bg-slate-800/50 border-b border-white/10 backdrop-blur-sm">
                         <div className="flex gap-1.5">
                           <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
                           <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
                           <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
                         </div>
                         <div className="flex-1 mx-4">
-                          <div className="bg-slate-700 rounded-md px-3 py-1.5 flex items-center gap-2">
+                          <div className="bg-slate-700/60 rounded-md px-3 py-1.5 flex items-center gap-2 border border-slate-600/50">
                             <svg
                               className="w-3 h-3 text-green-400"
                               fill="currentColor"
@@ -596,7 +626,7 @@ export default function Landing() {
                                 clipRule="evenodd"
                               />
                             </svg>
-                            <span className="text-slate-400 text-xs">
+                            <span className="text-slate-300 text-xs font-medium">
                               app.globalconnect.com
                             </span>
                           </div>
@@ -604,38 +634,40 @@ export default function Landing() {
                       </div>
 
                       {/* Dashboard Content */}
-                      <div className="p-5 bg-slate-900 space-y-4">
+                      <div className="p-5 bg-gradient-to-b from-slate-900/50 to-slate-900/30 space-y-4">
                         {/* Top Stats */}
                         <div className="grid grid-cols-3 gap-3">
-                          <div className="bg-white/5 rounded-lg p-3 border border-white/10">
-                            <p className="text-slate-400 text-xs mb-1">
+                          <div className="bg-white/10 rounded-lg p-3 border border-white/20 backdrop-blur-md shadow-lg hover:bg-white/[0.12] transition-colors">
+                            <p className="text-slate-300 text-xs mb-1 font-medium">
                               Active
                             </p>
                             <p className="text-white font-bold text-lg">24</p>
-                            <div className="w-full h-1 bg-slate-700 rounded mt-2">
-                              <div className="w-3/4 h-full bg-[#0891b2] rounded"></div>
+                            <div className="w-full h-1 bg-slate-700/50 rounded mt-2">
+                              <div className="w-3/4 h-full bg-[#0891b2] rounded shadow-sm"></div>
                             </div>
                           </div>
-                          <div className="bg-white/5 rounded-lg p-3 border border-white/10">
-                            <p className="text-slate-400 text-xs mb-1">
+                          <div className="bg-white/10 rounded-lg p-3 border border-white/20 backdrop-blur-md shadow-lg hover:bg-white/[0.12] transition-colors">
+                            <p className="text-slate-300 text-xs mb-1 font-medium">
                               Minutes
                             </p>
                             <p className="text-white font-bold text-lg">1.2k</p>
-                            <div className="w-full h-1 bg-slate-700 rounded mt-2">
-                              <div className="w-2/3 h-full bg-green-400 rounded"></div>
+                            <div className="w-full h-1 bg-slate-700/50 rounded mt-2">
+                              <div className="w-2/3 h-full bg-green-400 rounded shadow-sm"></div>
                             </div>
                           </div>
-                          <div className="bg-white/5 rounded-lg p-3 border border-white/10">
-                            <p className="text-slate-400 text-xs mb-1">Saved</p>
+                          <div className="bg-white/10 rounded-lg p-3 border border-white/20 backdrop-blur-md shadow-lg hover:bg-white/[0.12] transition-colors">
+                            <p className="text-slate-300 text-xs mb-1 font-medium">
+                              Saved
+                            </p>
                             <p className="text-white font-bold text-lg">$842</p>
-                            <div className="w-full h-1 bg-slate-700 rounded mt-2">
-                              <div className="w-4/5 h-full bg-purple-400 rounded"></div>
+                            <div className="w-full h-1 bg-slate-700/50 rounded mt-2">
+                              <div className="w-4/5 h-full bg-purple-400 rounded shadow-sm"></div>
                             </div>
                           </div>
                         </div>
 
                         {/* Active Call Indicator */}
-                        <div className="bg-[#0891b2]/10 border border-[#0891b2]/30 rounded-xl p-4 flex items-center justify-between">
+                        <div className="bg-[#0891b2]/20 border border-[#0891b2]/40 rounded-xl p-4 flex items-center justify-between backdrop-blur-md shadow-lg hover:bg-[#0891b2]/25 transition-colors">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-[#0891b2] flex items-center justify-center">
                               <svg
@@ -671,7 +703,7 @@ export default function Landing() {
 
                         {/* Recent Calls */}
                         <div className="space-y-2">
-                          <div className="flex items-center justify-between bg-white/5 rounded-lg p-3 border border-white/10">
+                          <div className="flex items-center justify-between bg-white/10 rounded-lg p-3 border border-white/20 backdrop-blur-md shadow-md hover:bg-white/[0.12] transition-colors">
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-xs font-bold">
                                 US
@@ -680,7 +712,7 @@ export default function Landing() {
                                 <p className="text-white text-sm font-medium">
                                   +1 (555) 0123
                                 </p>
-                                <p className="text-slate-500 text-xs">
+                                <p className="text-slate-300 text-xs">
                                   12 min • HD Quality
                                 </p>
                               </div>
@@ -689,16 +721,16 @@ export default function Landing() {
                               $0.24
                             </span>
                           </div>
-                          <div className="flex items-center justify-between bg-white/5 rounded-lg p-3 border border-white/10">
+                          <div className="flex items-center justify-between bg-white/10 rounded-lg p-3 border border-white/20 backdrop-blur-md shadow-md hover:bg-white/[0.12] transition-colors">
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-white text-xs font-bold">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-white text-xs font-bold shadow-md">
                                 IN
                               </div>
                               <div>
                                 <p className="text-white text-sm font-medium">
                                   +91 98765 4321
                                 </p>
-                                <p className="text-slate-500 text-xs">
+                                <p className="text-slate-300 text-xs">
                                   8 min • HD Quality
                                 </p>
                               </div>
@@ -789,21 +821,25 @@ export default function Landing() {
                 : "opacity-0 translate-y-12"
             }`}
           >
-            <div className="bg-gradient-to-br from-slate-900 to-black rounded-3xl shadow-2xl border border-slate-800 overflow-hidden p-6 md:p-8">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold text-white">Call Dashboard</h3>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-                  <span className="text-green-400 text-xs font-medium">
-                    Online
-                  </span>
+            <div className="bg-gradient-to-b from-blue-100 via-blue-50 to-orange-50 rounded-3xl shadow-2xl border border-blue-200 overflow-hidden p-6 md:p-8">
+              {/* Header Section with Badge */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-slate-800">
+                    Call Dashboard
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+                    <span className="text-green-400 text-xs font-medium">
+                      Online
+                    </span>
+                  </div>
                 </div>
               </div>
 
               {/* Stats Row */}
               <div className="grid grid-cols-2 gap-3 mb-6">
-                <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                <div className="bg-white rounded-xl p-4 border border-blue-100 shadow-md hover:shadow-lg transition-shadow">
                   <div className="flex items-center gap-2 mb-2">
                     <svg
                       className="w-4 h-4 text-[#0891b2]"
@@ -818,11 +854,13 @@ export default function Landing() {
                         d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
-                    <span className="text-slate-400 text-xs">Countries</span>
+                    <span className="text-slate-600 text-xs font-medium">
+                      Countries
+                    </span>
                   </div>
-                  <p className="text-2xl font-bold text-white">70+</p>
+                  <p className="text-2xl font-bold text-slate-800">70+</p>
                 </div>
-                <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                <div className="bg-white rounded-xl p-4 border border-blue-100 shadow-md hover:shadow-lg transition-shadow">
                   <div className="flex items-center gap-2 mb-2">
                     <svg
                       className="w-4 h-4 text-green-400"
@@ -837,23 +875,27 @@ export default function Landing() {
                         d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
-                    <span className="text-slate-400 text-xs">Uptime</span>
+                    <span className="text-slate-600 text-xs font-medium">
+                      Uptime
+                    </span>
                   </div>
-                  <p className="text-2xl font-bold text-white">99.9%</p>
+                  <p className="text-2xl font-bold text-slate-800">99.9%</p>
                 </div>
               </div>
 
               {/* Dial Pad Preview */}
-              <div className="bg-white/5 rounded-xl p-5 border border-white/10 mb-6">
+              <div className="bg-white rounded-xl p-5 border border-blue-100 mb-6 shadow-md">
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-white font-semibold text-sm">Quick Dial</p>
+                  <p className="text-slate-800 font-semibold text-sm">
+                    Quick Dial
+                  </p>
                   <span className="text-[#0891b2] text-xs font-medium">
                     HD Voice
                   </span>
                 </div>
-                <div className="bg-slate-800 rounded-lg p-3 flex items-center gap-3 mb-4">
-                  <span className="text-slate-400 text-lg">🇺🇸</span>
-                  <span className="text-white font-mono text-lg">
+                <div className="bg-slate-50 rounded-lg p-3 flex items-center gap-3 mb-4 border border-slate-200">
+                  <span className="text-slate-600 text-lg">🇺🇸</span>
+                  <span className="text-slate-800 font-mono text-lg">
                     +1 (555) 012-3456
                   </span>
                 </div>
@@ -861,7 +903,7 @@ export default function Landing() {
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, "*", 0, "#"].map((num) => (
                     <div
                       key={num}
-                      className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg py-2.5 text-center text-white font-medium text-sm transition-colors cursor-pointer"
+                      className="bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg py-2.5 text-center text-slate-800 font-medium text-sm transition-colors cursor-pointer shadow-sm"
                     >
                       {num}
                     </div>
@@ -888,7 +930,9 @@ export default function Landing() {
 
               {/* Recent Contacts */}
               <div className="flex items-center justify-between mb-3">
-                <p className="text-white font-semibold text-sm">Recent Calls</p>
+                <p className="text-slate-800 font-semibold text-sm">
+                  Recent Calls
+                </p>
                 <span className="text-[#0891b2] text-xs cursor-pointer hover:underline">
                   View all
                 </span>
@@ -919,7 +963,7 @@ export default function Landing() {
                 ].map((c) => (
                   <div
                     key={c.name}
-                    className="flex items-center justify-between bg-white/5 rounded-lg p-3 border border-white/10 hover:bg-white/10 transition-colors"
+                    className="flex items-center justify-between bg-white rounded-lg p-3 border border-blue-100 hover:shadow-md transition-shadow shadow-sm"
                   >
                     <div className="flex items-center gap-3">
                       <div
@@ -931,17 +975,17 @@ export default function Landing() {
                           .join("")}
                       </div>
                       <div>
-                        <p className="text-white text-sm font-medium">
+                        <p className="text-slate-800 text-sm font-medium">
                           {c.name}
                         </p>
-                        <p className="text-slate-500 text-xs">{c.location}</p>
+                        <p className="text-slate-600 text-xs">{c.location}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-slate-300 text-xs font-mono">
+                      <p className="text-slate-800 text-xs font-mono">
                         {c.duration}
                       </p>
-                      <p className="text-slate-500 text-xs">{c.time}</p>
+                      <p className="text-slate-600 text-xs">{c.time}</p>
                     </div>
                   </div>
                 ))}
@@ -980,12 +1024,14 @@ export default function Landing() {
             }`}
             style={{ direction: "ltr" }}
           >
-            <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-              Team Collaboration
+            <span className="text-xs font-semibold text-orange-600 uppercase tracking-wider mb-2 block">
+              👥 Team Collaboration
             </span>
-            <h2 className="text-3xl md:text-5xl font-bold text-foreground mt-4 mb-6 leading-tight">
-              Internal calling & conferencing made easy
-            </h2>
+            <div className="flex items-start gap-3 mt-4 mb-6">
+              <h2 className="text-3xl md:text-5xl font-bold text-foreground leading-tight">
+                Internal calling & conferencing made easy
+              </h2>
+            </div>
             <p className="text-muted-foreground leading-relaxed mb-8 max-w-md">
               <strong>Free calls between team members</strong>, host conference
               calls, and manage your organization. Everything you need to keep
@@ -1027,24 +1073,39 @@ export default function Landing() {
             }`}
             style={{ direction: "ltr" }}
           >
-            <div className="bg-gradient-to-br from-slate-900 to-black rounded-3xl shadow-2xl overflow-hidden p-8 md:p-10 border border-slate-800">
+            <div className="bg-gradient-to-b from-blue-100 via-blue-50 to-orange-50 rounded-3xl shadow-2xl overflow-hidden p-8 md:p-10 border border-blue-200">
               {/* Header */}
               <div className="mb-8">
-                <h3 className="text-2xl font-bold text-white mb-2">
-                  Call Analytics
-                </h3>
-                <p className="text-white/70 text-sm">
+                <div className="flex items-center gap-3 mb-2">
+                  <svg
+                    className="w-7 h-7 text-slate-700 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    />
+                  </svg>
+                  <h3 className="text-2xl font-bold text-slate-800">
+                    Call Analytics
+                  </h3>
+                </div>
+                <p className="text-slate-600 text-sm">
                   Real-time insights for your team
                 </p>
               </div>
 
               {/* Stats Grid */}
               <div className="grid grid-cols-2 gap-4 mb-8">
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 hover:bg-white/15 transition-all duration-300">
+                <div className="bg-white rounded-2xl p-5 border border-blue-100 hover:shadow-lg transition-all duration-300 shadow-md">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-[#0891b2]/10 flex items-center justify-center">
                       <svg
-                        className="w-5 h-5 text-white"
+                        className="w-5 h-5 text-[#0891b2]"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -1057,19 +1118,19 @@ export default function Landing() {
                         />
                       </svg>
                     </div>
-                    <span className="text-white/60 text-xs font-medium">
+                    <span className="text-slate-600 text-xs font-medium">
                       Total Calls
                     </span>
                   </div>
-                  <p className="text-3xl font-bold text-white">2,547</p>
-                  <p className="text-white/60 text-xs mt-1">This month</p>
+                  <p className="text-3xl font-bold text-slate-800">2,547</p>
+                  <p className="text-slate-600 text-xs mt-1">This month</p>
                 </div>
 
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 hover:bg-white/15 transition-all duration-300">
+                <div className="bg-white rounded-2xl p-5 border border-blue-100 hover:shadow-lg transition-all duration-300 shadow-md">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
                       <svg
-                        className="w-5 h-5 text-white"
+                        className="w-5 h-5 text-blue-600"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -1082,19 +1143,19 @@ export default function Landing() {
                         />
                       </svg>
                     </div>
-                    <span className="text-white/60 text-xs font-medium">
+                    <span className="text-slate-600 text-xs font-medium">
                       Avg Duration
                     </span>
                   </div>
-                  <p className="text-3xl font-bold text-white">18:42</p>
-                  <p className="text-white/60 text-xs mt-1">Minutes</p>
+                  <p className="text-3xl font-bold text-slate-800">18:42</p>
+                  <p className="text-slate-600 text-xs mt-1">Minutes</p>
                 </div>
 
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 hover:bg-white/15 transition-all duration-300">
+                <div className="bg-white rounded-2xl p-5 border border-blue-100 hover:shadow-lg transition-all duration-300 shadow-md">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
                       <svg
-                        className="w-5 h-5 text-white"
+                        className="w-5 h-5 text-green-600"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -1107,19 +1168,19 @@ export default function Landing() {
                         />
                       </svg>
                     </div>
-                    <span className="text-white/60 text-xs font-medium">
+                    <span className="text-slate-600 text-xs font-medium">
                       Cost Saved
                     </span>
                   </div>
-                  <p className="text-3xl font-bold text-white">$1,245</p>
-                  <p className="text-white/60 text-xs mt-1">vs traditional</p>
+                  <p className="text-3xl font-bold text-slate-800">$1,245</p>
+                  <p className="text-slate-600 text-xs mt-1">vs traditional</p>
                 </div>
 
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 hover:bg-white/15 transition-all duration-300">
+                <div className="bg-white rounded-2xl p-5 border border-blue-100 hover:shadow-lg transition-all duration-300 shadow-md">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
                       <svg
-                        className="w-5 h-5 text-white"
+                        className="w-5 h-5 text-purple-600"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -1132,104 +1193,183 @@ export default function Landing() {
                         />
                       </svg>
                     </div>
-                    <span className="text-white/60 text-xs font-medium">
+                    <span className="text-slate-600 text-xs font-medium">
                       Call Quality
                     </span>
                   </div>
-                  <p className="text-3xl font-bold text-white">98.5%</p>
-                  <p className="text-white/60 text-xs mt-1">HD quality</p>
+                  <p className="text-3xl font-bold text-slate-800">98.5%</p>
+                  <p className="text-slate-600 text-xs mt-1">HD quality</p>
                 </div>
               </div>
 
               {/* Usage Chart */}
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+              <div className="bg-white rounded-2xl p-6 border border-blue-100 shadow-md">
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-white font-semibold text-sm">
+                  <h4 className="text-slate-800 font-semibold text-sm">
                     Weekly Usage
                   </h4>
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                    <span className="text-white/60 text-xs">Active calls</span>
+                    <div className="w-3 h-3 rounded-full bg-cyan-400"></div>
+                    <span className="text-slate-600 text-xs">Active calls</span>
                   </div>
                 </div>
 
-                {/* Simple Bar Chart */}
-                <div className="flex items-end justify-between gap-2 h-32">
+                {/* Bar Chart */}
+                <div className="flex items-end justify-between gap-3 h-40 px-2">
                   <div className="flex-1 flex flex-col items-center gap-2">
+                    <span className="text-sm font-bold text-slate-800">
+                      145
+                    </span>
                     <div
-                      className="w-full bg-gradient-to-t from-green-400 to-green-300 rounded-t-lg hover:opacity-80 transition-opacity"
-                      style={{ height: "60%" }}
-                    ></div>
-                    <span className="text-white/50 text-xs">Mon</span>
+                      className="w-full bg-gradient-to-t from-cyan-500 to-cyan-400 rounded-t-md hover:from-cyan-600 hover:to-cyan-500 transition-all duration-200 relative group shadow-sm"
+                      style={{ height: "60%", minHeight: "40px" }}
+                    >
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg">
+                        145 mins
+                      </div>
+                    </div>
+                    <span className="text-slate-600 text-xs font-medium">
+                      Mon
+                    </span>
                   </div>
                   <div className="flex-1 flex flex-col items-center gap-2">
+                    <span className="text-sm font-bold text-slate-800">
+                      178
+                    </span>
                     <div
-                      className="w-full bg-gradient-to-t from-green-400 to-green-300 rounded-t-lg hover:opacity-80 transition-opacity"
-                      style={{ height: "75%" }}
-                    ></div>
-                    <span className="text-white/50 text-xs">Tue</span>
+                      className="w-full bg-gradient-to-t from-cyan-500 to-cyan-400 rounded-t-md hover:from-cyan-600 hover:to-cyan-500 transition-all duration-200 relative group shadow-sm"
+                      style={{ height: "75%", minHeight: "40px" }}
+                    >
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg">
+                        178 mins
+                      </div>
+                    </div>
+                    <span className="text-slate-600 text-xs font-medium">
+                      Tue
+                    </span>
                   </div>
                   <div className="flex-1 flex flex-col items-center gap-2">
+                    <span className="text-sm font-bold text-slate-800">
+                      203
+                    </span>
                     <div
-                      className="w-full bg-gradient-to-t from-green-400 to-green-300 rounded-t-lg hover:opacity-80 transition-opacity"
-                      style={{ height: "85%" }}
-                    ></div>
-                    <span className="text-white/50 text-xs">Wed</span>
+                      className="w-full bg-gradient-to-t from-cyan-500 to-cyan-400 rounded-t-md hover:from-cyan-600 hover:to-cyan-500 transition-all duration-200 relative group shadow-sm"
+                      style={{ height: "85%", minHeight: "40px" }}
+                    >
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg">
+                        203 mins
+                      </div>
+                    </div>
+                    <span className="text-slate-600 text-xs font-medium">
+                      Wed
+                    </span>
                   </div>
                   <div className="flex-1 flex flex-col items-center gap-2">
+                    <span className="text-sm font-bold text-slate-800">
+                      167
+                    </span>
                     <div
-                      className="w-full bg-gradient-to-t from-green-400 to-green-300 rounded-t-lg hover:opacity-80 transition-opacity"
-                      style={{ height: "70%" }}
-                    ></div>
-                    <span className="text-white/50 text-xs">Thu</span>
+                      className="w-full bg-gradient-to-t from-cyan-500 to-cyan-400 rounded-t-md hover:from-cyan-600 hover:to-cyan-500 transition-all duration-200 relative group shadow-sm"
+                      style={{ height: "70%", minHeight: "40px" }}
+                    >
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg">
+                        167 mins
+                      </div>
+                    </div>
+                    <span className="text-slate-600 text-xs font-medium">
+                      Thu
+                    </span>
                   </div>
                   <div className="flex-1 flex flex-col items-center gap-2">
+                    <span className="text-sm font-bold text-slate-800">
+                      227
+                    </span>
                     <div
-                      className="w-full bg-gradient-to-t from-green-400 to-green-300 rounded-t-lg hover:opacity-80 transition-opacity"
-                      style={{ height: "95%" }}
-                    ></div>
-                    <span className="text-white/50 text-xs">Fri</span>
+                      className="w-full bg-gradient-to-t from-cyan-500 to-cyan-400 rounded-t-md hover:from-cyan-600 hover:to-cyan-500 transition-all duration-200 relative group shadow-sm"
+                      style={{ height: "95%", minHeight: "40px" }}
+                    >
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg">
+                        227 mins
+                      </div>
+                    </div>
+                    <span className="text-slate-600 text-xs font-medium">
+                      Fri
+                    </span>
                   </div>
                   <div className="flex-1 flex flex-col items-center gap-2">
+                    <span className="text-sm font-bold text-slate-600">
+                      108
+                    </span>
                     <div
-                      className="w-full bg-gradient-to-t from-white/40 to-white/30 rounded-t-lg"
-                      style={{ height: "45%" }}
-                    ></div>
-                    <span className="text-white/50 text-xs">Sat</span>
+                      className="w-full bg-gradient-to-t from-slate-400 to-slate-300 rounded-t-md hover:from-slate-500 hover:to-slate-400 transition-all duration-200 relative group shadow-sm"
+                      style={{ height: "45%", minHeight: "40px" }}
+                    >
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg">
+                        108 mins
+                      </div>
+                    </div>
+                    <span className="text-slate-600 text-xs font-medium">
+                      Sat
+                    </span>
                   </div>
                   <div className="flex-1 flex flex-col items-center gap-2">
+                    <span className="text-sm font-bold text-slate-600">84</span>
                     <div
-                      className="w-full bg-gradient-to-t from-white/40 to-white/30 rounded-t-lg"
-                      style={{ height: "35%" }}
-                    ></div>
-                    <span className="text-white/50 text-xs">Sun</span>
+                      className="w-full bg-gradient-to-t from-slate-400 to-slate-300 rounded-t-md hover:from-slate-500 hover:to-slate-400 transition-all duration-200 relative group shadow-sm"
+                      style={{ height: "35%", minHeight: "40px" }}
+                    >
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg">
+                        84 mins
+                      </div>
+                    </div>
+                    <span className="text-slate-600 text-xs font-medium">
+                      Sun
+                    </span>
                   </div>
                 </div>
               </div>
 
-              {/* Active Users */}
-              <div className="mt-6 flex items-center justify-between bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
-                <div className="flex items-center gap-3">
-                  <div className="flex -space-x-2">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 border-2 border-white"></div>
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-cyan-400 border-2 border-white"></div>
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-red-400 border-2 border-white"></div>
-                    <div className="w-8 h-8 rounded-full bg-white/20 border-2 border-white flex items-center justify-center">
-                      <span className="text-white text-xs font-bold">+12</span>
+              {/* Cost Savings Card */}
+              <div className="mt-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-5 border border-green-100 shadow-md hover:shadow-lg transition-all">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-5 h-5 rounded-xl  flex items-center justify-center">
+                      <svg
+                        className="w-6 h-6 text-black"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-slate-800 font-bold text-lg">
+                        70% Cost Reduction
+                      </p>
+                      <p className="text-slate-600 text-xs">
+                        vs traditional providers
+                      </p>
                     </div>
                   </div>
-                  <div>
-                    <p className="text-white font-semibold text-sm">
-                      15 team members
-                    </p>
-                    <p className="text-white/60 text-xs">Active this week</p>
+                  <div className="px-3 py-1 bg-green-500 rounded-full">
+                    <span className="text-white text-xs font-bold">↓ 70%</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-                  <span className="text-white/80 text-xs font-medium">
-                    Live
-                  </span>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-white rounded-lg p-3 border border-green-100">
+                    <p className="text-slate-500 text-xs mb-1">Total Saved</p>
+                    <p className="text-green-600 font-bold text-xl">$12,450</p>
+                  </div>
+                  <div className="bg-white rounded-lg p-3 border border-green-100">
+                    <p className="text-slate-500 text-xs mb-1">This Month</p>
+                    <p className="text-green-600 font-bold text-xl">$1,245</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1240,7 +1380,20 @@ export default function Landing() {
       {/* ============================================================================ */}
       {/* FEATURES SECTION */}
       {/* ============================================================================ */}
-      <section ref={featuresRef.ref} id="features" className="py-20 md:py-28">
+      <section
+        ref={featuresRef.ref}
+        id="features"
+        className="py-20 md:py-28 relative overflow-hidden"
+      >
+        {/* Background gradient orbs */}
+        <div className="absolute inset-0 -z-10 overflow-hidden">
+          <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[#0891b2]/10 rounded-full blur-3xl animate-pulse"></div>
+          <div
+            className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-3xl animate-pulse"
+            style={{ animationDelay: "1s" }}
+          ></div>
+        </div>
+
         <div className="max-w-[1280px] mx-auto px-6">
           {/* Header */}
           <div
@@ -1250,56 +1403,81 @@ export default function Landing() {
                 : "opacity-0 translate-y-8"
             }`}
           >
-            <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-              features
-            </span>
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground mt-4 leading-tight">
-              Built for teams,
-              <br />
-              powered by simplicity
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[#0891b2]/10 to-orange-400/10 backdrop-blur-sm border border-white/20 mb-6">
+              <div className="w-2 h-2 rounded-full bg-[#0891b2] animate-pulse"></div>
+              <span className="text-sm font-medium text-foreground uppercase tracking-wider">
+                Premium Features
+              </span>
+            </div>
+
+            {/* Animated gradient for moving color effect */}
+            <style>{`
+              @keyframes gradient-shift {
+                0% {
+                  background-position: 0% 50%;
+                }
+                50% {
+                  background-position: 100% 50%;
+                }
+                100% {
+                  background-position: 0% 50%;
+                }
+              }
+              .animate-gradient {
+                background-size: 200% 200%;
+                animation: gradient-shift 3s ease infinite;
+              }
+            `}</style>
+
+            <h2 className="text-4xl md:text-6xl font-bold text-foreground mt-4 leading-tight">
+              <div className="flex items-center justify-center gap-3">
+                {/* Small logo */}
+                <svg
+                  width="32"
+                  height="32"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="flex-shrink-0"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path
+                    d="M8 12c0-2.2 1.8-4 4-4s4 1.8 4 4"
+                    stroke="white"
+                    strokeWidth="2"
+                    fill="none"
+                  />
+                </svg>
+                <span>Built for teams,</span>
+              </div>
+              <span className="animate-gradient bg-gradient-to-r from-blue-400 via-blue-600 to-blue-900 bg-clip-text text-transparent">
+                powered by simplicity
+              </span>
             </h2>
-            <p className="text-muted-foreground mt-4 text-lg">
-              Everything you need for seamless global communication
+            <p className="text-muted-foreground mt-6 text-lg md:text-xl max-w-2xl mx-auto">
+              Everything you need for seamless global communication, wrapped in
+              a beautiful interface
             </p>
           </div>
 
           {/* Feature grid */}
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Personalize */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* HD Voice Quality - Premium Card */}
             <div
-              className={`rounded-2xl border border-border bg-card p-8 transition-all duration-700 hover:shadow-lg hover:-translate-y-1 ${
+              className={`group relative rounded-3xl bg-gradient-to-br from-white/[0.15] via-white/[0.10] to-white/[0.05] backdrop-blur-2xl border border-white/30 shadow-2xl overflow-hidden transition-all duration-700 hover:scale-105 hover:shadow-[0_20px_60px_rgba(100,116,139,0.3)] ${
                 featuresRef.isVisible
                   ? "opacity-100 translate-y-0"
                   : "opacity-0 translate-y-8"
               }`}
               style={{ transitionDelay: "0.1s" }}
             >
-              <img
-                src="https://framerusercontent.com/images/o5PFg7LTymdZ6P4tuEGy4oFUFzw.svg?width=466&height=178"
-                alt="Customization"
-                className="w-full max-w-[350px] mb-6"
-                loading="lazy"
-              />
-              <p className="text-foreground leading-relaxed">
-                <strong>Customize your experience</strong>. Set your preferred
-                language, time zone, and interface preferences for a seamless
-                communication experience that works for you.
-              </p>
-            </div>
+              {/* Gradient glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-500/20 via-transparent to-slate-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
-            {/* Integrations */}
-            <div
-              className={`rounded-2xl border border-border bg-card p-8 overflow-hidden transition-all duration-700 hover:shadow-lg hover:-translate-y-1 ${
-                featuresRef.isVisible
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-8"
-              }`}
-              style={{ transitionDelay: "0.2s" }}
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0891b2] to-[#0e7490] flex items-center justify-center">
+              <div className="relative p-8">
+                {/* Icon and Title */}
+                <div className="flex items-center gap-3 mb-4">
                   <svg
-                    className="w-4 h-4 text-white"
+                    className="w-8 h-8 text-slate-700 group-hover:text-[#0891b2] transition-all duration-500 group-hover:scale-110 flex-shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -1308,85 +1486,514 @@ export default function Landing() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                      d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
                     />
                   </svg>
+                  <h3 className="text-xl font-bold text-slate-900 group-hover:text-[#0891b2] transition-colors">
+                    HD Voice Quality
+                  </h3>
                 </div>
-                <h3 className="text-lg font-semibold text-foreground">
-                  Powerful Integrations
-                </h3>
-              </div>
+                <p className="text-slate-700 leading-relaxed mb-6 text-sm">
+                  Crystal-clear audio on every call with adaptive bitrate and
+                  automatic network optimization.
+                </p>
 
-              <p className="text-muted-foreground text-sm mb-6">
-                Connect with the tools you already use. Sync your CRM, chat
-                tools, and business apps seamlessly.
-              </p>
-
-              {/* Integration grid */}
-              <div className="grid grid-cols-4 gap-3 mb-6">
-                {[
-                  { name: "Twilio", color: "bg-red-500", letter: "T" },
-                  { name: "Stripe", color: "bg-indigo-500", letter: "S" },
-                  { name: "Google", color: "bg-blue-500", letter: "G" },
-                  { name: "Slack", color: "bg-emerald-600", letter: "S" },
-                  { name: "Razorpay", color: "bg-blue-600", letter: "R" },
-                  { name: "Supabase", color: "bg-green-500", letter: "S" },
-                  { name: "Zapier", color: "bg-orange-500", letter: "Z" },
-                  { name: "WebRTC", color: "bg-cyan-600", letter: "W" },
-                ].map((tool) => (
-                  <div
-                    key={tool.name}
-                    className="group/tool flex flex-col items-center gap-2 p-3 rounded-xl bg-muted/50 hover:bg-muted border border-transparent hover:border-border transition-all duration-200 cursor-default"
-                  >
-                    <div
-                      className={`w-10 h-10 rounded-xl ${tool.color} flex items-center justify-center shadow-md group-hover/tool:scale-110 transition-transform duration-200`}
-                    >
-                      <span className="text-white font-bold text-sm">
-                        {tool.letter}
-                      </span>
-                    </div>
-                    <span className="text-xs font-medium text-muted-foreground group-hover/tool:text-foreground transition-colors">
-                      {tool.name}
+                {/* Quality metrics */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/40 backdrop-blur-sm border border-white/30">
+                    <span className="text-xs font-semibold text-slate-800">
+                      Uptime
+                    </span>
+                    <span className="text-sm font-bold text-green-600">
+                      99.9%
                     </span>
                   </div>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <svg
-                  className="w-4 h-4 text-green-500"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span>Plus 50+ more via API & webhooks</span>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/40 backdrop-blur-sm border border-white/30">
+                    <span className="text-xs font-semibold text-slate-800">
+                      Audio Quality
+                    </span>
+                    <span className="text-sm font-bold text-[#0891b2]">
+                      HD+
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Small feature cards */}
-            {smallFeatures.map((feat, i) => (
-              <div
-                key={feat.title}
-                className={`rounded-2xl border border-border bg-card p-8 transition-all duration-700 hover:shadow-lg hover:-translate-y-1 ${
-                  featuresRef.isVisible
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-8"
-                } ${i === 2 ? "md:col-span-2" : ""}`}
-                style={{ transitionDelay: `${0.3 + i * 0.1}s` }}
-              >
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  {feat.title}
-                </h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  {feat.desc}
+            {/* Browser Calling */}
+            <div
+              className={`group relative rounded-3xl bg-gradient-to-br from-white/[0.15] via-white/[0.10] to-white/[0.05] backdrop-blur-2xl border border-white/30 shadow-2xl overflow-hidden transition-all duration-700 hover:scale-105 hover:shadow-[0_20px_60px_rgba(100,116,139,0.3)] ${
+                featuresRef.isVisible
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-8"
+              }`}
+              style={{ transitionDelay: "0.2s" }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-400/20 via-transparent to-slate-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+              <div className="relative p-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <svg
+                    className="w-8 h-8 text-slate-700 group-hover:text-slate-600 transition-all duration-500 group-hover:scale-110 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                    />
+                  </svg>
+                  <h3 className="text-xl font-bold text-slate-900 group-hover:text-slate-600 transition-colors">
+                    Browser Calling
+                  </h3>
+                </div>
+                <p className="text-slate-700 leading-relaxed mb-6 text-sm">
+                  Make HD calls directly from your browser. No apps or downloads
+                  required, just instant connectivity.
                 </p>
+
+                {/* Browser metrics */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/40 backdrop-blur-sm border border-white/30">
+                    <span className="text-xs font-semibold text-slate-800">
+                      Load Time
+                    </span>
+                    <span className="text-sm font-bold text-green-600">
+                      {"< 2s"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/40 backdrop-blur-sm border border-white/30">
+                    <span className="text-xs font-semibold text-slate-800">
+                      Compatibility
+                    </span>
+                    <span className="text-sm font-bold text-[#0891b2]">
+                      100%
+                    </span>
+                  </div>
+                </div>
               </div>
-            ))}
+            </div>
+
+            {/* Secure Wallet */}
+            <div
+              className={`group relative rounded-3xl bg-gradient-to-br from-white/[0.15] via-white/[0.10] to-white/[0.05] backdrop-blur-2xl border border-white/30 shadow-2xl overflow-hidden transition-all duration-700 hover:scale-105 hover:shadow-[0_20px_60px_rgba(100,116,139,0.3)] ${
+                featuresRef.isVisible
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-8"
+              }`}
+              style={{ transitionDelay: "0.3s" }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-500/20 via-transparent to-slate-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+              <div className="relative p-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <svg
+                    className="w-8 h-8 text-slate-700 group-hover:text-slate-600 transition-all duration-500 group-hover:scale-110 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    />
+                  </svg>
+                  <h3 className="text-xl font-bold text-slate-900 group-hover:text-slate-600 transition-colors">
+                    Secure Wallet
+                  </h3>
+                </div>
+                <p className="text-slate-700 leading-relaxed mb-6 text-sm">
+                  Manage your credits securely with multiple payment options and
+                  instant fund transfers.
+                </p>
+
+                {/* Wallet metrics */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/40 backdrop-blur-sm border border-white/30">
+                    <span className="text-xs font-semibold text-slate-800">
+                      Encryption
+                    </span>
+                    <span className="text-sm font-bold text-green-600">
+                      AES-256
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/40 backdrop-blur-sm border border-white/30">
+                    <span className="text-xs font-semibold text-slate-800">
+                      Payment Methods
+                    </span>
+                    <span className="text-sm font-bold text-slate-700">
+                      10+
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Integrations - Spanning 2 columns */}
+            <div
+              className={`group relative md:col-span-2 rounded-3xl bg-gradient-to-br from-white/[0.15] via-white/[0.10] to-white/[0.05] backdrop-blur-2xl border border-white/30 shadow-2xl overflow-hidden transition-all duration-700 hover:scale-[1.02] hover:shadow-[0_20px_60px_rgba(8,145,178,0.3)] ${
+                featuresRef.isVisible
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-8"
+              }`}
+              style={{ transitionDelay: "0.4s" }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-[#0891b2]/20 via-transparent to-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+              <div className="relative p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#0891b2] to-blue-600 flex items-center justify-center shadow-xl shadow-[#0891b2]/30">
+                    <svg
+                      className="w-7 h-7 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-slate-900 group-hover:text-[#0891b2] transition-colors">
+                      Powerful Integrations
+                    </h3>
+                    <p className="text-slate-600 text-sm">
+                      Connect seamlessly with your favorite tools
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-4 md:grid-cols-8 gap-3 mb-4">
+                  {[
+                    {
+                      name: "Twilio",
+                      color: "from-red-500 to-red-600",
+                      letter: "T",
+                    },
+                    {
+                      name: "Stripe",
+                      color: "from-indigo-500 to-indigo-600",
+                      letter: "S",
+                    },
+                    {
+                      name: "Google",
+                      color: "from-blue-500 to-blue-600",
+                      letter: "G",
+                    },
+                    {
+                      name: "Slack",
+                      color: "from-emerald-500 to-emerald-600",
+                      letter: "S",
+                    },
+                    {
+                      name: "Razorpay",
+                      color: "from-blue-600 to-blue-700",
+                      letter: "R",
+                    },
+                    {
+                      name: "Supabase",
+                      color: "from-green-500 to-green-600",
+                      letter: "S",
+                    },
+                    {
+                      name: "Zapier",
+                      color: "from-orange-500 to-orange-600",
+                      letter: "Z",
+                    },
+                    {
+                      name: "WebRTC",
+                      color: "from-cyan-500 to-cyan-600",
+                      letter: "W",
+                    },
+                  ].map((tool, idx) => (
+                    <div
+                      key={tool.name}
+                      className="group/tool relative"
+                      style={{ animationDelay: `${idx * 0.05}s` }}
+                    >
+                      <div className="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/30 backdrop-blur-sm hover:bg-white/50 border border-white/40 hover:border-white/60 transition-all duration-300 hover:scale-110 hover:-translate-y-1 cursor-pointer">
+                        <div
+                          className={`w-10 h-10 rounded-xl bg-gradient-to-br ${tool.color} flex items-center justify-center shadow-lg`}
+                        >
+                          <span className="text-white font-bold text-sm">
+                            {tool.letter}
+                          </span>
+                        </div>
+                        <span className="text-xs font-semibold text-slate-800">
+                          {tool.name}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-white/30 backdrop-blur-sm border border-white/40">
+                  <svg
+                    className="w-5 h-5 text-green-600"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span className="text-sm font-medium text-slate-800">
+                    Plus 50+ more via API & webhooks
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Team Collaboration */}
+            <div
+              className={`group relative rounded-3xl bg-gradient-to-br from-white/[0.15] via-white/[0.10] to-white/[0.05] backdrop-blur-2xl border border-white/30 shadow-2xl overflow-hidden transition-all duration-700 hover:scale-105 hover:shadow-[0_20px_60px_rgba(249,115,22,0.3)] ${
+                featuresRef.isVisible
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-8"
+              }`}
+              style={{ transitionDelay: "0.5s" }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 via-transparent to-amber-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+              <div className="relative p-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <svg
+                    className="w-8 h-8 text-orange-600 group-hover:text-orange-600 transition-all duration-500 group-hover:scale-110 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                    />
+                  </svg>
+                  <h3 className="text-xl font-bold text-slate-900 group-hover:text-orange-600 transition-colors">
+                    Team Collaboration
+                  </h3>
+                </div>
+                <p className="text-slate-700 leading-relaxed mb-6 text-sm">
+                  Host internal voice meetings and collaborate with your team
+                  seamlessly across the globe.
+                </p>
+
+                {/* Team metrics */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/40 backdrop-blur-sm border border-white/30">
+                    <span className="text-xs font-semibold text-slate-800">
+                      Team Size
+                    </span>
+                    <span className="text-sm font-bold text-orange-600">
+                      Unlimited
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/40 backdrop-blur-sm border border-white/30">
+                    <span className="text-xs font-semibold text-slate-800">
+                      Internal Calls
+                    </span>
+                    <span className="text-sm font-bold text-green-600">
+                      Free
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Virtual Numbers */}
+            <div
+              className={`group relative rounded-3xl bg-gradient-to-br from-white/[0.15] via-white/[0.10] to-white/[0.05] backdrop-blur-2xl border border-white/30 shadow-2xl overflow-hidden transition-all duration-700 hover:scale-105 hover:shadow-[0_20px_60px_rgba(59,130,246,0.3)] ${
+                featuresRef.isVisible
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-8"
+              }`}
+              style={{ transitionDelay: "0.6s" }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-transparent to-indigo-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+              <div className="relative p-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <svg
+                    className="w-8 h-8 text-blue-600 group-hover:text-blue-600 transition-all duration-500 group-hover:scale-110 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                    />
+                  </svg>
+                  <h3 className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                    Virtual Numbers
+                  </h3>
+                </div>
+                <p className="text-slate-700 leading-relaxed mb-6 text-sm">
+                  Get local phone numbers from 70+ countries for your business
+                  presence worldwide.
+                </p>
+
+                {/* Virtual numbers metrics */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/40 backdrop-blur-sm border border-white/30">
+                    <span className="text-xs font-semibold text-slate-800">
+                      Countries
+                    </span>
+                    <span className="text-sm font-bold text-blue-600">70+</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/40 backdrop-blur-sm border border-white/30">
+                    <span className="text-xs font-semibold text-slate-800">
+                      Setup Time
+                    </span>
+                    <span className="text-sm font-bold text-green-600">
+                      Instant
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Call Analytics */}
+            <div
+              className={`group relative rounded-3xl bg-gradient-to-br from-white/[0.15] via-white/[0.10] to-white/[0.05] backdrop-blur-2xl border border-white/30 shadow-2xl overflow-hidden transition-all duration-700 hover:scale-105 hover:shadow-[0_20px_60px_rgba(100,100,100,0.3)] ${
+                featuresRef.isVisible
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-8"
+              }`}
+              style={{ transitionDelay: "0.7s" }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-500/20 via-transparent to-slate-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+              <div className="relative p-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <svg
+                    className="w-8 h-8 text-slate-700 group-hover:text-slate-600 transition-all duration-500 group-hover:scale-110 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    />
+                  </svg>
+                  <h3 className="text-xl font-bold text-slate-900 group-hover:text-slate-600 transition-colors">
+                    Call Analytics
+                  </h3>
+                </div>
+                <p className="text-slate-700 leading-relaxed mb-6 text-sm">
+                  Track usage, monitor costs, and optimize your communication
+                  spending with detailed insights.
+                </p>
+
+                {/* Analytics metrics */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/40 backdrop-blur-sm border border-white/30">
+                    <span className="text-xs font-semibold text-slate-800">
+                      Total Calls
+                    </span>
+                    <span className="text-sm font-bold text-[#0891b2]">
+                      2,547
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/40 backdrop-blur-sm border border-white/30">
+                    <span className="text-xs font-semibold text-slate-800">
+                      Avg Duration
+                    </span>
+                    <span className="text-sm font-bold text-slate-700">
+                      18:42
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/40 backdrop-blur-sm border border-white/30">
+                    <span className="text-xs font-semibold text-slate-800">
+                      Cost Saved
+                    </span>
+                    <span className="text-sm font-bold text-green-600">
+                      $1,245
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Conference Calling - New Card */}
+            <div
+              className={`group relative rounded-3xl bg-gradient-to-br from-white/[0.15] via-white/[0.10] to-white/[0.05] backdrop-blur-2xl border border-white/30 shadow-2xl overflow-hidden transition-all duration-700 hover:scale-105 hover:shadow-[0_20px_60px_rgba(139,92,246,0.3)] ${
+                featuresRef.isVisible
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-8"
+              }`}
+              style={{ transitionDelay: "0.8s" }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-violet-500/20 via-transparent to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+              <div className="relative p-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <svg
+                    className="w-8 h-8 text-violet-600 group-hover:text-violet-600 transition-all duration-500 group-hover:scale-110 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                    />
+                  </svg>
+                  <h3 className="text-xl font-bold text-slate-900 group-hover:text-violet-600 transition-colors">
+                    Conference Calling
+                  </h3>
+                </div>
+                <p className="text-slate-700 leading-relaxed mb-6 text-sm">
+                  Host multi-party conference calls with crystal-clear audio for
+                  seamless group discussions.
+                </p>
+
+                {/* Conference metrics */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/40 backdrop-blur-sm border border-white/30">
+                    <span className="text-xs font-semibold text-slate-800">
+                      Participants
+                    </span>
+                    <span className="text-sm font-bold text-violet-600">
+                      50+
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/40 backdrop-blur-sm border border-white/30">
+                    <span className="text-xs font-semibold text-slate-800">
+                      Audio Quality
+                    </span>
+                    <span className="text-sm font-bold text-green-600">HD</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/40 backdrop-blur-sm border border-white/30">
+                    <span className="text-xs font-semibold text-slate-800">
+                      Duration
+                    </span>
+                    <span className="text-sm font-bold text-[#0891b2]">
+                      Unlimited
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -1582,33 +2189,71 @@ export default function Landing() {
       <section
         ref={testimonialsRef.ref}
         id="testimonials"
-        className="py-20 md:py-28 overflow-hidden"
+        className="py-20 md:py-32 overflow-hidden relative"
       >
-        <div className="max-w-[1280px] mx-auto px-6">
+        {/* Background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-50/30 via-transparent to-transparent dark:from-blue-950/10" />
+
+        <div className="max-w-[1280px] mx-auto px-6 relative">
+          {/* Section Header */}
+          <div className="text-center mb-16">
+            <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+              testimonials
+            </span>
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground mt-4 mb-4 leading-tight">
+              Loved by teams worldwide
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              See how businesses like yours are transforming their global
+              communications
+            </p>
+          </div>
+
           {/* Featured testimonial */}
           <div
-            className={`flex flex-col md:flex-row items-center gap-12 mb-20 transition-all duration-700 ${
+            className={`mb-20 transition-all duration-700 ${
               testimonialsRef.isVisible
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-8"
             }`}
           >
-            <div className="flex-1 text-center md:text-left">
-              <p className="text-3xl md:text-4xl font-bold text-foreground leading-snug mb-8">
-                "GlobalConnect transformed how our team communicates globally"
-              </p>
-              <div className="flex items-center gap-4 justify-center md:justify-start">
-                <img
-                  src="https://framerusercontent.com/images/Et6DumDmh2RQ0iDyCSQ6tfsZ8.jpg?width=6000&height=4000"
-                  alt="Sarah Chen"
-                  className="w-14 h-14 rounded-full object-cover"
-                  loading="lazy"
-                />
-                <div>
-                  <p className="font-semibold text-foreground">Sarah Chen</p>
-                  <p className="text-sm text-muted-foreground">
-                    VP of Operations, TechFlow
+            <div className="max-w-5xl mx-auto rounded-3xl border border-border bg-gradient-to-br from-card to-card/50 backdrop-blur-sm shadow-xl p-8 md:p-12">
+              <div className="flex flex-col md:flex-row items-start gap-8">
+                {/* Quote Icon */}
+                <div className="flex-shrink-0">
+                  <svg
+                    className="w-12 h-12 text-primary/20"
+                    fill="currentColor"
+                    viewBox="0 0 32 32"
+                  >
+                    <path d="M10 8c-3.3 0-6 2.7-6 6v10h10V14H8c0-1.1.9-2 2-2V8zm12 0c-3.3 0-6 2.7-6 6v10h10V14h-6c0-1.1.9-2 2-2V8z" />
+                  </svg>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1">
+                  <p className="text-2xl md:text-3xl font-semibold text-foreground leading-relaxed mb-8">
+                    GlobalConnect transformed how our team communicates
+                    globally. The call quality is incredible and our team loves
+                    the browser-based interface.
                   </p>
+
+                  <div className="flex items-center gap-5">
+                    <img
+                      src="https://framerusercontent.com/images/Et6DumDmh2RQ0iDyCSQ6tfsZ8.jpg?width=6000&height=4000"
+                      alt="Sarah Chen"
+                      className="w-16 h-16 rounded-full object-cover ring-4 ring-primary/10"
+                      loading="lazy"
+                    />
+                    <div>
+                      <p className="font-bold text-lg text-foreground">
+                        Sarah Chen
+                      </p>
+                      <p className="text-muted-foreground">
+                        VP of Operations, TechFlow
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1626,35 +2271,54 @@ export default function Landing() {
                 }
               }
               .animate-scroll-infinite {
-                animation: scroll-infinite 40s linear infinite;
+                animation: scroll-infinite 45s linear infinite;
               }
               .animate-scroll-infinite:hover {
                 animation-play-state: paused;
               }
             `}</style>
-            <div className="overflow-hidden">
+
+            {/* Gradient overlays for fade effect */}
+            <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+
+            <div className="overflow-hidden py-4">
               <div className="flex gap-6 animate-scroll-infinite">
                 {/* Duplicate testimonials for seamless infinite scroll */}
                 {[...testimonials, ...testimonials].map((t, index) => (
                   <div
                     key={`${t.name}-${index}`}
-                    className="flex-shrink-0 w-[320px] md:w-[360px] rounded-2xl border border-border bg-card p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                    className="flex-shrink-0 w-[340px] md:w-[380px] rounded-2xl border border-border bg-card/80 backdrop-blur-sm p-8 hover:shadow-xl hover:scale-105 hover:border-primary/20 transition-all duration-300 group"
                   >
-                    <p className="text-muted-foreground text-sm leading-relaxed mb-6">
+                    {/* Stars */}
+                    <div className="flex gap-1 mb-4">
+                      {[...Array(5)].map((_, i) => (
+                        <svg
+                          key={i}
+                          className="w-5 h-5 text-yellow-500 fill-current"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                        </svg>
+                      ))}
+                    </div>
+
+                    <p className="text-muted-foreground leading-relaxed mb-6 text-base">
                       "{t.quote}"
                     </p>
-                    <div className="flex items-center gap-3">
+
+                    <div className="flex items-center gap-4 pt-4 border-t border-border/50">
                       <img
                         src={t.image}
                         alt={t.name}
-                        className="w-10 h-10 rounded-full object-cover"
+                        className="w-12 h-12 rounded-full object-cover ring-2 ring-primary/10"
                         loading="lazy"
                       />
                       <div>
-                        <p className="text-sm font-semibold text-foreground">
+                        <p className="font-semibold text-foreground">
                           {t.name}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-sm text-muted-foreground">
                           {t.role}
                         </p>
                       </div>
@@ -1824,12 +2488,12 @@ export default function Landing() {
             }`}
           >
             <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-              Resources
+              Resources & Guides
             </span>
             <h2 className="text-4xl md:text-5xl font-bold text-foreground mt-4 leading-tight">
-              Learn more about
+              Master global calling
               <br />
-              global communication
+              for your business
             </h2>
           </div>
 
@@ -1844,36 +2508,34 @@ export default function Landing() {
             <div className="grid md:grid-cols-2">
               <div className="overflow-hidden">
                 <img
-                  src="https://framerusercontent.com/images/vp3FQ8cQAX82fBniYARy66SgROY.png?width=1200&height=673"
-                  alt="Featured article"
+                  src="https://images.unsplash.com/photo-1560439513-74b037a25d84?w=1200&h=673&fit=crop"
+                  alt="Global business communication"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
                 />
               </div>
               <div className="p-8 md:p-12 flex flex-col justify-center">
                 <span className="text-xs font-medium text-muted-foreground mb-3">
-                  Featured • Must Read
+                  Featured • Essential Reading
                 </span>
                 <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-4 leading-tight">
-                  How to start a 100k creative agency in 2025
+                  The Complete Guide to VoIP for Growing Businesses
                 </h3>
                 <p className="text-muted-foreground mb-6">
-                  Learn how to kickstart your journey into agency ownership with
-                  our comprehensive guide.
+                  Discover how modern businesses are cutting communication costs
+                  while improving call quality with browser-based VoIP
+                  solutions.
                 </p>
                 <div className="flex items-center gap-3">
-                  <img
-                    src="https://framerusercontent.com/images/dOXROHKlycOnbn8lmjcAsLs.jpg?width=4000&height=6000"
-                    alt="Dhyna Phils"
-                    className="w-8 h-8 rounded-full object-cover"
-                    loading="lazy"
-                  />
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0891b2] to-[#0e7490] flex items-center justify-center text-white font-bold text-sm">
+                    GC
+                  </div>
                   <div>
                     <p className="text-sm font-medium text-foreground">
-                      Dhyna Phils
+                      GlobalConnect Team
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Head of Marketing
+                      Communications Experts
                     </p>
                   </div>
                 </div>
