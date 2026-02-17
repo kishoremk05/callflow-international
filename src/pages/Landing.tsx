@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { useScrollAnimation } from "@/hooks/useGsapAnimations";
 import bgImage from "@/assets/images/bg.png";
 import cardImage from "@/assets/images/dashboard-screenshot.png";
@@ -328,20 +329,150 @@ export default function Landing() {
       {/* ============================================================================ */}
       {/* HERO SECTION */}
       {/* ============================================================================ */}
-      <section className="relative pt-32 pb-0 overflow-hidden">
-        <div className="max-w-[1280px] mx-auto px-6 text-center">
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-foreground leading-[1.1] mb-6">
-            Make International Calls
-            <br />
-            From Your Browser
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-[600px] mx-auto mb-10 leading-relaxed">
-            Crystal-clear HD calls to 70+ countries. No apps, no SIM cards, no
-            restrictions. Just open your browser and connect with anyone,
-            anywhere.
-          </p>
+      <section
+        className="relative pt-32 pb-12 overflow-hidden"
+        style={{ minHeight: "calc(100vh - 80px)" }}
+      >
+        {/* Subtle Animated Decorative Elements */}
 
-          <div className="flex items-center justify-center gap-4 mb-16">
+        {/* Floating gradient ring - top left */}
+        <motion.div
+          className="absolute top-32 left-20 w-40 h-40 rounded-full border-2 border-cyan-300/20 z-0"
+          animate={{
+            x: [0, 30, 0],
+            y: [0, -20, 0],
+            rotate: [0, 180, 360],
+          }}
+          transition={{
+            duration: 15,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        {/* Floating gradient ring - top right */}
+        <motion.div
+          className="absolute top-20 right-32 w-32 h-32 rounded-full border-2 border-purple-300/20 z-0"
+          animate={{
+            x: [0, -25, 0],
+            y: [0, 25, 0],
+            rotate: [360, 180, 0],
+          }}
+          transition={{
+            duration: 12,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        {/* Small accent blob - left side */}
+        <motion.div
+          className="absolute top-1/2 left-10 w-24 h-24 bg-gradient-to-br from-blue-400/15 to-cyan-400/15 rounded-full filter blur-2xl z-0"
+          animate={{
+            y: [0, 40, 0],
+            scale: [1, 1.15, 1],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        {/* Small accent blob - right side */}
+        <motion.div
+          className="absolute top-1/3 right-16 w-20 h-20 bg-gradient-to-br from-purple-400/15 to-pink-400/15 rounded-full filter blur-2xl z-0"
+          animate={{
+            y: [0, -30, 0],
+            scale: [1, 1.2, 1],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        {/* Floating dots for depth */}
+        <motion.div
+          className="absolute top-40 left-1/3 w-3 h-3 bg-cyan-400/40 rounded-full z-0"
+          animate={{
+            y: [0, -50, 0],
+            opacity: [0.4, 0.8, 0.4],
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        <motion.div
+          className="absolute bottom-1/3 right-1/4 w-2 h-2 bg-purple-400/40 rounded-full z-0"
+          animate={{
+            y: [0, 40, 0],
+            opacity: [0.3, 0.7, 0.3],
+          }}
+          transition={{
+            duration: 7,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        <div className="max-w-[1280px] mx-auto px-6 text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, x: -50, filter: "blur(10px)" }}
+            animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            style={{
+              willChange: "transform, opacity, filter",
+              transform: "translateZ(0)",
+              backfaceVisibility: "hidden",
+              WebkitBackfaceVisibility: "hidden",
+            }}
+          >
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-foreground leading-[1.1] mb-6">
+              Make International Calls
+              <br />
+              From Your Browser
+            </h1>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: -50, filter: "blur(10px)" }}
+            animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+            transition={{
+              duration: 0.8,
+              delay: 0.15,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+            style={{
+              willChange: "transform, opacity, filter",
+              transform: "translateZ(0)",
+              backfaceVisibility: "hidden",
+              WebkitBackfaceVisibility: "hidden",
+            }}
+          >
+            <p className="text-lg md:text-xl text-muted-foreground max-w-[600px] mx-auto mb-10 leading-relaxed">
+              Crystal-clear HD calls to 70+ countries. No apps, no SIM cards, no
+              restrictions. Just open your browser and connect with anyone,
+              anywhere.
+            </p>
+          </motion.div>
+
+          <motion.div
+            className="flex items-center justify-center gap-4 mb-16"
+            initial={{ opacity: 0, x: -50, filter: "blur(10px)" }}
+            animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+            transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            style={{
+              willChange: "transform, opacity, filter",
+              transform: "translateZ(0)",
+              backfaceVisibility: "hidden",
+              WebkitBackfaceVisibility: "hidden",
+            }}
+          >
             <a
               href="#pricing"
               className="inline-flex items-center justify-center h-12 px-7 rounded-full bg-foreground text-background text-sm font-medium hover:scale-105 hover:shadow-xl transition-all duration-200"
@@ -354,20 +485,25 @@ export default function Landing() {
             >
               See features
             </a>
-          </div>
+          </motion.div>
 
           {/* Dashboard mockup */}
-          <div
+          <motion.div
             className="relative max-w-[1100px] mx-auto mt-16"
             style={{
               perspective: "1200px",
+              transform: "translateZ(0)",
             }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
           >
             <div
               className="relative bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden transition-transform duration-100 ease-out max-h-[700px]"
               style={{
-                transform: `perspective(1200px) rotateX(${rotateX}deg) scale(${scale}) translateY(${scrollY * 0.05}px)`,
+                transform: `perspective(1200px) rotateX(${rotateX}deg) scale(${scale}) translateY(${scrollY * 0.05}px) translateZ(0)`,
                 transformOrigin: "center bottom",
+                willChange: "transform",
               }}
             >
               <img
@@ -377,7 +513,7 @@ export default function Landing() {
                 loading="eager"
               />
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
