@@ -493,6 +493,8 @@ export default function Landing() {
             style={{
               perspective: "1200px",
               transform: "translateZ(0)",
+              backfaceVisibility: "hidden",
+              WebkitBackfaceVisibility: "hidden",
             }}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -504,6 +506,8 @@ export default function Landing() {
                 transform: `perspective(1200px) rotateX(${rotateX}deg) scale(${scale}) translateY(${scrollY * 0.05}px) translateZ(0)`,
                 transformOrigin: "center bottom",
                 willChange: "transform",
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
               }}
             >
               <img
