@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/layout/Header";
+import { Sidebar } from "@/components/layout/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -55,7 +56,7 @@ interface ExternalParticipant {
 
 export default function VoiceCall() {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user, signOut, userType } = useAuth();
   const [activeTab, setActiveTab] = useState<"internal">("internal");
 
   // Internal Browser Call State
@@ -69,7 +70,7 @@ export default function VoiceCall() {
   // Internal Team Conference State
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [roomName, setRoomName] = useState("");
   const [activeRooms, setActiveRooms] = useState<ConferenceRoom[]>([]);
@@ -125,7 +126,7 @@ export default function VoiceCall() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       const allMembers: TeamMember[] = [];
@@ -208,7 +209,7 @@ export default function VoiceCall() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (response.ok) {
@@ -295,7 +296,7 @@ export default function VoiceCall() {
             contacts: contactMembers,
             enterpriseId: enterpriseData?.enterprise_id,
           }),
-        }
+        },
       );
 
       const data = await response.json();
@@ -389,7 +390,7 @@ export default function VoiceCall() {
               name: p.name || "Unknown",
             })),
           }),
-        }
+        },
       );
 
       const data = await response.json();
@@ -432,7 +433,7 @@ export default function VoiceCall() {
               headers: {
                 Authorization: `Bearer ${token}`,
               },
-            }
+            },
           );
         }
       }
@@ -461,483 +462,501 @@ export default function VoiceCall() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="h-screen overflow-hidden flex flex-col bg-slate-50">
       <Header user={user} onSignOut={signOut} />
 
-      <main className="container py-6 px-4 md:px-6 lg:px-8">
-        {/* Header with Back Button */}
-        <div className="mb-6 flex items-center gap-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate("/dashboard")}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </Button>
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-[#1a365d]">
-              Voice Calls
-            </h1>
-            <p className="text-gray-600">
-              Conference calling for teams and clients
-            </p>
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar
+          activeView="voice-call"
+          onViewChange={(view) => {
+            if (view === "numbers") navigate("/numbers");
+            else if (view === "voice-call") navigate("/voice-call");
+            else if (view === "admin") navigate("/company-admin/dashboard");
+            else navigate("/dashboard", { state: { view } });
+          }}
+          onLogout={signOut}
+          showAdmin={userType === "company" || userType === "company_admin"}
+        />
+
+        <main className="flex-1 overflow-y-auto py-6 px-6 bg-slate-50">
+          {/* Header with Back Button */}
+          <div className="mb-6 flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/dashboard")}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </Button>
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-[#1a365d]">
+                Voice Calls
+              </h1>
+              <p className="text-gray-600">
+                Conference calling for teams and clients
+              </p>
+            </div>
           </div>
-        </div>
 
-        {/* Active Call Banner */}
-        {isInCall && (
-          <Card className="mb-6 bg-gradient-to-r from-green-500 to-emerald-500 border-0 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center animate-pulse">
-                    <Phone className="w-6 h-6" />
+          {/* Active Call Banner */}
+          {isInCall && (
+            <Card className="mb-6 bg-gradient-to-r from-green-500 to-emerald-500 border-0 text-white">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center animate-pulse">
+                      <Phone className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-lg">Call in Progress</p>
+                      <p className="text-sm text-white/80 flex items-center gap-2">
+                        <Clock className="w-4 h-4" />
+                        {formatDuration(callDuration)}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold text-lg">Call in Progress</p>
-                    <p className="text-sm text-white/80 flex items-center gap-2">
-                      <Clock className="w-4 h-4" />
-                      {formatDuration(callDuration)}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={toggleMute}
+                      className="bg-white/20 border-white/30 text-white hover:bg-white/30"
+                    >
+                      {isMuted ? (
+                        <MicOff className="w-4 h-4" />
+                      ) : (
+                        <Mic className="w-4 h-4" />
+                      )}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={endCall}
+                      className="bg-red-500 hover:bg-red-600"
+                    >
+                      <PhoneOff className="w-4 h-4 mr-2" />
+                      End Call
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={toggleMute}
-                    className="bg-white/20 border-white/30 text-white hover:bg-white/30"
-                  >
-                    {isMuted ? (
-                      <MicOff className="w-4 h-4" />
-                    ) : (
-                      <Mic className="w-4 h-4" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={endCall}
-                    className="bg-red-500 hover:bg-red-600"
-                  >
-                    <PhoneOff className="w-4 h-4 mr-2" />
-                    End Call
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+              </CardContent>
+            </Card>
+          )}
 
-        {/* Internal Call Section */}
-        <Tabs
-          value={activeTab}
-          onValueChange={(v) => setActiveTab(v as any)}
-          className="space-y-6"
-        >
-          <TabsList className="grid w-full max-w-[48rem] grid-cols-1 h-12">
-            <TabsTrigger value="internal" className="flex items-center gap-2">
-              <Headphones className="w-4 h-4" />
-              Internal Call
-            </TabsTrigger>
-          </TabsList>
+          {/* Internal Call Section */}
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) => setActiveTab(v as any)}
+            className="space-y-6"
+          >
+            <TabsList className="grid w-full max-w-[48rem] grid-cols-1 h-12">
+              <TabsTrigger value="internal" className="flex items-center gap-2">
+                <Headphones className="w-4 h-4" />
+                Internal Call
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Internal Call Tab */}
-          <TabsContent value="internal" className="space-y-6">
-            {showInternalCall ? (
-              <InternalCall
-                roomName={internalCallRoom}
-                userName={internalCallName}
-                onLeave={() => {
-                  setShowInternalCall(false);
-                  setInternalCallRoom("");
-                }}
-              />
-            ) : (
-              <div className="grid gap-6 lg:grid-cols-2">
-                {/* Join/Create Internal Call */}
-                <Card className="border-2 border-[#0891b2]/20 bg-gradient-to-br from-[#0891b2]/5 to-transparent">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-[#1a365d]">
-                      <Headphones className="w-6 h-6 text-[#0891b2]" />
-                      Internal Team Call
-                    </CardTitle>
-                    <p className="text-sm text-gray-600">
-                      💼 Professional calling with your team • $2 per hour
-                    </p>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-                      <div className="flex items-center gap-2 text-blue-700 mb-2">
-                        <Users className="w-5 h-5" />
-                        <span className="font-semibold">
-                          Pricing: $2 per Hour
-                        </span>
+            {/* Internal Call Tab */}
+            <TabsContent value="internal" className="space-y-6">
+              {showInternalCall ? (
+                <InternalCall
+                  roomName={internalCallRoom}
+                  userName={internalCallName}
+                  onLeave={() => {
+                    setShowInternalCall(false);
+                    setInternalCallRoom("");
+                  }}
+                />
+              ) : (
+                <div className="grid gap-6 lg:grid-cols-2">
+                  {/* Join/Create Internal Call */}
+                  <Card className="border-2 border-[#0891b2]/20 bg-gradient-to-br from-[#0891b2]/5 to-transparent">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-[#1a365d]">
+                        <Headphones className="w-6 h-6 text-[#0891b2]" />
+                        Internal Team Call
+                      </CardTitle>
+                      <p className="text-sm text-gray-600">
+                        💼 Professional calling with your team • $2 per hour
+                      </p>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                        <div className="flex items-center gap-2 text-blue-700 mb-2">
+                          <Users className="w-5 h-5" />
+                          <span className="font-semibold">
+                            Pricing: $2 per Hour
+                          </span>
+                        </div>
+                        <ul className="text-sm text-blue-600 space-y-1">
+                          <li>✓ Billed hourly from your wallet</li>
+                          <li>✓ High-quality audio calling</li>
+                          <li>✓ Available for all users</li>
+                          <li>✓ One-to-one or group calls</li>
+                        </ul>
                       </div>
-                      <ul className="text-sm text-blue-600 space-y-1">
-                        <li>✓ Billed hourly from your wallet</li>
-                        <li>✓ High-quality audio calling</li>
-                        <li>✓ Available for all users</li>
-                        <li>✓ One-to-one or group calls</li>
-                      </ul>
-                    </div>
 
-                    {/* Toggle between Create and Join */}
-                    <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-lg">
-                      <button
-                        onClick={() => setCallMode("create")}
-                        className={`py-2 px-4 rounded-md font-medium transition-colors ${
-                          callMode === "create"
-                            ? "bg-white text-[#0891b2] shadow-sm"
-                            : "text-gray-600 hover:text-gray-900"
-                        }`}
-                      >
-                        Create Room
-                      </button>
-                      <button
-                        onClick={() => setCallMode("join")}
-                        className={`py-2 px-4 rounded-md font-medium transition-colors ${
-                          callMode === "join"
-                            ? "bg-white text-[#0891b2] shadow-sm"
-                            : "text-gray-600 hover:text-gray-900"
-                        }`}
-                      >
-                        Join Room
-                      </button>
-                    </div>
-
-                    {callMode === "create" ? (
-                      <>
-                        <div>
-                          <Label htmlFor="callRoomName">Room Name</Label>
-                          <Input
-                            id="callRoomName"
-                            placeholder="e.g., Team Standup, Project Discussion"
-                            value={internalCallRoom}
-                            onChange={(e) =>
-                              setInternalCallRoom(e.target.value)
-                            }
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="displayName">Your Name</Label>
-                          <Input
-                            id="displayName"
-                            placeholder="Enter your display name"
-                            value={internalCallName}
-                            onChange={(e) =>
-                              setInternalCallName(e.target.value)
-                            }
-                          />
-                        </div>
-
-                        <Button
-                          onClick={() => {
-                            if (
-                              !internalCallRoom.trim() ||
-                              !internalCallName.trim()
-                            ) {
-                              toast.error(
-                                "Please enter room name and your name"
-                              );
-                              return;
-                            }
-                            // Generate a unique 6-digit room code
-                            const code = Math.floor(
-                              100000 + Math.random() * 900000
-                            ).toString();
-                            setGeneratedRoomCode(code);
-                            setInternalCallRoom(code);
-                            setShowInternalCall(true);
-                            toast.success(`Room created! Code: ${code}`, {
-                              duration: 5000,
-                            });
-                          }}
-                          className="w-full bg-[#0891b2] hover:bg-[#0e7490] text-white h-12 text-lg"
+                      {/* Toggle between Create and Join */}
+                      <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-lg">
+                        <button
+                          onClick={() => setCallMode("create")}
+                          className={`py-2 px-4 rounded-md font-medium transition-colors ${
+                            callMode === "create"
+                              ? "bg-white text-[#0891b2] shadow-sm"
+                              : "text-gray-600 hover:text-gray-900"
+                          }`}
                         >
-                          <Plus className="w-5 h-5 mr-2" />
                           Create Room
-                        </Button>
-
-                        <p className="text-xs text-gray-500 text-center">
-                          Share the generated code with teammates to join
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <div>
-                          <Label htmlFor="roomCode">Room Code</Label>
-                          <Input
-                            id="roomCode"
-                            placeholder="Enter 6-digit room code"
-                            value={roomCode}
-                            onChange={(e) => setRoomCode(e.target.value)}
-                            maxLength={6}
-                            className="text-center text-2xl font-bold tracking-widest"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="displayNameJoin">Your Name</Label>
-                          <Input
-                            id="displayNameJoin"
-                            placeholder="Enter your display name"
-                            value={internalCallName}
-                            onChange={(e) =>
-                              setInternalCallName(e.target.value)
-                            }
-                          />
-                        </div>
-
-                        <Button
-                          onClick={() => {
-                            if (!roomCode.trim() || !internalCallName.trim()) {
-                              toast.error(
-                                "Please enter room code and your name"
-                              );
-                              return;
-                            }
-                            if (roomCode.length !== 6) {
-                              toast.error("Room code must be 6 digits");
-                              return;
-                            }
-                            setInternalCallRoom(roomCode);
-                            setShowInternalCall(true);
-                          }}
-                          className="w-full bg-green-600 hover:bg-green-700 text-white h-12 text-lg"
+                        </button>
+                        <button
+                          onClick={() => setCallMode("join")}
+                          className={`py-2 px-4 rounded-md font-medium transition-colors ${
+                            callMode === "join"
+                              ? "bg-white text-[#0891b2] shadow-sm"
+                              : "text-gray-600 hover:text-gray-900"
+                          }`}
                         >
-                          <Phone className="w-5 h-5 mr-2" />
                           Join Room
-                        </Button>
+                        </button>
+                      </div>
 
-                        <p className="text-xs text-gray-500 text-center">
-                          Ask the room creator for the 6-digit code
+                      {callMode === "create" ? (
+                        <>
+                          <div>
+                            <Label htmlFor="callRoomName">Room Name</Label>
+                            <Input
+                              id="callRoomName"
+                              placeholder="e.g., Team Standup, Project Discussion"
+                              value={internalCallRoom}
+                              onChange={(e) =>
+                                setInternalCallRoom(e.target.value)
+                              }
+                            />
+                          </div>
+
+                          <div>
+                            <Label htmlFor="displayName">Your Name</Label>
+                            <Input
+                              id="displayName"
+                              placeholder="Enter your display name"
+                              value={internalCallName}
+                              onChange={(e) =>
+                                setInternalCallName(e.target.value)
+                              }
+                            />
+                          </div>
+
+                          <Button
+                            onClick={() => {
+                              if (
+                                !internalCallRoom.trim() ||
+                                !internalCallName.trim()
+                              ) {
+                                toast.error(
+                                  "Please enter room name and your name",
+                                );
+                                return;
+                              }
+                              // Generate a unique 6-digit room code
+                              const code = Math.floor(
+                                100000 + Math.random() * 900000,
+                              ).toString();
+                              setGeneratedRoomCode(code);
+                              setInternalCallRoom(code);
+                              setShowInternalCall(true);
+                              toast.success(`Room created! Code: ${code}`, {
+                                duration: 5000,
+                              });
+                            }}
+                            className="w-full bg-[#0891b2] hover:bg-[#0e7490] text-white h-12 text-lg"
+                          >
+                            <Plus className="w-5 h-5 mr-2" />
+                            Create Room
+                          </Button>
+
+                          <p className="text-xs text-gray-500 text-center">
+                            Share the generated code with teammates to join
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <div>
+                            <Label htmlFor="roomCode">Room Code</Label>
+                            <Input
+                              id="roomCode"
+                              placeholder="Enter 6-digit room code"
+                              value={roomCode}
+                              onChange={(e) => setRoomCode(e.target.value)}
+                              maxLength={6}
+                              className="text-center text-2xl font-bold tracking-widest"
+                            />
+                          </div>
+
+                          <div>
+                            <Label htmlFor="displayNameJoin">Your Name</Label>
+                            <Input
+                              id="displayNameJoin"
+                              placeholder="Enter your display name"
+                              value={internalCallName}
+                              onChange={(e) =>
+                                setInternalCallName(e.target.value)
+                              }
+                            />
+                          </div>
+
+                          <Button
+                            onClick={() => {
+                              if (
+                                !roomCode.trim() ||
+                                !internalCallName.trim()
+                              ) {
+                                toast.error(
+                                  "Please enter room code and your name",
+                                );
+                                return;
+                              }
+                              if (roomCode.length !== 6) {
+                                toast.error("Room code must be 6 digits");
+                                return;
+                              }
+                              setInternalCallRoom(roomCode);
+                              setShowInternalCall(true);
+                            }}
+                            className="w-full bg-green-600 hover:bg-green-700 text-white h-12 text-lg"
+                          >
+                            <Phone className="w-5 h-5 mr-2" />
+                            Join Room
+                          </Button>
+
+                          <p className="text-xs text-gray-500 text-center">
+                            Ask the room creator for the 6-digit code
+                          </p>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Instructions */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-[#1a365d]">
+                        How It Works
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-3">
+                        <div className="flex gap-3">
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0891b2]/10 flex items-center justify-center text-[#0891b2] font-bold">
+                            1
+                          </div>
+                          <div>
+                            <p className="font-medium">Create a Room</p>
+                            <p className="text-sm text-gray-600">
+                              Click "Create Room" and get a 6-digit code
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-3">
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0891b2]/10 flex items-center justify-center text-[#0891b2] font-bold">
+                            2
+                          </div>
+                          <div>
+                            <p className="font-medium">Share the Code</p>
+                            <p className="text-sm text-gray-600">
+                              Send the 6-digit code to your teammates
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-3">
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0891b2]/10 flex items-center justify-center text-[#0891b2] font-bold">
+                            3
+                          </div>
+                          <div>
+                            <p className="font-medium">Join with Code</p>
+                            <p className="text-sm text-gray-600">
+                              Others click "Join Room" and enter the code
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-4 border-t">
+                        <p className="text-sm font-medium text-gray-700 mb-2">
+                          Best For:
                         </p>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
+                        <ul className="text-sm text-gray-600 space-y-1">
+                          <li>• Quick team discussions</li>
+                          <li>• Daily standups & meetings</li>
+                          <li>• Project collaboration</li>
+                          <li>• Internal support calls</li>
+                        </ul>
+                      </div>
 
-                {/* Instructions */}
+                      <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
+                        <p className="text-sm text-blue-700">
+                          <strong>Note:</strong> Calls are billed at $2 per hour
+                          and deducted from your wallet balance.
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Removed Phone Conference Tab */}
+            <TabsContent
+              value="phone-conference"
+              className="space-y-6"
+              style={{ display: "none" }}
+            >
+              <div className="grid gap-6 lg:grid-cols-2">
+                {/* Create Conference Room */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-[#1a365d]">
-                      How It Works
+                    <CardTitle className="flex items-center gap-2 text-[#1a365d]">
+                      <Users className="w-5 h-5 text-[#0891b2]" />
+                      Create Team Conference
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="space-y-3">
-                      <div className="flex gap-3">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0891b2]/10 flex items-center justify-center text-[#0891b2] font-bold">
-                          1
-                        </div>
-                        <div>
-                          <p className="font-medium">Create a Room</p>
-                          <p className="text-sm text-gray-600">
-                            Click "Create Room" and get a 6-digit code
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-3">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0891b2]/10 flex items-center justify-center text-[#0891b2] font-bold">
-                          2
-                        </div>
-                        <div>
-                          <p className="font-medium">Share the Code</p>
-                          <p className="text-sm text-gray-600">
-                            Send the 6-digit code to your teammates
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-3">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0891b2]/10 flex items-center justify-center text-[#0891b2] font-bold">
-                          3
-                        </div>
-                        <div>
-                          <p className="font-medium">Join with Code</p>
-                          <p className="text-sm text-gray-600">
-                            Others click "Join Room" and enter the code
-                          </p>
-                        </div>
-                      </div>
+                    <div>
+                      <Label htmlFor="roomName">Room Name</Label>
+                      <Input
+                        id="roomName"
+                        placeholder="e.g., Daily Standup, Project Review"
+                        value={roomName}
+                        onChange={(e) => setRoomName(e.target.value)}
+                        disabled={isInCall}
+                      />
                     </div>
 
-                    <div className="pt-4 border-t">
-                      <p className="text-sm font-medium text-gray-700 mb-2">
-                        Best For:
-                      </p>
-                      <ul className="text-sm text-gray-600 space-y-1">
-                        <li>• Quick team discussions</li>
-                        <li>• Daily standups & meetings</li>
-                        <li>• Project collaboration</li>
-                        <li>• Internal support calls</li>
-                      </ul>
+                    <div>
+                      <Label className="mb-3 block">Select Team Members</Label>
+                      {loadingTeam ? (
+                        <p className="text-sm text-gray-500">
+                          Loading team members...
+                        </p>
+                      ) : teamMembers.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                          <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">No team members found</p>
+                          <p className="text-xs mt-1">
+                            You need to be part of an enterprise account
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                          {teamMembers.map((member) => (
+                            <div
+                              key={member.id}
+                              className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                            >
+                              <Checkbox
+                                id={`member-${member.id}`}
+                                checked={selectedMembers.has(member.id)}
+                                onCheckedChange={() =>
+                                  toggleMemberSelection(member.id)
+                                }
+                                disabled={isInCall}
+                              />
+                              <div className="flex items-center gap-2 flex-1">
+                                <div className="w-10 h-10 rounded-full bg-[#0891b2]/10 flex items-center justify-center flex-shrink-0">
+                                  <span className="text-[#0891b2] font-bold text-sm">
+                                    {member.full_name.charAt(0).toUpperCase()}
+                                  </span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <label
+                                    htmlFor={`member-${member.id}`}
+                                    className="text-sm font-medium cursor-pointer flex items-center gap-2"
+                                  >
+                                    {member.full_name}
+                                    {member.is_contact && (
+                                      <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full">
+                                        Contact
+                                      </span>
+                                    )}
+                                  </label>
+                                  <p className="text-xs text-gray-500 truncate">
+                                    {member.is_contact && member.phone_number
+                                      ? `${member.country_code} ${member.phone_number}`
+                                      : member.email}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
-                    <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
-                      <p className="text-sm text-blue-700">
-                        <strong>Note:</strong> Calls are billed at $2 per hour
-                        and deducted from your wallet balance.
-                      </p>
-                    </div>
+                    <Button
+                      onClick={createTeamRoom}
+                      disabled={
+                        isInCall || selectedMembers.size === 0 || !roomName
+                      }
+                      className="w-full bg-[#0891b2] hover:bg-[#0e7490]"
+                    >
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Create & Start Conference
+                    </Button>
                   </CardContent>
                 </Card>
-              </div>
-            )}
-          </TabsContent>
 
-          {/* Removed Phone Conference Tab */}
-          <TabsContent
-            value="phone-conference"
-            className="space-y-6"
-            style={{ display: "none" }}
-          >
-            <div className="grid gap-6 lg:grid-cols-2">
-              {/* Create Conference Room */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-[#1a365d]">
-                    <Users className="w-5 h-5 text-[#0891b2]" />
-                    Create Team Conference
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="roomName">Room Name</Label>
-                    <Input
-                      id="roomName"
-                      placeholder="e.g., Daily Standup, Project Review"
-                      value={roomName}
-                      onChange={(e) => setRoomName(e.target.value)}
-                      disabled={isInCall}
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="mb-3 block">Select Team Members</Label>
-                    {loadingTeam ? (
-                      <p className="text-sm text-gray-500">
-                        Loading team members...
-                      </p>
-                    ) : teamMembers.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
-                        <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">No team members found</p>
+                {/* Active Rooms */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-[#1a365d]">
+                      <Video className="w-5 h-5 text-[#0891b2]" />
+                      Active Rooms
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {activeRooms.length === 0 ? (
+                      <div className="text-center py-12 text-gray-500">
+                        <Video className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">No active conference rooms</p>
                         <p className="text-xs mt-1">
-                          You need to be part of an enterprise account
+                          Create a room to get started
                         </p>
                       </div>
                     ) : (
-                      <div className="space-y-2 max-h-64 overflow-y-auto">
-                        {teamMembers.map((member) => (
+                      <div className="space-y-3">
+                        {activeRooms.map((room) => (
                           <div
-                            key={member.id}
-                            className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                            key={room.id}
+                            className="p-4 bg-green-50 border border-green-200 rounded-lg"
                           >
-                            <Checkbox
-                              id={`member-${member.id}`}
-                              checked={selectedMembers.has(member.id)}
-                              onCheckedChange={() =>
-                                toggleMemberSelection(member.id)
-                              }
-                              disabled={isInCall}
-                            />
-                            <div className="flex items-center gap-2 flex-1">
-                              <div className="w-10 h-10 rounded-full bg-[#0891b2]/10 flex items-center justify-center flex-shrink-0">
-                                <span className="text-[#0891b2] font-bold text-sm">
-                                  {member.full_name.charAt(0).toUpperCase()}
-                                </span>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <label
-                                  htmlFor={`member-${member.id}`}
-                                  className="text-sm font-medium cursor-pointer flex items-center gap-2"
-                                >
-                                  {member.full_name}
-                                  {member.is_contact && (
-                                    <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full">
-                                      Contact
-                                    </span>
-                                  )}
-                                </label>
-                                <p className="text-xs text-gray-500 truncate">
-                                  {member.is_contact && member.phone_number
-                                    ? `${member.country_code} ${member.phone_number}`
-                                    : member.email}
-                                </p>
-                              </div>
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="font-semibold text-[#1a365d]">
+                                {room.name}
+                              </h4>
+                              <span className="text-xs px-2 py-1 bg-green-500 text-white rounded-full">
+                                Active
+                              </span>
                             </div>
+                            <p className="text-sm text-gray-600">
+                              {room.participants.length} participants
+                            </p>
                           </div>
                         ))}
                       </div>
                     )}
-                  </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
 
-                  <Button
-                    onClick={createTeamRoom}
-                    disabled={
-                      isInCall || selectedMembers.size === 0 || !roomName
-                    }
-                    className="w-full bg-[#0891b2] hover:bg-[#0e7490]"
-                  >
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    Create & Start Conference
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Active Rooms */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-[#1a365d]">
-                    <Video className="w-5 h-5 text-[#0891b2]" />
-                    Active Rooms
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {activeRooms.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">
-                      <Video className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No active conference rooms</p>
-                      <p className="text-xs mt-1">
-                        Create a room to get started
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {activeRooms.map((room) => (
-                        <div
-                          key={room.id}
-                          className="p-4 bg-green-50 border border-green-200 rounded-lg"
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-semibold text-[#1a365d]">
-                              {room.name}
-                            </h4>
-                            <span className="text-xs px-2 py-1 bg-green-500 text-white rounded-full">
-                              Active
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600">
-                            {room.participants.length} participants
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* External Conference Tab - Removed */}
-        </Tabs>
-      </main>
+            {/* External Conference Tab - Removed */}
+          </Tabs>
+        </main>
+      </div>
+      {/* end flex */}
     </div>
   );
 }

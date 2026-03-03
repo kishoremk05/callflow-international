@@ -5,11 +5,12 @@ import {
   useRef,
   useCallback,
 } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useCallContext } from "@/contexts/CallContext";
 import { Header } from "@/components/layout/Header";
+import { Sidebar, type SidebarView } from "@/components/layout/Sidebar";
 import { WalletCard } from "@/components/dashboard/WalletCard";
 import { Dialer } from "@/components/dashboard/Dialer";
 import { RecentCalls } from "@/components/dashboard/RecentCalls";
@@ -19,8 +20,18 @@ import { InviteNotifications } from "@/components/dashboard/InviteNotifications"
 import { JoinedOrganizations } from "@/components/dashboard/JoinedOrganizations";
 import { CallQueueUpload } from "@/components/dashboard/CallQueueUpload";
 import { CallQueueManager } from "@/components/dashboard/CallQueueManager";
+import { MeetingCalendar } from "@/components/dashboard/MeetingCalendar";
 import { toast } from "sonner";
 import { gsap } from "gsap";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import {
   Users,
   PhoneCall,
@@ -31,6 +42,7 @@ import {
   Calendar,
   BarChart3,
   ArrowUpRight,
+  ArrowDownRight,
   Phone,
   Video,
   MessageSquare,
@@ -39,6 +51,11 @@ import {
   Bell,
   Upload,
   Loader2,
+  PhoneMissed,
+  CheckCircle2,
+  TrendingUp,
+  Wallet,
+  Plus,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -72,6 +89,7 @@ interface Wallet {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, signOut, userType } = useAuth();
   const {
     makeCall,
@@ -101,6 +119,9 @@ export default function Dashboard() {
   });
   const [activeView, setActiveView] = useState<"dialer" | "team" | "analytics">(
     "dialer",
+  );
+  const [sidebarView, setSidebarView] = useState<SidebarView>(
+    (location.state as any)?.view || "overview",
   );
 
   // Organization state
@@ -706,325 +727,528 @@ export default function Dashboard() {
       icon: Phone,
       label: "Voice Call",
       color: "#0891b2",
-      action: () => navigate("/voice-call"),
+      action: () => setSidebarView("voice-call"),
       showFor: ["normal", "company"], // Show for all users
     },
   ];
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-slate-50">
-      <Header
-        user={user}
-        onSignOut={signOut}
-        userType={userType}
-        onManageClick={
-          userType === "company" || userType === "company_admin"
-            ? handleManageClick
-            : undefined
-        }
-      />
+    <div
+      ref={containerRef}
+      className="h-screen overflow-hidden flex flex-col bg-slate-50"
+    >
+      <Header user={user} onSignOut={signOut} />
 
-      <main className="container py-6 px-4 md:px-6 lg:px-8">
-        {/* Hero Section */}
-        <div className="mb-6" data-animate="hero">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-[#1a365d] mb-1">
-                Dashboard
-              </h1>
-              <p className="text-gray-600">
-                Welcome back, {user?.user_metadata?.full_name || "there"}! 👋
-              </p>
-            </div>
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar
+          activeView={sidebarView}
+          onViewChange={(view) => {
+            if (view === "admin") {
+              handleManageClick();
+            } else if (view === "numbers") {
+              navigate("/numbers");
+            } else if (view === "voice-call") {
+              navigate("/voice-call");
+            } else {
+              setSidebarView(view);
+            }
+          }}
+          onLogout={signOut}
+          showAdmin={userType === "company" || userType === "company_admin"}
+        />
 
-            {/* Quick Actions */}
-            <div className="flex gap-2 flex-wrap items-center">
-              {/* Invite Notifications and Organizations for Normal Users */}
-              {userType === "normal" && (
-                <>
-                  <Button
-                    onClick={() => setShowInviteNotifications(true)}
-                    variant={pendingInvitesCount > 0 ? "default" : "outline"}
-                    className={`flex items-center gap-2 relative ${
-                      pendingInvitesCount > 0
-                        ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white animate-pulse"
-                        : "border-gray-200 text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    <Bell className="w-4 h-4" />
-                    {pendingInvitesCount > 0
-                      ? "Organization Invites"
-                      : "Invitations"}
-                    {pendingInvitesCount > 0 && (
-                      <Badge className="ml-1 bg-white text-orange-600 hover:bg-white">
-                        {pendingInvitesCount}
-                      </Badge>
-                    )}
-                  </Button>
-                  <Button
-                    onClick={() => setShowJoinedOrgs(true)}
-                    variant="outline"
-                    className="flex items-center gap-2 border-[#0891b2]/30 text-[#0891b2] hover:bg-[#0891b2]/10 hover:text-[#0e7490]"
-                  >
-                    <Building2 className="w-4 h-4" />
-                    My Organizations
-                  </Button>
-                </>
-              )}
-
-              {/* Call Queue Upload for Company Users */}
-              {userType === "company" && (
-                <Button
-                  onClick={() => setShowCallQueueUpload(true)}
-                  variant="outline"
-                  className="flex items-center gap-2 border-purple-300 text-purple-600 hover:bg-purple-50"
-                >
-                  <Upload className="w-4 h-4" />
-                  Upload Call Data
-                </Button>
-              )}
-
-              {quickActions.map((action, index) => (
-                <button
-                  key={index}
-                  onClick={action.action}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all"
-                >
-                  <action.icon
-                    className="w-4 h-4"
-                    style={{ color: action.color }}
-                  />
-                  <span className="text-sm font-medium text-gray-700">
-                    {action.label}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Connection Status Banner */}
-        {!isConnected && !isInitializing && (
-          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-3">
-            <WifiOff className="w-5 h-5 text-amber-600" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-amber-800">
-                Backend server not connected
-              </p>
-              <p className="text-xs text-amber-600">
-                Start the backend server to enable calling features
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-amber-300 text-amber-700 hover:bg-amber-100"
-              onClick={retryConnection}
-            >
-              Retry
-            </Button>
-          </div>
-        )}
-
-        {/* Company Linking Notification - Organization Owners */}
-        {userType === "company" &&
-          showCompanyNotification &&
-          companyAdminInfo && (
-            <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-300 rounded-xl shadow-md">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 animate-pulse">
-                  <Building2 className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-blue-800">
-                    🎉 Your organization has been linked to a company!
-                  </p>
-                  <p className="text-sm text-blue-700 mt-1">
-                    <strong>{companyAdminInfo.company_name}</strong> has invited
-                    your organization to join their company.
-                  </p>
-                  <p className="text-xs text-blue-600 mt-1">
-                    Contact: {companyAdminInfo.company_email}
+        <main className="flex-1 overflow-y-auto py-6 px-6 bg-slate-50">
+          {/* ── OVERVIEW ── */}
+          {sidebarView === "overview" && (
+            <>
+              {/* ── Page Header ── */}
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h1 className="text-3xl font-bold text-[#1a365d]">
+                    Dashboard
+                  </h1>
+                  <p className="text-gray-500 text-sm mt-1">
+                    Welcome back, {user?.user_metadata?.full_name || "there"} —
+                    here's what's happening today.
                   </p>
                 </div>
-                <Button
-                  size="sm"
-                  className="bg-blue-500 hover:bg-blue-600 text-white"
-                  onClick={() => {
-                    // Save dismissal to localStorage
-                    if (companyAdminInfo && user?.id) {
-                      localStorage.setItem(
-                        `company-notification-dismissed-${user.id}`,
-                        "true",
-                      );
-                    }
-                    setShowCompanyNotification(false);
-                  }}
-                >
-                  Got it
-                </Button>
+                <div className="flex items-center gap-3">
+                  {userType === "normal" && pendingInvitesCount > 0 && (
+                    <button
+                      onClick={() => setShowInviteNotifications(true)}
+                      className="relative flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition-all animate-pulse"
+                    >
+                      <Bell className="w-4 h-4" />
+                      {pendingInvitesCount} Invite
+                      {pendingInvitesCount > 1 ? "s" : ""}
+                    </button>
+                  )}
+                  {userType === "company" && (
+                    <button
+                      onClick={() => setShowCallQueueUpload(true)}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl border border-purple-300 text-purple-600 bg-white text-sm font-medium hover:bg-purple-50 transition-all"
+                    >
+                      <Upload className="w-4 h-4" />
+                      Upload Call Data
+                    </button>
+                  )}
+                  <button
+                    onClick={() => navigate("/voice-call")}
+                    className="flex items-center gap-2 px-5 py-2 rounded-xl bg-[#0891b2] text-white text-sm font-semibold hover:bg-[#0e7490] transition-all shadow-md"
+                  >
+                    <Phone className="w-4 h-4" />
+                    Make a Call
+                  </button>
+                </div>
               </div>
+
+              {/* ── Connection Banner ── */}
+              {!isConnected && !isInitializing && (
+                <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-3">
+                  <WifiOff className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-amber-800">
+                      Backend server not connected
+                    </p>
+                    <p className="text-xs text-amber-600">
+                      Start the backend server to enable calling
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-amber-300 text-amber-700 hover:bg-amber-100"
+                    onClick={retryConnection}
+                  >
+                    Retry
+                  </Button>
+                </div>
+              )}
+
+              {/* ── Company notification ── */}
+              {userType === "company" &&
+                showCompanyNotification &&
+                companyAdminInfo && (
+                  <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-2xl flex items-start gap-3">
+                    <Building2 className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-blue-800">
+                        🎉 Your organization has been linked!
+                      </p>
+                      <p className="text-xs text-blue-600 mt-0.5">
+                        {companyAdminInfo.company_name} ·{" "}
+                        {companyAdminInfo.company_email}
+                      </p>
+                    </div>
+                    <button
+                      className="text-xs text-blue-600 hover:underline"
+                      onClick={() => {
+                        localStorage.setItem(
+                          `company-notification-dismissed-${user?.id}`,
+                          "true",
+                        );
+                        setShowCompanyNotification(false);
+                      }}
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                )}
+
+              {/* ── 4 Stat Cards ── */}
+              <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+                {/* Total Calls - dark teal (hero card) */}
+                <div className="bg-[#0891b2] rounded-2xl p-5 text-white relative overflow-hidden">
+                  <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                    <ArrowUpRight className="w-4 h-4" />
+                  </div>
+                  <p className="text-sm font-medium text-white/80 mb-2">
+                    Total Calls
+                  </p>
+                  <p className="text-4xl font-bold">{stats.totalCalls}</p>
+                  <p className="text-xs text-white/70 mt-2 flex items-center gap-1">
+                    <TrendingUp className="w-3 h-3" /> Increased from last month
+                  </p>
+                </div>
+                {/* Total Minutes */}
+                <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm relative">
+                  <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                    <ArrowUpRight className="w-4 h-4 text-gray-500" />
+                  </div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-6 h-6 rounded-full bg-[#0891b2]/10 flex items-center justify-center">
+                      <Clock className="w-3 h-3 text-[#0891b2]" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-500">
+                      Total Minutes
+                    </p>
+                  </div>
+                  <p className="text-4xl font-bold text-[#1a365d]">
+                    {stats.totalMinutes}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-2">
+                    Increased from last month
+                  </p>
+                </div>
+                {/* Total Spent */}
+                <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm relative">
+                  <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                    <ArrowUpRight className="w-4 h-4 text-gray-500" />
+                  </div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                      <Wallet className="w-3 h-3 text-green-600" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-500">
+                      Total Spent
+                    </p>
+                  </div>
+                  <p className="text-4xl font-bold text-[#1a365d]">
+                    ${stats.totalSpent.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-2">vs last month</p>
+                </div>
+                {/* This Month */}
+                <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm relative">
+                  <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                    <ArrowUpRight className="w-4 h-4 text-gray-500" />
+                  </div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
+                      <BarChart3 className="w-3 h-3 text-purple-600" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-500">
+                      This Month
+                    </p>
+                  </div>
+                  <p className="text-4xl font-bold text-[#1a365d]">
+                    ${stats.thisMonth.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-2">
+                    Increased +15% vs last month
+                  </p>
+                </div>
+              </div>
+
+              {/* ── Main Grid ── */}
+              <div className="grid gap-6 xl:grid-cols-12">
+                {/* ── Left Column (analytics + recent calls) ── */}
+                <div className="xl:col-span-7 space-y-6">
+                  {/* Call Analytics Chart */}
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-base font-semibold text-[#1a365d]">
+                        Call Analytics
+                      </h2>
+                      <span className="text-xs text-gray-400">Last 7 days</span>
+                    </div>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <BarChart
+                        data={(() => {
+                          const days = [
+                            "Sun",
+                            "Mon",
+                            "Tue",
+                            "Wed",
+                            "Thu",
+                            "Fri",
+                            "Sat",
+                          ];
+                          const counts: Record<string, number> = {};
+                          days.forEach((d) => (counts[d] = 0));
+                          calls.forEach((c) => {
+                            const d = new Date(c.started_at);
+                            const diff = Math.floor(
+                              (Date.now() - d.getTime()) / 86400000,
+                            );
+                            if (diff < 7)
+                              counts[days[d.getDay()]] =
+                                (counts[days[d.getDay()]] || 0) + 1;
+                          });
+                          return days.map((d) => ({
+                            day: d,
+                            calls: counts[d],
+                          }));
+                        })()}
+                        barSize={28}
+                        margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
+                      >
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          vertical={false}
+                          stroke="#f0f0f0"
+                        />
+                        <XAxis
+                          dataKey="day"
+                          tick={{ fontSize: 12, fill: "#9ca3af" }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          tick={{ fontSize: 12, fill: "#9ca3af" }}
+                          axisLine={false}
+                          tickLine={false}
+                          allowDecimals={false}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            background: "#fff",
+                            border: "1px solid #e5e7eb",
+                            borderRadius: "12px",
+                            fontSize: 12,
+                          }}
+                          cursor={{ fill: "#f0f9ff" }}
+                        />
+                        <Bar
+                          dataKey="calls"
+                          fill="#0891b2"
+                          radius={[6, 6, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Call Queue Manager – shown left, aligned with Dialer */}
+                  {activeQueueId && (
+                    <CallQueueManager
+                      queueId={activeQueueId}
+                      onCall={(number, countryCode) => {
+                        handleCall(number, countryCode);
+                      }}
+                      onComplete={() => {
+                        setActiveQueueId(null);
+                        toast.success("Call queue completed!");
+                      }}
+                      currentCallStatus={
+                        callState === "connecting"
+                          ? "ringing"
+                          : (callState as "ringing" | "idle" | "answered")
+                      }
+                    />
+                  )}
+
+                  {/* Recent Calls */}
+                  <RecentCalls
+                    calls={calls}
+                    loading={loading}
+                    onCallBack={handleCallBack}
+                  />
+                </div>
+
+                {/* ── Right Column (wallet + dialer) ── */}
+                <div className="xl:col-span-5 space-y-6">
+                  {/* Wallet Card - dark style like Donezo hero card */}
+                  <div className="bg-gradient-to-br from-[#0891b2] to-[#1a365d] rounded-2xl p-6 text-white">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-sm font-medium text-white/80">
+                        Wallet Balance
+                      </p>
+                      <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                        <Wallet className="w-4 h-4" />
+                      </div>
+                    </div>
+                    <p className="text-4xl font-bold mt-1">
+                      $
+                      {(userType === "company_admin"
+                        ? wallet.balance - totalShared
+                        : wallet.balance
+                      ).toFixed(2)}
+                    </p>
+                    <p className="text-sm text-white/70 mt-1">
+                      {wallet.currency}
+                    </p>
+                    <div className="mt-4 pt-4 border-t border-white/20 flex items-center justify-between">
+                      <span className="text-xs text-white/60">
+                        {isConnected
+                          ? "🟢 Calling device ready"
+                          : "🔴 Device not connected"}
+                      </span>
+                      {!isConnected && (
+                        <button
+                          onClick={retryConnection}
+                          className="text-xs text-white/80 hover:text-white underline"
+                        >
+                          Retry
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Dialer */}
+                  <Dialer
+                    onCall={handleCall}
+                    onEndCall={handleEndCall}
+                    onMarkAnswered={markCallAnswered}
+                    disabled={isInitializing || (!isConnected && !currentCall)}
+                    isInCall={callState === "answered"}
+                    callState={callState}
+                    callDuration={callDuration}
+                    callerName={
+                      currentNumber
+                        ? `${currentCountryCode} ${currentNumber}`
+                        : "Unknown"
+                    }
+                    onUploadCSV={
+                      userType === "company" || joinedOrganizations.length > 0
+                        ? () => setShowCallQueueUpload(true)
+                        : undefined
+                    }
+                  />
+
+                  {/* Invite Notifications for normal users */}
+                  {userType === "normal" && (
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2">
+                      <h3 className="text-sm font-semibold text-[#1a365d]">
+                        Organizations
+                      </h3>
+                      <button
+                        onClick={() => setShowInviteNotifications(true)}
+                        className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-all text-left"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                          <Bell className="w-4 h-4 text-orange-500" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-700">
+                            Invitations
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {pendingInvitesCount > 0
+                              ? `${pendingInvitesCount} pending`
+                              : "No pending invites"}
+                          </p>
+                        </div>
+                        {pendingInvitesCount > 0 && (
+                          <span className="w-5 h-5 rounded-full bg-orange-500 text-white text-xs flex items-center justify-center font-bold">
+                            {pendingInvitesCount}
+                          </span>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setShowJoinedOrgs(true)}
+                        className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-all text-left"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-[#0891b2]/10 flex items-center justify-center flex-shrink-0">
+                          <Building2 className="w-4 h-4 text-[#0891b2]" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-700">
+                            My Organizations
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            View joined orgs
+                          </p>
+                        </div>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Team Activity - Company users */}
+                  {userType === "company" && (
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
+                      <h3 className="text-sm font-semibold text-[#1a365d]">
+                        Team Activity
+                      </h3>
+                      {[
+                        {
+                          icon: (
+                            <div className="w-2 h-2 bg-green-500 rounded-full" />
+                          ),
+                          bg: "bg-green-100",
+                          label: "12 Online",
+                          sub: "Team members",
+                        },
+                        {
+                          icon: (
+                            <PhoneCall className="w-4 h-4 text-[#0891b2]" />
+                          ),
+                          bg: "bg-[#0891b2]/10",
+                          label: "3 Active Calls",
+                          sub: "Right now",
+                        },
+                        {
+                          icon: <Globe className="w-4 h-4 text-purple-600" />,
+                          bg: "bg-purple-100",
+                          label: "15 Countries",
+                          sub: "Connected today",
+                        },
+                      ].map((item, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl"
+                        >
+                          <div
+                            className={`w-8 h-8 rounded-full ${item.bg} flex items-center justify-center`}
+                          >
+                            {item.icon}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-800">
+                              {item.label}
+                            </p>
+                            <p className="text-xs text-gray-500">{item.sub}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}{" "}
+          {/* end overview */}
+          {/* ── VOICE CALL ── */}
+          {sidebarView === "voice-call" && (
+            <div className="max-w-md mx-auto pt-4">
+              <h1 className="text-2xl font-bold text-[#1a365d] mb-6">
+                Voice Call
+              </h1>
+              <Dialer
+                onCall={handleCall}
+                onEndCall={handleEndCall}
+                onMarkAnswered={markCallAnswered}
+                disabled={isInitializing || (!isConnected && !currentCall)}
+                isInCall={callState === "answered"}
+                callState={callState}
+                callDuration={callDuration}
+                callerName={
+                  currentNumber
+                    ? `${currentCountryCode} ${currentNumber}`
+                    : "Unknown"
+                }
+                onUploadCSV={
+                  userType === "company" || joinedOrganizations.length > 0
+                    ? () => setShowCallQueueUpload(true)
+                    : undefined
+                }
+              />
             </div>
           )}
-
-        {/* Organization Invitation Alert - Normal Users */}
-        {userType === "normal" && pendingInvitesCount > 0 && (
-          <div className="mb-6 p-4 bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-300 rounded-xl flex items-center gap-3 shadow-md">
-            <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center animate-pulse">
-              <Bell className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-bold text-orange-800">
-                You have {pendingInvitesCount} organization invitation
-                {pendingInvitesCount > 1 ? "s" : ""}!
-              </p>
-              <p className="text-xs text-orange-600">
-                Click the button to view and respond to your invitations
-              </p>
-            </div>
-            <Button
-              size="sm"
-              className="bg-orange-500 hover:bg-orange-600 text-white"
-              onClick={() => setShowInviteNotifications(true)}
-            >
-              View Invites
-            </Button>
-          </div>
-        )}
-
-        {isConnected && (
-          <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-xl flex items-center gap-3">
-            <Wifi className="w-4 h-4 text-green-600" />
-            <p className="text-sm font-medium text-green-700">
-              Calling device ready
-            </p>
-          </div>
-        )}
-
-        {/* Stats Cards */}
-        <div data-animate="stats" className="mb-6">
-          <StatsCards stats={stats} />
-        </div>
-
-        {/* Main Grid */}
-        <div className="grid gap-6 lg:grid-cols-12">
-          {/* Left Column - Recent Calls */}
-          <div className="lg:col-span-5 space-y-6">
-            <div data-animate="content">
+          {/* ── RECENT CALLS ── */}
+          {sidebarView === "recent-calls" && (
+            <div>
+              <h1 className="text-2xl font-bold text-[#1a365d] mb-6">
+                Recent Calls
+              </h1>
               <RecentCalls
                 calls={calls}
                 loading={loading}
                 onCallBack={handleCallBack}
               />
             </div>
-          </div>
-
-          {/* Middle Column - Dialer */}
-          <div className="lg:col-span-4 space-y-6" data-animate="sidebar">
-            <Dialer
-              onCall={handleCall}
-              onEndCall={handleEndCall}
-              onMarkAnswered={markCallAnswered}
-              disabled={isInitializing || (!isConnected && !currentCall)}
-              isInCall={callState === "answered"}
-              callState={callState}
-              callDuration={callDuration}
-              callerName={
-                currentNumber
-                  ? `${currentCountryCode} ${currentNumber}`
-                  : "Unknown"
-              }
-              onUploadCSV={
-                userType === "company" || joinedOrganizations.length > 0
-                  ? () => setShowCallQueueUpload(true)
-                  : undefined
-              }
-            />
-          </div>
-
-          {/* Right Column - Wallet & Quick Stats */}
-          <div className="lg:col-span-3 space-y-6" data-animate="sidebar">
-            <WalletCard
-              balance={
-                userType === "company_admin"
-                  ? wallet.balance - totalShared
-                  : wallet.balance
-              }
-              currency={wallet.currency}
-            />
-
-            {/* Call Queue Manager */}
-            {activeQueueId && (
-              <CallQueueManager
-                queueId={activeQueueId}
-                onCall={(number, countryCode) => {
-                  // CallQueueManager now extracts country code properly
-                  console.log(
-                    `📞 Dashboard received: ${countryCode} ${number}`,
-                  );
-                  handleCall(number, countryCode);
-                }}
-                onComplete={() => {
-                  setActiveQueueId(null);
-                  toast.success("Call queue completed!");
-                }}
-                currentCallStatus={
-                  callState === "connecting"
-                    ? "ringing"
-                    : (callState as "ringing" | "idle" | "answered")
-                }
-              />
-            )}
-
-            {/* Team Activity Card - Only for company users */}
-            {userType === "company" && (
-              <Card className="border-gray-100 bg-white rounded-2xl shadow-sm">
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-[#1a365d] text-base">
-                    <Users className="w-4 h-4 text-[#0891b2]" />
-                    Team Activity
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                      <div className="w-2 h-2 bg-green-500 rounded-full" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-800">
-                        12 Online
-                      </p>
-                      <p className="text-xs text-gray-500">Team members</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                    <div className="w-8 h-8 rounded-full bg-[#0891b2]/10 flex items-center justify-center">
-                      <PhoneCall className="w-4 h-4 text-[#0891b2]" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-800">
-                        3 Active Calls
-                      </p>
-                      <p className="text-xs text-gray-500">Right now</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-                      <Globe className="w-4 h-4 text-purple-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-800">
-                        15 Countries
-                      </p>
-                      <p className="text-xs text-gray-500">Connected today</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </div>
-      </main>
+          )}
+          {/* ── MEETING CALENDAR ── */}
+          {sidebarView === "calendar" && (
+            <div>
+              <h1 className="text-2xl font-bold text-[#1a365d] mb-6">
+                Meeting Calendar
+              </h1>
+              <MeetingCalendar />
+            </div>
+          )}
+        </main>
+      </div>
+      {/* end flex */}
 
       {/* Modals */}
       {selectedOrg && (

@@ -1,15 +1,6 @@
-import {
-  Phone,
-  LogOut,
-  User,
-  Settings,
-  CreditCard,
-  PhoneCall,
-  Home,
-  Building2,
-} from "lucide-react";
+import { Phone, LogOut, User, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,14 +24,8 @@ interface HeaderProps {
   onManageClick?: () => void;
 }
 
-export function Header({
-  user,
-  onSignOut,
-  userType,
-  onManageClick,
-}: HeaderProps) {
+export function Header({ user, onSignOut }: HeaderProps) {
   const navigate = useNavigate();
-  const location = useLocation();
 
   const fullName = user?.user_metadata?.full_name || user?.email || "User";
   const initials = fullName
@@ -58,18 +43,9 @@ export function Header({
     toast.info("Settings page coming soon!");
   };
 
-  // Only show wallet for normal users, company admins access wallet from their dashboard
-  const navLinks = [
-    { href: "/dashboard", label: "Dashboard", icon: Home },
-    { href: "/numbers", label: "Numbers", icon: PhoneCall },
-    ...(userType === "normal"
-      ? [{ href: "/payments", label: "Wallet", icon: CreditCard }]
-      : []),
-  ];
-
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-100 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-      <div className="container flex h-16 items-center justify-between px-4 md:px-6">
+      <div className="flex h-16 items-center justify-between px-6">
         {/* Logo */}
         <div
           className="flex items-center gap-3 cursor-pointer"
@@ -83,40 +59,7 @@ export function Header({
           </span>
         </div>
 
-        {/* Navigation Links - Desktop */}
-        <nav className="hidden md:flex items-center gap-1">
-          {navLinks.map((link) => {
-            const isActive = location.pathname === link.href;
-            return (
-              <button
-                key={link.href}
-                onClick={() => navigate(link.href)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-                  isActive
-                    ? "bg-[#0891b2]/10 text-[#0891b2]"
-                    : "text-gray-600 hover:bg-gray-100"
-                }`}
-              >
-                <link.icon className="w-4 h-4" />
-                {link.label}
-              </button>
-            );
-          })}
-
-          {/* Admin Button - For Company Users and Company Admins */}
-          {(userType === "company" || userType === "company_admin") &&
-            onManageClick && (
-              <button
-                onClick={onManageClick}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
-              >
-                <Building2 className="w-4 h-4" />
-                Admin
-              </button>
-            )}
-        </nav>
-
-        {/* User Menu */}
+        {/* User Menu - Right Side Only */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -150,21 +93,6 @@ export function Header({
               </div>
             </div>
             <DropdownMenuSeparator className="bg-gray-100" />
-
-            {/* Mobile Nav Links */}
-            <div className="md:hidden">
-              {navLinks.map((link) => (
-                <DropdownMenuItem
-                  key={link.href}
-                  onClick={() => navigate(link.href)}
-                  className="cursor-pointer"
-                >
-                  <link.icon className="mr-2 h-4 w-4 text-gray-500" />
-                  {link.label}
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator className="bg-gray-100" />
-            </div>
 
             <DropdownMenuItem
               onClick={handleProfile}
