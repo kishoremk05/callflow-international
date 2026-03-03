@@ -8,7 +8,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useTwilioDevice } from "@/hooks/useTwilioDevice";
+import { useCallContext } from "@/contexts/CallContext";
 import { Header } from "@/components/layout/Header";
 import { WalletCard } from "@/components/dashboard/WalletCard";
 import { Dialer } from "@/components/dashboard/Dialer";
@@ -83,7 +83,12 @@ export default function Dashboard() {
     markCallAnswered,
     error: twilioError,
     retryConnection,
-  } = useTwilioDevice();
+    currentNumber,
+    setCurrentNumber,
+    currentCountryCode,
+    setCurrentCountryCode,
+    callDuration,
+  } = useCallContext();
   const [wallet, setWallet] = useState<Wallet>({ balance: 0, currency: "USD" });
   const [totalShared, setTotalShared] = useState(0);
   const [calls, setCalls] = useState<CallLog[]>([]);
@@ -94,9 +99,6 @@ export default function Dashboard() {
     totalSpent: 0,
     thisMonth: 0,
   });
-  const [callDuration, setCallDuration] = useState(0);
-  const [currentNumber, setCurrentNumber] = useState("");
-  const [currentCountryCode, setCurrentCountryCode] = useState("");
   const [activeView, setActiveView] = useState<"dialer" | "team" | "analytics">(
     "dialer",
   );
@@ -142,7 +144,6 @@ export default function Dashboard() {
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const callTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Company search effect
   useEffect(() => {
@@ -227,28 +228,6 @@ export default function Dashboard() {
 
     return () => ctx.revert();
   }, []);
-
-  // Call duration timer
-  useEffect(() => {
-    if (callState === "answered") {
-      callTimerRef.current = setInterval(() => {
-        setCallDuration((prev) => prev + 1);
-      }, 1000);
-    } else {
-      if (callTimerRef.current) {
-        clearInterval(callTimerRef.current);
-      }
-      if (callState === "idle") {
-        setCallDuration(0);
-      }
-    }
-
-    return () => {
-      if (callTimerRef.current) {
-        clearInterval(callTimerRef.current);
-      }
-    };
-  }, [callState]);
 
   useEffect(() => {
     if (user) {

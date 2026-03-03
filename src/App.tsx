@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
+import { CallProvider } from "@/contexts/CallContext";
+import { GlobalFloatingCallButton } from "@/components/GlobalFloatingCallButton";
 import Landing from "./pages/Landing";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
@@ -37,55 +39,62 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <ScrollToTop />
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Index />} />
-          <Route path="/signup" element={<Index />} />
-          <Route path="/demo" element={<Index />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route
-            path="/account-type-selection"
-            element={<AccountTypeSelection />}
-          />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/voice-call" element={<VoiceCall />} />
-          <Route path="/payments" element={<Payments />} />
-          <Route path="/numbers" element={<PurchaseNumbers />} />
-          <Route path="/enterprise" element={<EnterpriseDashboard />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin-panel" element={<AdminPanel />} />
-          <Route path="/company-admin/login" element={<CompanyAdminLogin />} />
-          <Route
-            path="/company-admin/register"
-            element={<CompanyAdminRegister />}
-          />
-          <Route
-            path="/company-admin/dashboard"
-            element={<CompanyAdminDashboard />}
-          />
-          <Route path="/super-admin/login" element={<SuperAdminLogin />} />
-          <Route
-            path="/super-admin/dashboard"
-            element={<SuperAdminDashboard />}
-          />
-          <Route path="/features" element={<Features />} />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="/api" element={<API />} />
-          <Route path="/about" element={<AboutUs />} />
-          <Route path="/careers" element={<Careers />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/terms" element={<TermsOfService />} />
-          <Route path="/cookies" element={<CookiePolicy />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <CallProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <ScrollToTop />
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Index />} />
+            <Route path="/signup" element={<Index />} />
+            <Route path="/demo" element={<Index />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route
+              path="/account-type-selection"
+              element={<AccountTypeSelection />}
+            />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/voice-call" element={<VoiceCall />} />
+            <Route path="/payments" element={<Payments />} />
+            <Route path="/numbers" element={<PurchaseNumbers />} />
+            <Route path="/enterprise" element={<EnterpriseDashboard />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin-panel" element={<AdminPanel />} />
+            <Route
+              path="/company-admin/login"
+              element={<CompanyAdminLogin />}
+            />
+            <Route
+              path="/company-admin/register"
+              element={<CompanyAdminRegister />}
+            />
+            <Route
+              path="/company-admin/dashboard"
+              element={<CompanyAdminDashboard />}
+            />
+            <Route path="/super-admin/login" element={<SuperAdminLogin />} />
+            <Route
+              path="/super-admin/dashboard"
+              element={<SuperAdminDashboard />}
+            />
+            <Route path="/features" element={<Features />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/api" element={<API />} />
+            <Route path="/about" element={<AboutUs />} />
+            <Route path="/careers" element={<Careers />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/cookies" element={<CookiePolicy />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          {/* Global Floating Call Button - shows on all pages when in call */}
+          <GlobalFloatingCallButton />
+        </BrowserRouter>
+      </CallProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

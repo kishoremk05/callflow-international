@@ -330,14 +330,14 @@ export default function Landing() {
       {/* HERO SECTION */}
       {/* ============================================================================ */}
       <section
-        className="relative pt-32 pb-12 overflow-hidden"
+        className="relative pt-24 md:pt-32 pb-8 md:pb-12 overflow-hidden"
         style={{ minHeight: "calc(100vh - 80px)" }}
       >
         {/* Subtle Animated Decorative Elements */}
 
         {/* Floating gradient ring - top left */}
         <motion.div
-          className="absolute top-32 left-20 w-40 h-40 rounded-full border-2 border-cyan-300/20 z-0"
+          className="hidden md:block absolute top-32 left-20 w-40 h-40 rounded-full border-2 border-cyan-300/20 z-0"
           animate={{
             x: [0, 30, 0],
             y: [0, -20, 0],
@@ -352,7 +352,7 @@ export default function Landing() {
 
         {/* Floating gradient ring - top right */}
         <motion.div
-          className="absolute top-20 right-32 w-32 h-32 rounded-full border-2 border-purple-300/20 z-0"
+          className="hidden md:block absolute top-20 right-32 w-32 h-32 rounded-full border-2 border-purple-300/20 z-0"
           animate={{
             x: [0, -25, 0],
             y: [0, 25, 0],
@@ -367,7 +367,7 @@ export default function Landing() {
 
         {/* Small accent blob - left side */}
         <motion.div
-          className="absolute top-1/2 left-10 w-24 h-24 bg-gradient-to-br from-blue-400/15 to-cyan-400/15 rounded-full filter blur-2xl z-0"
+          className="absolute top-1/2 left-2 md:left-10 w-16 md:w-24 h-16 md:h-24 bg-gradient-to-br from-blue-400/15 to-cyan-400/15 rounded-full filter blur-2xl z-0"
           animate={{
             y: [0, 40, 0],
             scale: [1, 1.15, 1],
@@ -381,7 +381,7 @@ export default function Landing() {
 
         {/* Small accent blob - right side */}
         <motion.div
-          className="absolute top-1/3 right-16 w-20 h-20 bg-gradient-to-br from-purple-400/15 to-pink-400/15 rounded-full filter blur-2xl z-0"
+          className="absolute top-1/3 right-2 md:right-16 w-16 md:w-20 h-16 md:h-20 bg-gradient-to-br from-purple-400/15 to-pink-400/15 rounded-full filter blur-2xl z-0"
           animate={{
             y: [0, -30, 0],
             scale: [1, 1.2, 1],
@@ -395,7 +395,7 @@ export default function Landing() {
 
         {/* Floating dots for depth */}
         <motion.div
-          className="absolute top-40 left-1/3 w-3 h-3 bg-cyan-400/40 rounded-full z-0"
+          className="hidden md:block absolute top-40 left-1/3 w-3 h-3 bg-cyan-400/40 rounded-full z-0"
           animate={{
             y: [0, -50, 0],
             opacity: [0.4, 0.8, 0.4],
@@ -408,7 +408,7 @@ export default function Landing() {
         />
 
         <motion.div
-          className="absolute bottom-1/3 right-1/4 w-2 h-2 bg-purple-400/40 rounded-full z-0"
+          className="hidden md:block absolute bottom-1/3 right-1/4 w-2 h-2 bg-purple-400/40 rounded-full z-0"
           animate={{
             y: [0, 40, 0],
             opacity: [0.3, 0.7, 0.3],
@@ -420,7 +420,7 @@ export default function Landing() {
           }}
         />
 
-        <div className="max-w-[1280px] mx-auto px-6 text-center relative z-10">
+        <div className="max-w-[1280px] mx-auto px-4 md:px-6 text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, x: -50, filter: "blur(10px)" }}
             animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
@@ -432,9 +432,10 @@ export default function Landing() {
               WebkitBackfaceVisibility: "hidden",
             }}
           >
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-foreground leading-[1.1] mb-6">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-foreground leading-[1.1] mb-4 md:mb-6 px-2">
               Make International Calls
-              <br />
+              <br className="hidden sm:block" />
+              <span className="sm:hidden"> </span>
               From Your Browser
             </h1>
           </motion.div>
@@ -454,7 +455,7 @@ export default function Landing() {
               WebkitBackfaceVisibility: "hidden",
             }}
           >
-            <p className="text-lg md:text-xl text-muted-foreground max-w-[600px] mx-auto mb-10 leading-relaxed">
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-[600px] mx-auto mb-8 md:mb-10 leading-relaxed px-2">
               Crystal-clear HD calls to 70+ countries. No apps, no SIM cards, no
               restrictions. Just open your browser and connect with anyone,
               anywhere.
@@ -462,7 +463,7 @@ export default function Landing() {
           </motion.div>
 
           <motion.div
-            className="flex items-center justify-center gap-4 mb-16"
+            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-12 md:mb-16 px-4"
             initial={{ opacity: 0, x: -50, filter: "blur(10px)" }}
             animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
             transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
@@ -475,13 +476,13 @@ export default function Landing() {
           >
             <a
               href="#pricing"
-              className="inline-flex items-center justify-center h-12 px-7 rounded-full bg-foreground text-background text-sm font-medium hover:scale-105 hover:shadow-xl transition-all duration-200"
+              className="inline-flex items-center justify-center h-12 px-7 rounded-full bg-foreground text-background text-sm font-medium hover:scale-105 hover:shadow-xl transition-all duration-200 w-full sm:w-auto"
             >
               Start Calling Free
             </a>
             <a
               href="#features"
-              className="inline-flex items-center justify-center h-12 px-7 rounded-full border border-border text-foreground hover:text-white text-sm font-medium hover:bg-secondary hover:scale-105 transition-all duration-200"
+              className="inline-flex items-center justify-center h-12 px-7 rounded-full border border-border text-foreground hover:text-white text-sm font-medium hover:bg-secondary hover:scale-105 transition-all duration-200 w-full sm:w-auto"
             >
               See features
             </a>
@@ -489,7 +490,7 @@ export default function Landing() {
 
           {/* Dashboard mockup */}
           <motion.div
-            className="relative max-w-[1100px] mx-auto mt-16"
+            className="relative max-w-[1100px] mx-auto mt-8 md:mt-16 px-2 md:px-0"
             style={{
               perspective: "1200px",
               transform: "translateZ(0)",
@@ -540,8 +541,8 @@ export default function Landing() {
       {/* ============================================================================ */}
       {/* PLATFORM SECTION */}
       {/* ============================================================================ */}
-      <section ref={devicesRef.ref} id="benefits" className="py-20 md:py-28">
-        <div className="max-w-[1280px] mx-auto px-6">
+      <section ref={devicesRef.ref} id="benefits" className="py-16 md:py-20 lg:py-28">
+        <div className="max-w-[1280px] mx-auto px-4 md:px-6">
           <div
             className={`text-center mb-16 transition-all duration-700 ${
               devicesRef.isVisible
@@ -552,9 +553,9 @@ export default function Landing() {
             <span className="text-xs font-semibold text-[#0891b2] uppercase tracking-wider mb-2 block">
               🌐 Browser-Based Communication
             </span>
-            <div className="flex items-start justify-center gap-3 mt-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-center gap-2 sm:gap-3 mt-4">
               <svg
-                className="w-10 h-10 text-foreground flex-shrink-0 mt-1"
+                className="w-8 h-8 sm:w-10 sm:h-10 text-foreground flex-shrink-0 mt-1"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -566,13 +567,13 @@ export default function Landing() {
                   d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                 />
               </svg>
-              <h2 className="text-4xl md:text-5xl font-bold text-foreground leading-tight">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground leading-tight">
                 Call from anywhere,
                 <br />
                 stay connected
               </h2>
             </div>
-            <p className="text-muted-foreground text-lg mt-4 max-w-2xl mx-auto">
+            <p className="text-muted-foreground text-base sm:text-lg mt-4 max-w-2xl mx-auto px-4">
               Experience seamless global communication directly from your
               browser — no downloads needed
             </p>
@@ -588,7 +589,7 @@ export default function Landing() {
               }`}
               style={{ transitionDelay: "0.1s" }}
             >
-              <div className="p-8 md:p-12">
+              <div className="p-6 sm:p-8 md:p-12">
                 <div className="grid md:grid-cols-2 gap-10 items-center">
                   {/* Left - Text Content */}
                   <div>
@@ -1523,7 +1524,7 @@ export default function Landing() {
       <section
         ref={featuresRef.ref}
         id="features"
-        className="py-20 md:py-28 relative overflow-hidden"
+        className="py-16 md:py-20 lg:py-28 relative overflow-hidden"
       >
         {/* Background gradient orbs */}
         <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -1569,7 +1570,7 @@ export default function Landing() {
               }
             `}</style>
 
-            <h2 className="text-4xl md:text-6xl font-bold text-foreground mt-4 leading-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mt-4 leading-tight">
               <div className="flex items-center justify-center gap-3">
                 {/* Small logo */}
                 <svg
@@ -2474,8 +2475,8 @@ export default function Landing() {
       {/* ============================================================================ */}
       {/* PRICING SECTION */}
       {/* ============================================================================ */}
-      <section ref={pricingRef.ref} id="pricing" className="py-20 md:py-28">
-        <div className="max-w-[1280px] mx-auto px-6">
+      <section ref={pricingRef.ref} id="pricing" className="py-16 md:py-20 lg:py-28">
+        <div className="max-w-[1280px] mx-auto px-4 md:px-6">
           <div
             className={`text-center mb-12 transition-all duration-700 ${
               pricingRef.isVisible
