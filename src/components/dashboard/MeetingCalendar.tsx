@@ -12,6 +12,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Users,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +24,8 @@ import {
   addDays,
   parseISO,
 } from "date-fns";
+import { CreateEventDialog, CreateEventData } from "./CreateEventDialog";
+import { toast } from "sonner";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -61,7 +64,7 @@ declare global {
   }
 }
 
-const SCOPES = "https://www.googleapis.com/auth/calendar.readonly";
+const SCOPES = "https://www.googleapis.com/auth/calendar";
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;
 const STORAGE_KEY = "gcal_access_token";
 
@@ -135,6 +138,8 @@ export function MeetingCalendar() {
   const [error, setError] = useState<string | null>(null);
   const [gisReady, setGisReady] = useState(false);
   const [scriptError, setScriptError] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isCreatingEvent, setIsCreatingEvent] = useState(false);
 
   // ── Load Google Identity Services script ──────────────────────────────────
   useEffect(() => {
@@ -239,6 +244,58 @@ export function MeetingCalendar() {
   const handleRefresh = () => {
     if (accessToken) fetchEvents(accessToken, true);
     else if (tokenClient) tokenClient.requestAccessToken({ prompt: "" });
+  };
+
+  const handleCreateEvent = async (eventData: CreateEventData) => {
+    if (!accessToken) {
+      toast.error("Please connect your Google Calendar first");
+      return;
+    }
+
+    setIsCreatingEvent(true);
+    try {
+      // Call the backend API to create the event
+      const response = await fetch("/api/calendar/create-event", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          accessToken,
+          eventData,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (response.status === 401) {
+          // Token expired
+          sessionStorage.removeItem(STORAGE_KEY);
+          setAccessToken(null);
+          toast.error("Session expired. Please reconnect your calendar.");
+          setIsCreateDialogOpen(false);
+          return;
+        }
+        throw new Error(
+          errorData.message || errorData.error || "Failed to create event",
+        );
+      }
+
+      const result = await response.json();
+      toast.success("Event created successfully!");
+
+      // Refresh the calendar to show the new event
+      if (accessToken) {
+        fetchEvents(accessToken, true);
+      }
+
+      setIsCreateDialogOpen(false);
+    } catch (err: any) {
+      console.error("Event creation error:", err);
+      toast.error(err.message || "Failed to create event");
+    } finally {
+      setIsCreatingEvent(false);
+    }
   };
 
   // ── Group events ──────────────────────────────────────────────────────────
@@ -369,6 +426,13 @@ export function MeetingCalendar() {
         </div>
         <div className="flex items-center gap-2">
           <button
+            onClick={() => setIsCreateDialogOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-[#0891b2] border border-[#0891b2] hover:bg-[#0e7490] transition-all disabled:opacity-50"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Create
+          </button>
+          <button
             onClick={handleRefresh}
             disabled={refreshing}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 border border-gray-200 hover:bg-gray-50 transition-all disabled:opacity-50"
@@ -462,6 +526,13 @@ export function MeetingCalendar() {
           <p className="text-sm">No events in the next 10 days</p>
         </div>
       )}
+
+      <CreateEventDialog
+        isOpen={isCreateDialogOpen}
+        onClose={() => setIsCreateDialogOpen(false)}
+        onSubmit={handleCreateEvent}
+        loading={isCreatingEvent}
+      />
     </div>
   );
 }

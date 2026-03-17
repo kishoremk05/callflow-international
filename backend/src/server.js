@@ -13,6 +13,7 @@ import twilioRoutes from "./routes/twilio.routes.js";
 import numberRoutes from "./routes/number.routes.js";
 import enterpriseRoutes from "./routes/enterprise.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
+import calendarRoutes from "./routes/calendar.routes.js";
 
 // Import middleware
 import { errorHandler } from "./middleware/errorHandler.js";
@@ -28,7 +29,7 @@ app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:5173",
     credentials: true,
-  })
+  }),
 );
 app.use(morgan("dev"));
 app.use(express.json());
@@ -48,6 +49,7 @@ app.use("/api/twilio", twilioRoutes);
 app.use("/api/numbers", numberRoutes);
 app.use("/api/enterprise", enterpriseRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/calendar", calendarRoutes);
 
 // Error handling
 app.use(errorHandler);

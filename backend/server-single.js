@@ -7125,6 +7125,187 @@ app.post(
 );
 
 // ============================================================================
+// GOOGLE CALENDAR ROUTES
+// ============================================================================
+
+// Create event in Google Calendar
+app.post("/api/calendar/create-event", async (req, res, next) => {
+  try {
+    const { accessToken, eventData } = req.body;
+
+    // Validate access token
+    if (!accessToken) {
+      return res.status(400).json({ error: "Access token is required" });
+    }
+
+    // Validate event data
+    if (!eventData || !eventData.summary) {
+      return res.status(400).json({ error: "Event summary is required" });
+    }
+
+    // Validate start and end times
+    if (!eventData.start || !eventData.end) {
+      return res
+        .status(400)
+        .json({ error: "Event start and end times are required" });
+    }
+
+    // Prepare the event object for Google Calendar API
+    const googleCalendarEvent = {
+      summary: eventData.summary,
+      description: eventData.description || "",
+      location: eventData.location || "",
+      start: {
+        dateTime: eventData.start, // ISO 8601 format
+      },
+      end: {
+        dateTime: eventData.end, // ISO 8601 format
+      },
+    };
+
+    // Add conferencing if requested
+    if (eventData.addConference) {
+      googleCalendarEvent.conferenceData = {
+        createRequest: {
+          requestId: `conference-${Date.now()}`,
+          conferenceSolutionKey: {
+            key: "hangoutsMeet",
+          },
+        },
+      };
+    }
+
+    // Add attendees if provided
+    if (eventData.attendees && eventData.attendees.length > 0) {
+      googleCalendarEvent.attendees = eventData.attendees.map((email) => ({
+        email,
+      }));
+    }
+
+    // Send request to Google Calendar API
+    const response = await fetch(
+      "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(googleCalendarEvent),
+        ...(eventData.addConference && {
+          params: { conferenceDataVersion: 1 },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+
+      // Handle Google API errors
+      if (response.status === 401) {
+        return res.status(401).json({
+          error: "Unauthorized",
+          message: "Access token has expired. Please reconnect your calendar.",
+        });
+      }
+
+      if (response.status === 403) {
+        return res.status(403).json({
+          error: "Forbidden",
+          message: "You don't have permission to access Google Calendar.",
+        });
+      }
+
+      return res.status(400).json({
+        error: "Google Calendar API error",
+        message: errorData.error?.message || "Failed to create event",
+      });
+    }
+
+    const result = await response.json();
+
+    return res.status(201).json({
+      success: true,
+      message: "Event created successfully",
+      event: {
+        id: result.id,
+        summary: result.summary,
+        start: result.start,
+        end: result.end,
+        htmlLink: result.htmlLink,
+        conferenceData: result.conferenceData,
+      },
+    });
+  } catch (error) {
+    console.error("Calendar event creation error:", error);
+    return res.status(500).json({
+      error: "Failed to create event",
+      message: error.message,
+    });
+  }
+});
+
+// Get calendar availability
+app.post("/api/calendar/availability", async (req, res, next) => {
+  try {
+    const { accessToken, timeMin, timeMax } = req.body;
+
+    if (!accessToken) {
+      return res.status(400).json({ error: "Access token is required" });
+    }
+
+    if (!timeMin || !timeMax) {
+      return res
+        .status(400)
+        .json({ error: "timeMin and timeMax are required" });
+    }
+
+    const response = await fetch(
+      "https://www.googleapis.com/calendar/v3/calendars/primary/freebusy",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          timeMin,
+          timeMax,
+          items: [{ id: "primary" }],
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        return res.status(401).json({
+          error: "Unauthorized",
+          message: "Access token has expired.",
+        });
+      }
+
+      return res.status(500).json({
+        error: "Failed to fetch availability",
+        message: "Could not retrieve calendar availability",
+      });
+    }
+
+    const result = await response.json();
+
+    return res.status(200).json({
+      success: true,
+      availability: result.calendars.primary.busy,
+    });
+  } catch (error) {
+    console.error("Calendar availability error:", error);
+    return res.status(500).json({
+      error: "Failed to fetch availability",
+      message: error.message,
+    });
+  }
+});
+
+// ============================================================================
 // ERROR HANDLING
 // ============================================================================
 
