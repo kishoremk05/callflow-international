@@ -4,7 +4,6 @@ const footerPageLinks = [
   { href: "/", label: "Home" },
   { href: "/features", label: "Features" },
   { href: "/pricing", label: "Pricing" },
-  { href: "/blog", label: "Blog" },
 ];
 
 const footerInfoLinks = [

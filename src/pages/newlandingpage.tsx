@@ -14,20 +14,20 @@ const companyInfo = {
   shortName: "CallFlow",
   tagline: "Global Communication, Zero Boundaries",
   description:
-    "Browser-based VoIP SaaS platform for international calling, video meetings, and enterprise communication.",
+    "Browser-based VoIP SaaS platform for calling, meetings, and enterprise communication.",
   secondQuote:
     "It doesn't matter where your team is located. What matters is how seamlessly they connect.",
 };
 
 const showcaseStats = [
-  { number: "10M+", label: "Calls Made" },
-  { number: "50+", label: "Countries" },
+  { number: "0s", label: "Load Time" },
+  { number: "150+", label: "Countries" },
   { number: "99.9%", label: "Uptime SLA" },
 ];
 
 const premiumFeatures = [
   {
-    icon: "ðŸŽ§",
+    icon: "AUD",
     title: "HD Voice Quality",
     desc: "Crystal-clear audio on every call with adaptive bitrate and automatic network optimization.",
     stats: [
@@ -36,7 +36,7 @@ const premiumFeatures = [
     ],
   },
   {
-    icon: "ðŸŒ",
+    icon: "WEB",
     title: "Browser Calling",
     desc: "Make HD calls directly from your browser. No apps or downloads required, just instant connectivity.",
     stats: [
@@ -45,53 +45,53 @@ const premiumFeatures = [
     ],
   },
   {
-    icon: "ðŸ”’",
-    title: "Secure Wallet",
-    desc: "Manage your credits securely with multiple payment options and instant fund transfers.",
-    stats: [
-      { label: "Encryption", value: "AES-256" },
-      { label: "Payment Methods", value: "10+" },
-    ],
-  },
-  {
-    icon: "ðŸ”—",
-    title: "Powerful Integrations",
-    desc: "Connect seamlessly with your favorite tools - Twilio, Stripe, Slack, and 50+ more.",
-    stats: [
-      { label: "Integrations", value: "50+" },
-      { label: "API & Webhooks", value: "âœ“" },
-    ],
-  },
-  {
-    icon: "ðŸ‘¥",
+    icon: "TEAM",
     title: "Team Collaboration",
     desc: "Host internal voice meetings and collaborate with your team seamlessly across the globe.",
     stats: [
       { label: "Team Size", value: "Unlimited" },
-      { label: "Internal Calls", value: "Free" },
+      { label: "Internal Calls", value: "Duration-based cost" },
     ],
   },
   {
-    icon: "ðŸ“±",
-    title: "Virtual Numbers",
-    desc: "Get local phone numbers from 70+ countries for your business presence worldwide.",
+    icon: "NUM",
+    title: "Virtual Number Allocation",
+    desc: "Assign a personal virtual number to each individual user for direct inbound calls, privacy, and location-based presence.",
     stats: [
-      { label: "Countries", value: "70+" },
-      { label: "Setup Time", value: "Instant" },
+      { label: "User Type", value: "Individual" },
+      { label: "Activation", value: "Instant" },
     ],
   },
   {
-    icon: "ðŸ“Š",
+    icon: "AI",
+    title: "AI Agent Automation Support (Coming Soon)",
+    desc: "AI assistant for call summaries, ticket drafting, follow-up reminders, and workflow automation after every conversation.",
+    stats: [
+      { label: "Status", value: "Coming Soon" },
+      { label: "Use Cases", value: "Support + Ops" },
+    ],
+  },
+  {
+    icon: "REC",
+    title: "Call Recording (Coming Soon)",
+    desc: "Automatic recording options with secure storage, searchable transcripts, and role-based playback controls.",
+    stats: [
+      { label: "Status", value: "Coming Soon" },
+      { label: "Storage", value: "Encrypted" },
+    ],
+  },
+  {
+    icon: "ANL",
     title: "Call Analytics",
-    desc: "Track usage, monitor costs, and optimize your communication spending with detailed insights.",
+    desc: "Monitor pilot usage, validate call quality, and prepare reporting workflows before public rollout.",
     stats: [
-      { label: "Total Calls", value: "2,547" },
-      { label: "Avg Duration", value: "18:42" },
-      { label: "Cost Saved", value: "$1,345" },
+      { label: "Mode", value: "Pre-Launch" },
+      { label: "Pilot Calls", value: "0-100" },
+      { label: "Report Status", value: "Baseline" },
     ],
   },
   {
-    icon: "ðŸŽ™ï¸",
+    icon: "CONF",
     title: "Conference Calling",
     desc: "Host multi-party conference calls with crystal-clear audio for seamless group discussions.",
     stats: [
@@ -103,44 +103,44 @@ const premiumFeatures = [
 ];
 
 const stats = [
-  { label: "Calls Made", value: "10M+", numericValue: 10 },
-  { label: "Countries", value: "50+", numericValue: 50 },
+  { label: "Load Time", value: "0s", numericValue: 0 },
+  { label: "Countries", value: "150+", numericValue: 150 },
   { label: "Uptime SLA", value: "99.9%", numericValue: 99.9 },
-  { label: "Active Teams", value: "5K+", numericValue: 5 },
+  { label: "Launch Stage", value: "Pre-Launch", numericValue: 0 },
 ];
 
 const pricingTiers = [
   {
     id: "starter",
     name: "Starter",
-    price: "$5",
-    period: "/month",
-    description: "For solo use with light needs.",
-    features: ["Call 50+ countries", "HD browser calling"],
+    price: "Free",
+    period: "",
+    description: "For solo use and testing.",
+    features: ["Call 150+ countries", "HD browser calling"],
     highlighted: false,
   },
   {
     id: "business",
     name: "Business",
-    price: "$50",
+    price: "$49",
     period: "/month",
-    description: "Best value for teams",
-    features: ["All Starter features", "190+ countries"],
+    description: "For teams with 11+ users",
+    features: ["All Starter features", "Call 150+ countries"],
     highlighted: true,
   },
   {
     id: "enterprise",
     name: "Enterprise",
-    price: "$200",
-    period: "/month",
-    description: "For team use with custom needs.",
+    price: "Custom",
+    period: "",
+    description: "Custom account (up to 10 users).",
     features: ["All Business features", "Dedicated manager"],
     highlighted: false,
   },
 ];
 
 const integrations = [
-  "Twilio",
+  "SIP Trunk",
   "LiveKit",
   "Stripe",
   "Slack",
@@ -155,49 +155,56 @@ const integrations = [
 const navItems = [
   { href: "/", label: "Home" },
   { href: "/features", label: "Features" },
-  { href: "/how-it-works", label: "Analysis" },
   { href: "/pricing", label: "Pricing" },
 ];
 
-const analysisMetrics = [
-  { label: "Total Calls", value: "128K+" },
-  { label: "Minutes Spent", value: "342K" },
-  { label: "Shares", value: "24.8K" },
-  { label: "Growth Analysis", value: "+38%" },
-  { label: "Outreaches", value: "12.4K" },
+const dashboardAnalysisMetrics = [
+  { label: "Pilot Calls", value: "0-100" },
+  { label: "Minutes Tracked", value: "0-300" },
+  { label: "Reports Shared", value: "0-20" },
+  { label: "Data Readiness", value: "Baseline" },
+  { label: "Outbound Trials", value: "0-50" },
 ];
 
-const analysisCards = [
+const companyDashboardAnalysisMetrics = [
+  { label: "Team Members", value: "0-120" },
+  { label: "Shared Wallets", value: "0-15" },
+  { label: "CSV Imports", value: "0-10" },
+  { label: "Queue Depth", value: "0-25" },
+  { label: "Ops Readiness", value: "Enabled" },
+];
+
+const dashboardAnalysisCards = [
   {
-    icon: "ðŸ“ž",
+    icon: "CALL",
     category: "Usage",
     subtitle: "Conversation Volume",
     title: "Total Calls Overview",
     desc: "Monitor inbound and outbound call totals by team, region, and campaign with live rollups and daily trend lines.",
   },
   {
-    icon: "â±ï¸",
+    icon: "TIME",
     category: "Efficiency",
     subtitle: "Time Intelligence",
     title: "Minutes Spent",
     desc: "Track talk-time distribution and identify high-efficiency calling windows to optimize team performance and cost control.",
   },
   {
-    icon: "ðŸ”",
+    icon: "FLOW",
     category: "Engagement",
     subtitle: "Share Performance",
     title: "Shares & Follow-ups",
     desc: "Measure how shared call summaries, links, and notes translate into follow-ups, team alignment, and improved outcomes.",
   },
   {
-    icon: "ðŸ“ˆ",
+    icon: "GROW",
     category: "Forecast",
     subtitle: "Growth Signals",
     title: "Growth Analysis",
     desc: "Visualize week-over-week call growth, quality consistency, and retention signals with actionable trend insights.",
   },
   {
-    icon: "ðŸŽ¯",
+    icon: "GOAL",
     category: "Pipeline",
     subtitle: "Reach Impact",
     title: "Outreach Analysis",
@@ -205,7 +212,177 @@ const analysisCards = [
   },
 ];
 
-const analysisSidebarItems = [
+const companyDashboardAnalysisCards = [
+  {
+    icon: "TEAM",
+    category: "Collaboration",
+    subtitle: "Company Workspace",
+    title: "Team Management",
+    desc: "Organize members by role, track team calling activity, and manage workspace-level operations from one panel.",
+  },
+  {
+    icon: "WLT",
+    category: "Billing",
+    subtitle: "Shared Credits",
+    title: "Wallet Sharing",
+    desc: "Share wallet balances across departments, apply spend rules, and monitor credit usage by user or team.",
+  },
+  {
+    icon: "CSV",
+    category: "Import",
+    subtitle: "Bulk Operations",
+    title: "CSV Upload Sheet",
+    desc: "Upload and validate contact lists in bulk, then push clean records directly into outreach workflows.",
+  },
+  {
+    icon: "QUE",
+    category: "Routing",
+    subtitle: "Inbound Operations",
+    title: "Call Queuing",
+    desc: "Manage queue load, waiting time, and escalation flows to keep incoming calls distributed effectively.",
+  },
+  {
+    icon: "CTRL",
+    category: "Governance",
+    subtitle: "Company Controls",
+    title: "Admin & Access Overview",
+    desc: "Manage role permissions, approval flows, and audit visibility for wallet actions, team settings, and operational controls.",
+  },
+];
+
+const analysisContentByItem = {
+  Dashboard: {
+    metrics: dashboardAnalysisMetrics,
+    cards: dashboardAnalysisCards,
+  },
+  "Team Call": {
+    metrics: [
+      { label: "Active Rooms", value: "0-8" },
+      { label: "Participants", value: "0-40" },
+      { label: "Avg Session", value: "08:30" },
+      { label: "Audio Stability", value: "99%" },
+      { label: "Queue Delay", value: "<2s" },
+    ],
+    cards: [
+      {
+        icon: "ROOM",
+        category: "Calls",
+        subtitle: "Live Team Rooms",
+        title: "Team Call Sessions",
+        desc: "View active internal call rooms, participant count, and session health across teams in real time.",
+      },
+      {
+        icon: "AUDIO",
+        category: "Quality",
+        subtitle: "Voice Performance",
+        title: "Call Quality Monitor",
+        desc: "Track packet loss, jitter, and reconnect events to maintain consistent team calling quality.",
+      },
+    ],
+  },
+  "Recent Calls": {
+    metrics: [
+      { label: "Calls Today", value: "0-60" },
+      { label: "Answered", value: "0-45" },
+      { label: "Missed", value: "0-12" },
+      { label: "Avg Handle", value: "04:10" },
+      { label: "Follow-Ups", value: "0-20" },
+    ],
+    cards: [
+      {
+        icon: "LOG",
+        category: "History",
+        subtitle: "Timeline",
+        title: "Recent Call Feed",
+        desc: "Review latest inbound and outbound calls with timestamp, outcome, and assigned owner.",
+      },
+      {
+        icon: "TASK",
+        category: "Action",
+        subtitle: "Post-Call",
+        title: "Follow-Up Queue",
+        desc: "Automatically queue callback and action items based on missed calls, short calls, or flagged outcomes.",
+      },
+    ],
+  },
+  "Meeting Calendar": {
+    metrics: [
+      { label: "Meetings Today", value: "0-15" },
+      { label: "Upcoming", value: "0-30" },
+      { label: "Rescheduled", value: "0-5" },
+      { label: "No-Show Rate", value: "0-10%" },
+      { label: "Slot Fill", value: "Baseline" },
+    ],
+    cards: [
+      {
+        icon: "CAL",
+        category: "Planning",
+        subtitle: "Schedule View",
+        title: "Meeting Timeline",
+        desc: "See upcoming team and customer meetings in one calendar with timezone-aware scheduling.",
+      },
+      {
+        icon: "SYNC",
+        category: "Automation",
+        subtitle: "Calendar Sync",
+        title: "Reminders & Reschedule",
+        desc: "Send auto-reminders, track reschedule patterns, and keep call plans aligned with team availability.",
+      },
+    ],
+  },
+  Numbers: {
+    metrics: [
+      { label: "Numbers Active", value: "0-25" },
+      { label: "Regions", value: "0-12" },
+      { label: "Assigned", value: "0-20" },
+      { label: "Unassigned", value: "0-5" },
+      { label: "Activation", value: "Instant" },
+    ],
+    cards: [
+      {
+        icon: "NUM",
+        category: "Inventory",
+        subtitle: "Virtual Numbers",
+        title: "Number Allocation",
+        desc: "Track purchased numbers, assignment status, and routing destination by user, team, or campaign.",
+      },
+      {
+        icon: "ROUTE",
+        category: "Routing",
+        subtitle: "Inbound Flow",
+        title: "Destination Rules",
+        desc: "Configure where each number routes, including IVR, direct user ringing, and fallback forwarding.",
+      },
+    ],
+  },
+  "Admin Access": {
+    metrics: [
+      { label: "Admins", value: "1-5" },
+      { label: "Roles", value: "3" },
+      { label: "Permission Sets", value: "6" },
+      { label: "Audit Events", value: "0-120" },
+      { label: "Access Health", value: "Stable" },
+    ],
+    cards: [
+      {
+        icon: "RBAC",
+        category: "Security",
+        subtitle: "Role Control",
+        title: "Access Management",
+        desc: "Manage role-based permissions for billing, number control, analytics, and organization settings.",
+      },
+      {
+        icon: "AUDIT",
+        category: "Compliance",
+        subtitle: "Event Logs",
+        title: "Audit Trail",
+        desc: "Review authentication attempts and permission changes with timestamped event records.",
+      },
+    ],
+  },
+};
+
+const companyAnalysisSidebarItems = [
   "Dashboard",
   "Team Call",
   "Recent Calls",
@@ -214,44 +391,51 @@ const analysisSidebarItems = [
   "Admin Access",
 ];
 
+const normalAnalysisSidebarItems = [
+  "Dashboard",
+  "Recent Calls",
+  "Meeting Calendar",
+  "Numbers",
+];
+
 const featureDeepDive = [
   {
-    icon: "ðŸ“ž",
+    icon: "CALL",
     category: "calling",
     subtitle: "Crystal-Clear Calls",
     title: "International VoIP",
-    desc: "Make and receive PSTN calls worldwide via Twilio integration. HD voice quality with adaptive bitrate, noise cancellation, and call recording.",
+    desc: "Make and receive PSTN calls worldwide with reliable carrier routing. HD voice quality with adaptive bitrate, noise cancellation, and call recording.",
   },
   {
-    icon: "ðŸŽ¥",
+    icon: "MEET",
     category: "meetings",
     subtitle: "Free Internal Conferencing",
-    title: "Video Meetings",
-    desc: "Powered by LiveKit - unlimited internal audio and video meetings with screen sharing, virtual backgrounds, and real-time collaboration.",
+    title: "Team Meetings",
+    desc: "Powered by LiveKit - unlimited internal team meetings with screen sharing, virtual backgrounds, and real-time collaboration.",
   },
   {
-    icon: "ðŸ’³",
+    icon: "PAY",
     category: "billing",
     subtitle: "Pay-As-You-Go",
     title: "Wallet Billing",
     desc: "Transparent wallet-based billing with real-time balance tracking, auto-recharge, detailed call logs, and organization-level credit management.",
   },
   {
-    icon: "ðŸŒ",
+    icon: "NUM",
     category: "calling",
     subtitle: "Local Presence, Global Reach",
     title: "Virtual Numbers",
     desc: "Purchase virtual phone numbers in 50+ countries. Establish local presence, set up IVR menus, and route calls intelligently.",
   },
   {
-    icon: "ðŸ”",
+    icon: "RBAC",
     category: "platform",
     subtitle: "Enterprise Security",
     title: "Role-Based Access",
     desc: "Granular role-based access control with SSO integration, audit logs, compliance reporting, and organization-level policies.",
   },
   {
-    icon: "âš¡",
+    icon: "SCL",
     category: "platform",
     subtitle: "Built for Growth",
     title: "Scalable Architecture",
@@ -283,7 +467,7 @@ const platformCapabilities = [
   {
     category: "Meetings",
     title: "Team Collaboration",
-    desc: "HD video meetings with screen sharing, chat, and whiteboarding - all free for internal use.",
+    desc: "HD team meetings with screen sharing, chat, and whiteboarding - all free for internal use.",
   },
   {
     category: "Enterprise",
@@ -321,13 +505,13 @@ const fullPricingTiers = [
   {
     id: "starter-full",
     name: "Starter",
-    price: "$5",
-    period: "/month",
-    description: "For solo use with light needs.",
+    price: "Free",
+    period: "",
+    description: "For solo use and testing.",
     cta: "Get Started",
     highlighted: false,
     features: [
-      "Call 50+ countries",
+      "Call 150+ countries",
       "HD browser calling",
       "Basic support",
       "Call history",
@@ -337,35 +521,36 @@ const fullPricingTiers = [
   {
     id: "business-full",
     name: "Business",
-    price: "$50",
+    price: "$49",
     period: "/month",
-    description: "Best value for teams",
+    description: "For teams with 11+ users",
     cta: "Get Started",
     highlighted: true,
     features: [
       "All Starter features",
-      "190+ countries",
+      "150+ countries",
       "Call recording",
       "Priority support",
-      "Team features",
+      "11+ users",
       "Organization management",
     ],
   },
   {
     id: "enterprise-full",
     name: "Enterprise",
-    price: "$200",
-    period: "/month",
-    description: "For team use with custom needs.",
+    price: "Custom",
+    period: "",
+    description: "Custom account for up to 10 users.",
     cta: "Contact Sales",
     highlighted: false,
     features: [
       "All Business features",
+      "150+ countries",
+      "Up to 10 users",
       "Dedicated manager",
-      "Custom numbers",
-      "API access",
-      "SLA guarantee",
-      "Custom integrations",
+      "AI support agent (Coming soon)",
+      "Voice auto-calling agent (Coming soon)",
+      "AI analysis insights (Coming soon)",
     ],
   },
 ];
@@ -373,43 +558,65 @@ const fullPricingTiers = [
 const comparisonRows = [
   {
     feature: "International Calling",
-    starter: "50+ countries",
-    business: "190+ countries",
-    enterprise: "190+ countries",
+    starter: "150+ countries",
+    business: "150+ countries",
+    enterprise: "150+ countries",
   },
   {
     feature: "HD Browser Calling",
-    starter: "âœ“",
-    business: "âœ“",
-    enterprise: "âœ“",
+    starter: "Yes",
+    business: "Yes",
+    enterprise: "Yes",
   },
   {
     feature: "Call Recording",
     starter: "-",
-    business: "âœ“",
-    enterprise: "âœ“",
+    business: "Yes",
+    enterprise: "Yes",
   },
   {
     feature: "Team Features",
     starter: "-",
-    business: "âœ“",
-    enterprise: "âœ“",
+    business: "Yes",
+    enterprise: "Yes",
+  },
+  {
+    feature: "User Capacity",
+    starter: "-",
+    business: "-",
+    enterprise: "Up to 10 users",
   },
   {
     feature: "Organization Management",
     starter: "-",
-    business: "âœ“",
-    enterprise: "âœ“",
+    business: "Yes",
+    enterprise: "Yes",
   },
   {
     feature: "Dedicated Manager",
     starter: "-",
     business: "-",
-    enterprise: "âœ“",
+    enterprise: "Yes",
   },
-  { feature: "Custom Numbers", starter: "-", business: "-", enterprise: "âœ“" },
-  { feature: "API Access", starter: "-", business: "-", enterprise: "âœ“" },
-  { feature: "SLA Guarantee", starter: "-", business: "-", enterprise: "âœ“" },
+  { feature: "Custom Numbers", starter: "-", business: "-", enterprise: "Yes" },
+  {
+    feature: "AI Support Agent (Coming soon)",
+    starter: "-",
+    business: "-",
+    enterprise: "Yes",
+  },
+  {
+    feature: "Voice Auto-Calling Agent (Coming soon)",
+    starter: "-",
+    business: "-",
+    enterprise: "Yes",
+  },
+  {
+    feature: "AI Analysis (Coming soon)",
+    starter: "-",
+    business: "-",
+    enterprise: "Yes",
+  },
   {
     feature: "Support",
     starter: "Basic",
@@ -421,7 +628,7 @@ const comparisonRows = [
 const faqs = [
   {
     q: "How does wallet billing work?",
-    a: "Each user and organization has a wallet with a real-time balance. Calls are billed per-minute at transparent rates. You can enable auto-recharge, set spending limits, and view detailed usage logs.",
+    a: "Each user and organization has a wallet with real-time balance updates. Usage is metered per minute and deducted automatically. You can set low-balance alerts, enable auto-recharge, and export billing reports from the dashboard.",
   },
   {
     q: "Do I need to install anything?",
@@ -429,19 +636,19 @@ const faqs = [
   },
   {
     q: "Are internal meetings really free?",
-    a: "Yes. All internal audio and video meetings powered by LiveKit are completely free with unlimited participants and duration. Only outbound PSTN calls are billed.",
+    a: "Internal meetings are billed at a low usage rate starting around $0.01 per minute, depending on duration and routing type. This keeps pricing predictable while still supporting unlimited team participants.",
   },
   {
-    q: "Can I port my existing phone numbers?",
-    a: "Yes. We support number porting from most carriers worldwide. Our team handles the entire porting process, typically completed within 5-10 business days.",
+    q: "Can I get a virtual number?",
+    a: "Yes. You can buy virtual numbers directly in the platform and allocate them to your users, teams, or campaigns. Numbers can be activated instantly and managed from one admin panel.",
   },
   {
     q: "What about call quality?",
-    a: "CallFlow uses adaptive bitrate technology with Opus codec, built-in noise cancellation, and global edge servers to deliver crystal-clear HD voice quality even on variable connections.",
+    a: "CallFlow uses adaptive bitrate, intelligent jitter buffering, and regional media routing to keep calls stable. During pilot rollout, quality metrics are tracked continuously so teams can tune performance before full launch.",
   },
   {
     q: "Is CallFlow suitable for regulated industries?",
-    a: "Absolutely. We offer SOC 2 Type II compliance, end-to-end encryption, HIPAA-ready configurations, detailed audit logs, and data residency options for healthcare, finance, and government sectors.",
+    a: "Yes. We support encrypted signaling, role-based access controls, and audit-ready activity logs. Additional compliance configurations can be enabled based on your industry and deployment requirements.",
   },
 ];
 
@@ -449,10 +656,29 @@ const LandingPage = () => {
   const { pathname } = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+  const [analysisUserType, setAnalysisUserType] = useState<
+    "normal" | "company"
+  >("company");
+  const [selectedAnalysisItem, setSelectedAnalysisItem] =
+    useState<string>("Dashboard");
 
   const isFeaturesPage = pathname === "/features";
   const isHowItWorksPage = pathname === "/how-it-works";
   const isPricingPage = pathname === "/pricing";
+  const currentAnalysisSidebarItems =
+    analysisUserType === "company"
+      ? companyAnalysisSidebarItems
+      : normalAnalysisSidebarItems;
+  const isCompanyDashboardView =
+    analysisUserType === "company" && selectedAnalysisItem === "Dashboard";
+  const activeAnalysisContent = isCompanyDashboardView
+    ? {
+        metrics: companyDashboardAnalysisMetrics,
+        cards: companyDashboardAnalysisCards,
+      }
+    : (analysisContentByItem[
+        selectedAnalysisItem as keyof typeof analysisContentByItem
+      ] ?? analysisContentByItem.Dashboard);
   const currentPath =
     pathname.length > 1 && pathname.endsWith("/")
       ? pathname.slice(0, -1)
@@ -826,7 +1052,7 @@ const LandingPage = () => {
       });
     }
 
-    if (isHowItWorksPage && howItWorksRef.current) {
+    if ((isHowItWorksPage || isFeaturesPage) && howItWorksRef.current) {
       const heroEls = howItWorksRef.current.querySelectorAll(
         ".analysis-hero-reveal",
       );
@@ -1040,6 +1266,12 @@ const LandingPage = () => {
     };
   }, [pathname, isFeaturesPage, isHowItWorksPage, isPricingPage]);
 
+  useEffect(() => {
+    if (!currentAnalysisSidebarItems.includes(selectedAnalysisItem)) {
+      setSelectedAnalysisItem("Dashboard");
+    }
+  }, [analysisUserType, currentAnalysisSidebarItems, selectedAnalysisItem]);
+
   const closeMenu = () => setIsOpen(false);
 
   const simpleHeader = (
@@ -1172,6 +1404,190 @@ const LandingPage = () => {
         </section>
 
         <section
+          ref={howItWorksRef}
+          id="analysis"
+          className="features-hero-shell relative z-20 pt-20 md:pt-24 pb-16 md:pb-20 px-6 md:px-12 overflow-hidden"
+          style={{
+            background:
+              "linear-gradient(180deg, hsl(220 8% 7%) 0%, hsl(220 8% 9%) 100%)",
+          }}
+        >
+          <div className="relative z-10 max-w-7xl mx-auto">
+            <p className="analysis-hero-reveal text-lime font-body text-xs tracking-[0.3em] uppercase mb-5">
+              Analysis
+            </p>
+            <h1 className="analysis-hero-reveal font-display text-[5rem] md:text-[8rem] lg:text-[9rem] leading-[0.86] text-on-dark uppercase tracking-[-0.02em]">
+              Analysis
+            </h1>
+            <p className="analysis-hero-reveal font-body text-[1.05rem] text-muted-dark max-w-2xl mt-5 leading-relaxed mb-10">
+              Track performance across calls, minutes, shares, growth, and
+              outreach with real-time visibility and actionable insights.
+            </p>
+
+            <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8 md:gap-10 items-start mt-3 md:mt-5">
+              <div className="analysis-hero-reveal">
+                <div className="mb-3 p-1 flex items-center gap-1 bg-dark-lighter border border-lime/15 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setAnalysisUserType("normal")}
+                    className={`flex-1 px-3 py-2 text-[10px] md:text-xs tracking-[0.12em] uppercase font-display rounded-lg transition-all duration-300 ${
+                      analysisUserType === "normal"
+                        ? "bg-lime text-on-lime"
+                        : "text-muted-dark hover:text-on-dark"
+                    }`}
+                  >
+                    Normal User
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAnalysisUserType("company")}
+                    className={`flex-1 px-3 py-2 text-[10px] md:text-xs tracking-[0.12em] uppercase font-display rounded-lg transition-all duration-300 ${
+                      analysisUserType === "company"
+                        ? "bg-lime text-on-lime"
+                        : "text-muted-dark hover:text-on-dark"
+                    }`}
+                  >
+                    Company User
+                  </button>
+                </div>
+
+                <aside className="bg-dark-lighter/70 border border-lime/10 rounded-2xl p-5 md:p-6">
+                  <div className="flex items-center gap-4 pb-5 border-b border-lime/10">
+                    <div className="w-14 h-14 rounded-xl bg-lime/20 flex items-center justify-center text-2xl">
+                      CF
+                    </div>
+                    <div>
+                      <p className="font-display text-2xl text-on-dark normal-case tracking-normal">
+                        CallFlow
+                      </p>
+                      <p className="text-xs text-muted-dark font-body mt-1">
+                        {analysisUserType === "company"
+                          ? "Performance Workspace"
+                          : "Personal Workspace"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <nav className="mt-5 flex flex-col gap-2">
+                    {currentAnalysisSidebarItems.map((item) => {
+                      const isActive = selectedAnalysisItem === item;
+                      return (
+                        <button
+                          type="button"
+                          key={item}
+                          onClick={() => setSelectedAnalysisItem(item)}
+                          className={`analysis-hero-reveal flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-300 ${
+                            isActive
+                              ? "bg-lime/15 text-lime"
+                              : "text-muted-dark hover:bg-dark-card hover:text-on-dark"
+                          }`}
+                        >
+                          <span className="font-body text-base md:text-lg">
+                            {item}
+                          </span>
+                          {isActive ? (
+                            <span className="text-lime">o</span>
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                  </nav>
+
+                  <div className="analysis-hero-reveal mt-20 p-4 border border-lime/10 bg-dark-card rounded-xl">
+                    <p className="font-display text-[10px] tracking-[0.2em] uppercase text-lime/80 mb-3">
+                      Today Snapshot
+                    </p>
+
+                    <div className="space-y-2.5 text-sm font-body">
+                      <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-dark/50 border border-lime/10">
+                        <span className="text-muted-dark">
+                          Active Campaigns
+                        </span>
+                        <span className="text-on-dark font-display text-base">
+                          12
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-dark/50 border border-lime/10">
+                        <span className="text-muted-dark">New Leads</span>
+                        <span className="text-lime font-display text-base">
+                          284
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-dark/50 border border-lime/10">
+                        <span className="text-muted-dark">Conversion</span>
+                        <span className="text-on-dark font-display text-base">
+                          21.6%
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-dark mb-2">
+                        Daily Goal
+                      </p>
+                      <div className="h-2 rounded-full bg-dark/60 overflow-hidden">
+                        <div className="h-full w-[72%] bg-lime" />
+                      </div>
+                    </div>
+                  </div>
+                </aside>
+              </div>
+
+              <div className="lg:mt-12">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mb-6">
+                  {activeAnalysisContent.metrics.map((item) => (
+                    <div
+                      key={item.label}
+                      className="analysis-kpi text-left px-4 py-4 border border-lime/10 bg-dark-card"
+                    >
+                      <p className="font-display text-2xl md:text-3xl text-lime leading-none mb-1">
+                        {item.value}
+                      </p>
+                      <p className="font-display text-[0.6rem] tracking-[0.18em] uppercase text-muted-dark">
+                        {item.label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {activeAnalysisContent.cards.map((item, idx) => {
+                    const isLastOddCard =
+                      activeAnalysisContent.cards.length % 2 === 1 &&
+                      idx === activeAnalysisContent.cards.length - 1;
+
+                    return (
+                      <div
+                        key={item.title}
+                        className={`analysis-card p-6 md:p-7 border border-lime/10 bg-dark-card ${isLastOddCard ? "md:col-span-2" : ""}`}
+                      >
+                        <div className="text-3xl mb-3 text-lime">
+                          {item.icon}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <span className="text-[10px] px-2 py-1 uppercase tracking-widest bg-lime/15 text-lime font-display">
+                            {item.category}
+                          </span>
+                          <span className="text-[11px] text-muted-dark font-body uppercase tracking-wider">
+                            {item.subtitle}
+                          </span>
+                        </div>
+                        <h2 className="font-display text-xl md:text-2xl text-on-dark uppercase mb-2">
+                          {item.title}
+                        </h2>
+                        <p className="font-body text-sm text-muted-dark leading-relaxed">
+                          {item.desc}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section
           ref={featuresCardsRef}
           className="relative z-20 pt-20 md:pt-24 pb-24 md:pb-32 px-6 bg-dark"
         >
@@ -1197,7 +1613,7 @@ const LandingPage = () => {
                       "linear-gradient(180deg, hsl(220 8% 9%) 0%, hsl(220 8% 8%) 100%)",
                   }}
                 >
-                  <div className="text-4xl">{item.icon}</div>
+                  <div className="text-4xl text-lime">{item.icon}</div>
                   <div>
                     <div className="flex flex-wrap items-center gap-2 mb-2">
                       <span className="text-[10px] px-2 py-1 uppercase tracking-widest bg-lime/15 text-lime font-display">
@@ -1250,85 +1666,117 @@ const LandingPage = () => {
             </p>
 
             <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8 md:gap-10 items-start mt-3 md:mt-5">
-              <aside className="analysis-hero-reveal bg-dark-lighter/70 border border-lime/10 rounded-2xl p-5 md:p-6">
-                <div className="flex items-center gap-4 pb-5 border-b border-lime/10">
-                  <div className="w-14 h-14 rounded-xl bg-lime/20 flex items-center justify-center text-2xl">
-                    ðŸ“ž
-                  </div>
-                  <div>
-                    <p className="font-display text-2xl text-on-dark normal-case tracking-normal">
-                      CallFlow
-                    </p>
-                    <p className="text-xs text-muted-dark font-body mt-1">
-                      Performance Workspace
-                    </p>
-                  </div>
+              <div className="analysis-hero-reveal">
+                <div className="mb-3 p-1 flex items-center gap-1 bg-dark-lighter border border-lime/15 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setAnalysisUserType("normal")}
+                    className={`flex-1 px-3 py-2 text-[10px] md:text-xs tracking-[0.12em] uppercase font-display rounded-lg transition-all duration-300 ${
+                      analysisUserType === "normal"
+                        ? "bg-lime text-on-lime"
+                        : "text-muted-dark hover:text-on-dark"
+                    }`}
+                  >
+                    Normal User
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAnalysisUserType("company")}
+                    className={`flex-1 px-3 py-2 text-[10px] md:text-xs tracking-[0.12em] uppercase font-display rounded-lg transition-all duration-300 ${
+                      analysisUserType === "company"
+                        ? "bg-lime text-on-lime"
+                        : "text-muted-dark hover:text-on-dark"
+                    }`}
+                  >
+                    Company User
+                  </button>
                 </div>
 
-                <nav className="mt-5 flex flex-col gap-2">
-                  {analysisSidebarItems.map((item, idx) => {
-                    const isActive = idx === 0;
-                    return (
-                      <a
-                        key={item}
-                        href="#"
-                        className={`analysis-hero-reveal flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-300 ${
-                          isActive
-                            ? "bg-lime/15 text-lime"
-                            : "text-muted-dark hover:bg-dark-card hover:text-on-dark"
-                        }`}
-                      >
-                        <span className="font-body text-base md:text-lg">
-                          {item}
+                <aside className="bg-dark-lighter/70 border border-lime/10 rounded-2xl p-5 md:p-6">
+                  <div className="flex items-center gap-4 pb-5 border-b border-lime/10">
+                    <div className="w-14 h-14 rounded-xl bg-lime/20 flex items-center justify-center text-2xl">
+                      CF
+                    </div>
+                    <div>
+                      <p className="font-display text-2xl text-on-dark normal-case tracking-normal">
+                        CallFlow
+                      </p>
+                      <p className="text-xs text-muted-dark font-body mt-1">
+                        {analysisUserType === "company"
+                          ? "Performance Workspace"
+                          : "Personal Workspace"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <nav className="mt-5 flex flex-col gap-2">
+                    {currentAnalysisSidebarItems.map((item) => {
+                      const isActive = selectedAnalysisItem === item;
+                      return (
+                        <button
+                          type="button"
+                          key={item}
+                          onClick={() => setSelectedAnalysisItem(item)}
+                          className={`analysis-hero-reveal flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-300 ${
+                            isActive
+                              ? "bg-lime/15 text-lime"
+                              : "text-muted-dark hover:bg-dark-card hover:text-on-dark"
+                          }`}
+                        >
+                          <span className="font-body text-base md:text-lg">
+                            {item}
+                          </span>
+                          {isActive ? (
+                            <span className="text-lime">o</span>
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                  </nav>
+
+                  <div className="analysis-hero-reveal mt-20 p-4 border border-lime/10 bg-dark-card rounded-xl">
+                    <p className="font-display text-[10px] tracking-[0.2em] uppercase text-lime/80 mb-3">
+                      Today Snapshot
+                    </p>
+
+                    <div className="space-y-2.5 text-sm font-body">
+                      <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-dark/50 border border-lime/10">
+                        <span className="text-muted-dark">
+                          Active Campaigns
                         </span>
-                        {isActive ? (
-                          <span className="text-lime">â—</span>
-                        ) : null}
-                      </a>
-                    );
-                  })}
-                </nav>
-
-                <div className="analysis-hero-reveal mt-20 p-4 border border-lime/10 bg-dark-card rounded-xl">
-                  <p className="font-display text-[10px] tracking-[0.2em] uppercase text-lime/80 mb-3">
-                    Today Snapshot
-                  </p>
-
-                  <div className="space-y-2.5 text-sm font-body">
-                    <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-dark/50 border border-lime/10">
-                      <span className="text-muted-dark">Active Campaigns</span>
-                      <span className="text-on-dark font-display text-base">
-                        12
-                      </span>
+                        <span className="text-on-dark font-display text-base">
+                          12
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-dark/50 border border-lime/10">
+                        <span className="text-muted-dark">New Leads</span>
+                        <span className="text-lime font-display text-base">
+                          284
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-dark/50 border border-lime/10">
+                        <span className="text-muted-dark">Conversion</span>
+                        <span className="text-on-dark font-display text-base">
+                          21.6%
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-dark/50 border border-lime/10">
-                      <span className="text-muted-dark">New Leads</span>
-                      <span className="text-lime font-display text-base">
-                        284
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-dark/50 border border-lime/10">
-                      <span className="text-muted-dark">Conversion</span>
-                      <span className="text-on-dark font-display text-base">
-                        21.6%
-                      </span>
+
+                    <div className="mt-4">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-dark mb-2">
+                        Daily Goal
+                      </p>
+                      <div className="h-2 rounded-full bg-dark/60 overflow-hidden">
+                        <div className="h-full w-[72%] bg-lime" />
+                      </div>
                     </div>
                   </div>
+                </aside>
+              </div>
 
-                  <div className="mt-4">
-                    <p className="text-[10px] uppercase tracking-wider text-muted-dark mb-2">
-                      Daily Goal
-                    </p>
-                    <div className="h-2 rounded-full bg-dark/60 overflow-hidden">
-                      <div className="h-full w-[72%] bg-lime" />
-                    </div>
-                  </div>
-                </div>
-              </aside>
-
-              <div>
+              <div className="lg:mt-12">
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mb-6">
-                  {analysisMetrics.map((item) => (
+                  {activeAnalysisContent.metrics.map((item) => (
                     <div
                       key={item.label}
                       className="analysis-kpi text-left px-4 py-4 border border-lime/10 bg-dark-card"
@@ -1344,17 +1792,19 @@ const LandingPage = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {analysisCards.map((item, idx) => {
+                  {activeAnalysisContent.cards.map((item, idx) => {
                     const isLastOddCard =
-                      analysisCards.length % 2 === 1 &&
-                      idx === analysisCards.length - 1;
+                      activeAnalysisContent.cards.length % 2 === 1 &&
+                      idx === activeAnalysisContent.cards.length - 1;
 
                     return (
                       <div
                         key={item.title}
                         className={`analysis-card p-6 md:p-7 border border-lime/10 bg-dark-card ${isLastOddCard ? "md:col-span-2" : ""}`}
                       >
-                        <div className="text-3xl mb-3">{item.icon}</div>
+                        <div className="text-3xl mb-3 text-lime">
+                          {item.icon}
+                        </div>
                         <div className="flex flex-wrap items-center gap-2 mb-2">
                           <span className="text-[10px] px-2 py-1 uppercase tracking-widest bg-lime/15 text-lime font-display">
                             {item.category}
@@ -1489,8 +1939,17 @@ const LandingPage = () => {
                         key={`${tier.id}-${f}`}
                         className="font-body text-sm text-on-dark flex items-start gap-2"
                       >
-                        <span className="text-lime">âœ¦</span>
-                        <span>{f}</span>
+                        <span className="text-lime">+</span>
+                        <span>
+                          {f.includes("(Coming soon)") ? (
+                            <>
+                              {f.replace(" (Coming soon)", "")}{" "}
+                              <span className="text-lime">(Coming soon)</span>
+                            </>
+                          ) : (
+                            f
+                          )}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -1807,24 +2266,21 @@ const LandingPage = () => {
             Why CallFlow
           </p>
           <h2 className="font-display text-4xl md:text-6xl lg:text-7xl text-on-dark leading-[1.1] tracking-tight uppercase">
-            <span className="quote-word font-serif-accent">Redefining</span>{" "}
-            <span className="quote-word">global</span>{" "}
-            <span className="quote-word">communication.</span>{" "}
+            <span className="quote-word font-serif-accent">Powering</span>{" "}
+            <span className="quote-word">modern</span>{" "}
+            <span className="quote-word">teams.</span>{" "}
             <span className="quote-word">One</span>{" "}
             <span className="quote-word">platform</span>{" "}
             <span className="quote-word">for</span>{" "}
             <span className="quote-word font-serif-accent">calls,</span>{" "}
+            <span className="quote-word font-serif-accent">calendar</span>{" "}
+            <span className="quote-word font-serif-accent">features,</span>{" "}
+            <span className="quote-word">team</span>{" "}
             <span className="quote-word font-serif-accent">meetings,</span>{" "}
             <span className="quote-word">and</span>{" "}
-            <span className="quote-word">enterprise</span>{" "}
-            <span className="quote-word font-serif-accent">voice</span>{" "}
-            <span className="quote-word">from</span>{" "}
-            <span className="quote-word">any</span>{" "}
-            <span className="quote-word">browser,</span>{" "}
-            <span className="quote-word">anywhere</span>{" "}
-            <span className="quote-word">in</span>{" "}
-            <span className="quote-word">the</span>{" "}
-            <span className="quote-word">world.</span>
+            <span className="quote-word font-serif-accent">virtual</span>{" "}
+            <span className="quote-word font-serif-accent">number</span>{" "}
+            <span className="quote-word font-serif-accent">allocation.</span>
           </h2>
         </div>
       </section>
@@ -1881,7 +2337,7 @@ const LandingPage = () => {
               className="pf-card flex-shrink-0 w-[280px] md:w-[300px] bg-dark-lighter border border-lime/10 p-6 hover:border-lime/30 transition-all duration-500 group rounded-sm"
               style={{ marginTop: i % 2 === 0 ? "-60px" : "60px" }}
             >
-              <span className="text-2xl mb-3 block">{feat.icon}</span>
+              <span className="text-2xl mb-3 block text-lime">{feat.icon}</span>
               <h4 className="font-display text-lg text-on-dark tracking-wider mb-1.5 group-hover:text-lime transition-colors">
                 {feat.title}
               </h4>
@@ -2133,7 +2589,14 @@ const LandingPage = () => {
                     <div key={feature} className="flex items-center gap-2">
                       <span className="text-lime text-xs">+</span>
                       <span className="font-body text-sm text-on-dark">
-                        {feature}
+                        {feature.includes("(Coming soon)") ? (
+                          <>
+                            {feature.replace(" (Coming soon)", "")}{" "}
+                            <span className="text-lime">(Coming soon)</span>
+                          </>
+                        ) : (
+                          feature
+                        )}
                       </span>
                     </div>
                   ))}

@@ -6,7 +6,7 @@ export const companyInfo = {
   product: "CallFlow Pro",
   tagline: "Global Communication, Zero Boundaries",
   description:
-    "Browser-based VoIP SaaS platform for international calling, video meetings, and enterprise communication.",
+    "Browser-based VoIP SaaS platform for calling, meetings, and enterprise communication.",
   heroQuote:
     "Redefining global communication. One platform for calls, meetings, and enterprise voice — from any browser, anywhere in the world.",
   secondQuote:

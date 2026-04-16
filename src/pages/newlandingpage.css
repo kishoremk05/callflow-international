@@ -53,8 +53,8 @@
     --dark-lighter: 220 8% 8%;
     --dark-card: 220 8% 11%;
     --text-on-lime: 220 8% 6%;
-    --text-on-dark: 0 0% 92%;
-    --text-muted-on-dark: 0 0% 55%;
+    --text-on-dark: 0 0% 95%;
+    --text-muted-on-dark: 0 0% 72%;
 
     --font-display: 'Oswald', sans-serif;
     --font-body: 'Inter', sans-serif;
@@ -89,7 +89,7 @@
 
   body {
     font-family: var(--font-body);
-    @apply bg-dark text-foreground antialiased;
+    @apply bg-dark text-on-dark antialiased;
     overflow-x: hidden;
   }
 
