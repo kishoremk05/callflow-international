@@ -323,6 +323,15 @@ export default function Dashboard() {
       window.removeEventListener("focus-make-call", handleFocusMakeCall);
   }, []);
 
+  useEffect(() => {
+    if (
+      userType === "normal" &&
+      ["voice-call", "calendar", "numbers"].includes(sidebarView)
+    ) {
+      setSidebarView("overview");
+    }
+  }, [userType, sidebarView]);
+
   // Real-time wallet synchronization - ensures all dashboards show same balance
   useEffect(() => {
     if (!user) return;
@@ -803,6 +812,7 @@ export default function Dashboard() {
         }}
         onLogout={signOut}
         showAdmin={userType === "company" || userType === "company_admin"}
+        userType={userType}
         user={user}
       />
 

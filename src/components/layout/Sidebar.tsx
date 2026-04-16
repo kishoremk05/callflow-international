@@ -33,6 +33,7 @@ interface SidebarProps {
   onViewChange: (view: SidebarView) => void;
   onLogout: () => void;
   showAdmin?: boolean;
+  userType?: "normal" | "company" | "company_admin" | null;
   user?: {
     email?: string;
     user_metadata?: {
@@ -60,6 +61,7 @@ export function Sidebar({
   onViewChange,
   onLogout,
   showAdmin = true,
+  userType,
   user,
 }: SidebarProps) {
   const fullName = user?.user_metadata?.full_name || user?.email || "User";
@@ -69,6 +71,12 @@ export function Sidebar({
     .join("")
     .toUpperCase()
     .slice(0, 2);
+
+  const hiddenForNormalUsers: SidebarView[] = [
+    "voice-call",
+    "calendar",
+    "numbers",
+  ];
 
   return (
     <aside className="w-[250px] flex-shrink-0 bg-[#0f141d] border-r border-yellow-500/10 flex flex-col z-40 shadow-[0_10px_40px_rgba(0,0,0,0.35)]">
@@ -83,6 +91,10 @@ export function Sidebar({
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems
           .filter((item) => item.id !== "admin" || showAdmin)
+          .filter(
+            (item) =>
+              userType !== "normal" || !hiddenForNormalUsers.includes(item.id),
+          )
           .map((item) => {
             const isActive = activeView === item.id;
             return (
