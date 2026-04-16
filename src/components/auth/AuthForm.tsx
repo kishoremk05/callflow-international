@@ -15,6 +15,8 @@ import { toast } from "sonner";
 import {
   Mail,
   Lock,
+  Eye,
+  EyeOff,
   User,
   Building2,
   UserCircle,
@@ -29,6 +31,7 @@ export function AuthForm() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState("");
   const [userType, setUserType] = useState<"normal" | "company">("normal");
 
@@ -265,14 +268,26 @@ export function AuthForm() {
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                   <Input
                     id="password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 bg-[#0f131b] border-yellow-500/20 text-zinc-100 placeholder:text-zinc-500"
+                    className="pl-10 pr-10 bg-[#0f131b] border-yellow-500/20 text-zinc-100 placeholder:text-zinc-500"
                     required
                     minLength={6}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-yellow-400 transition-colors"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
                 </div>
               </div>
               <Button
