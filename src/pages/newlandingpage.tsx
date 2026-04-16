@@ -91,6 +91,15 @@ const premiumFeatures = [
       { label: "Use Cases", value: "Support + Ops" },
     ],
   },
+  {
+    icon: "REC",
+    title: "Call Recording (Coming Soon)",
+    desc: "Record calls automatically with secure storage and easy playback for quality reviews and compliance workflows.",
+    stats: [
+      { label: "Status", value: "Coming Soon" },
+      { label: "Storage", value: "Secure" },
+    ],
+  },
 ];
 
 const stats = [
