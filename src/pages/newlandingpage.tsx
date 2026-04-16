@@ -409,7 +409,7 @@ const featureDeepDive = [
   {
     icon: "MEET",
     category: "meetings",
-    subtitle: "Free Internal Conferencing",
+    subtitle: "Internal Conferencing",
     title: "Team Meetings",
     desc: "Powered by LiveKit - unlimited internal team meetings with screen sharing, virtual backgrounds, and real-time collaboration.",
   },
@@ -425,7 +425,7 @@ const featureDeepDive = [
     category: "calling",
     subtitle: "Local Presence, Global Reach",
     title: "Virtual Numbers",
-    desc: "Purchase virtual phone numbers in 50+ countries. Establish local presence, set up IVR menus, and route calls intelligently.",
+    desc: "Purchase virtual phone numbers in 150+ countries. Establish local presence, set up IVR menus, and route calls intelligently.",
   },
   {
     icon: "RBAC",
@@ -462,7 +462,7 @@ const platformCapabilities = [
   {
     category: "Numbers",
     title: "Number Management",
-    desc: "Purchase and manage virtual numbers across 50+ countries from a single dashboard.",
+    desc: "Purchase and manage virtual numbers across 150+ countries from a single dashboard.",
   },
   {
     category: "Meetings",
@@ -598,7 +598,12 @@ const comparisonRows = [
     business: "-",
     enterprise: "Yes",
   },
-  { feature: "Custom Numbers", starter: "-", business: "-", enterprise: "Yes" },
+  {
+    feature: "Custom Numbers",
+    starter: "Yes",
+    business: "Yes",
+    enterprise: "Yes",
+  },
   {
     feature: "AI Support Agent (Coming soon)",
     starter: "-",
