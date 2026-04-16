@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
 import { CallProvider } from "@/contexts/CallContext";
 import { GlobalFloatingCallButton } from "@/components/GlobalFloatingCallButton";
-import Landing from "./pages/Landing";
+import Landing from "./pages/newlandingpage";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import VoiceCall from "./pages/VoiceCall";
@@ -46,6 +46,9 @@ const App = () => (
           <ScrollToTop />
           <Routes>
             <Route path="/" element={<Landing />} />
+            <Route path="/features" element={<Landing />} />
+            <Route path="/how-it-works" element={<Landing />} />
+            <Route path="/pricing" element={<Landing />} />
             <Route path="/login" element={<Index />} />
             <Route path="/signup" element={<Index />} />
             <Route path="/demo" element={<Index />} />
@@ -78,14 +81,15 @@ const App = () => (
               path="/super-admin/dashboard"
               element={<SuperAdminDashboard />}
             />
-            <Route path="/features" element={<Features />} />
-            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/legacy-features" element={<Features />} />
+            <Route path="/legacy-pricing" element={<Pricing />} />
             <Route path="/api" element={<API />} />
             <Route path="/about" element={<AboutUs />} />
             <Route path="/careers" element={<Careers />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/cookies" element={<CookiePolicy />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

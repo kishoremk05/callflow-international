@@ -1,0 +1,148 @@
+.super-admin-dashboard {
+  background: #05080f;
+  color: #e4e4e7;
+  --background: 220 28% 7%;
+  --card: 220 35% 12%;
+  --card-foreground: 0 0% 95%;
+  --popover: 220 32% 10%;
+  --popover-foreground: 0 0% 95%;
+  --muted: 220 22% 16%;
+  --muted-foreground: 220 9% 68%;
+  --border: 41 35% 28%;
+}
+
+.super-admin-dashboard .bg-card {
+  background: hsl(var(--card)) !important;
+  color: hsl(var(--card-foreground)) !important;
+}
+
+.super-admin-dashboard .border,
+.super-admin-dashboard .border-gray-200,
+.super-admin-dashboard .border-gray-300,
+.super-admin-dashboard .border-blue-100,
+.super-admin-dashboard .border-blue-200,
+.super-admin-dashboard .border-indigo-50,
+.super-admin-dashboard .border-orange-200,
+.super-admin-dashboard .border-amber-200,
+.super-admin-dashboard .border-purple-200,
+.super-admin-dashboard .border-green-200,
+.super-admin-dashboard .border-red-200 {
+  border-color: rgba(232, 178, 74, 0.18) !important;
+}
+
+.super-admin-dashboard .bg-white,
+.super-admin-dashboard .bg-gray-50,
+.super-admin-dashboard .bg-orange-50,
+.super-admin-dashboard .bg-red-50,
+.super-admin-dashboard .bg-green-50,
+.super-admin-dashboard .bg-blue-50,
+.super-admin-dashboard .bg-amber-50,
+.super-admin-dashboard .bg-purple-50,
+.super-admin-dashboard .bg-indigo-50,
+.super-admin-dashboard [class*="from-blue-50"],
+.super-admin-dashboard [class*="to-indigo-50"],
+.super-admin-dashboard [class*="from-orange-50"],
+.super-admin-dashboard [class*="to-amber-50"],
+.super-admin-dashboard [class*="from-orange-100"],
+.super-admin-dashboard [class*="to-yellow-100"],
+.super-admin-dashboard [class*="from-blue-500"],
+.super-admin-dashboard [class*="to-indigo-600"],
+.super-admin-dashboard [class*="from-purple-500"],
+.super-admin-dashboard [class*="to-purple-700"] {
+  background: #0f1726 !important;
+}
+
+.super-admin-dashboard .shadow-md,
+.super-admin-dashboard .shadow-lg,
+.super-admin-dashboard .hover\:shadow-lg:hover {
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.38) !important;
+}
+
+.super-admin-dashboard .text-gray-900,
+.super-admin-dashboard .text-gray-800,
+.super-admin-dashboard .text-gray-700,
+.super-admin-dashboard .text-gray-600,
+.super-admin-dashboard .text-gray-500 {
+  color: #a1a1aa !important;
+}
+
+.super-admin-dashboard .text-gray-900 {
+  color: #f4f4f5 !important;
+}
+
+.super-admin-dashboard .text-gray-900,
+.super-admin-dashboard .font-semibold,
+.super-admin-dashboard .font-bold,
+.super-admin-dashboard .font-extrabold {
+  color: #f4f4f5;
+}
+
+.super-admin-dashboard .text-muted-foreground {
+  color: #a1a1aa !important;
+}
+
+.super-admin-dashboard .text-blue-600,
+.super-admin-dashboard .text-purple-600,
+.super-admin-dashboard .text-orange-600 {
+  color: #e8b24a !important;
+}
+
+.super-admin-dashboard .bg-purple-500,
+.super-admin-dashboard .bg-blue-500,
+.super-admin-dashboard .bg-orange-500,
+.super-admin-dashboard .bg-green-600,
+.super-admin-dashboard .bg-red-600,
+.super-admin-dashboard .bg-blue-600,
+.super-admin-dashboard .bg-indigo-600 {
+  background: rgba(232, 178, 74, 0.15) !important;
+  color: #e8b24a !important;
+  border: 1px solid rgba(232, 178, 74, 0.28);
+}
+
+.super-admin-dashboard .text-transparent {
+  color: #e8b24a !important;
+  -webkit-text-fill-color: #e8b24a !important;
+  background: none !important;
+}
+
+.super-admin-dashboard table tr:hover {
+  background: #121c2e !important;
+}
+
+.super-admin-dashboard table,
+.super-admin-dashboard th,
+.super-admin-dashboard td {
+  color: #e4e4e7;
+}
+
+.super-admin-dashboard tbody tr:nth-child(2n) {
+  background: #0d1627 !important;
+}
+
+.super-admin-dashboard tbody tr:nth-child(2n + 1) {
+  background: #101b2f !important;
+}
+
+.super-admin-dashboard input,
+.super-admin-dashboard textarea,
+.super-admin-dashboard [role="combobox"] {
+  background: #0b1320 !important;
+  border-color: rgba(232, 178, 74, 0.22) !important;
+  color: #f4f4f5 !important;
+}
+
+.super-admin-dashboard .super-pagination-btn {
+  border-color: rgba(232, 178, 74, 0.24) !important;
+  background: #101827 !important;
+  color: #e4e4e7 !important;
+}
+
+.super-admin-dashboard .super-pagination-btn:hover {
+  background: #182338 !important;
+}
+
+.super-admin-dashboard .super-pagination-btn[data-active="true"] {
+  background: rgba(232, 178, 74, 0.2) !important;
+  color: #e8b24a !important;
+  border-color: rgba(232, 178, 74, 0.35) !important;
+}

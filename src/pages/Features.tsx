@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+﻿import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useScrollAnimation } from "@/hooks/useGsapAnimations";
 import {
@@ -132,7 +132,7 @@ const Features = () => {
                 <Phone className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-bold text-foreground">
-                GlobalConnect
+                CallFlow
               </span>
             </div>
             <div className="flex gap-3">
@@ -203,7 +203,7 @@ const Features = () => {
               Everything You Need
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Discover all the features that make GlobalConnect the perfect
+              Discover all the features that make CallFlow the perfect
               choice for your international calling needs.
             </p>
           </div>
@@ -274,7 +274,7 @@ const Features = () => {
                 <p className="text-muted-foreground text-lg leading-relaxed">
                   Manage your global communication with our intuitive, powerful
                   dashboard. Track calls, monitor teams, analyze costs, and
-                  optimize your international calling strategy—all from one
+                  optimize your international calling strategyâ€”all from one
                   beautiful interface.
                 </p>
                 <ul className="space-y-4">
@@ -557,7 +557,7 @@ const Features = () => {
                 </div>
                 {/* Floating badge */}
                 <div className="absolute -top-4 -right-4 bg-gradient-to-br from-[#0891b2] to-[#0e7490] text-white px-6 py-3 rounded-2xl shadow-xl transform rotate-3 group-hover:rotate-6 transition-transform duration-300">
-                  <p className="font-bold text-sm">✨ Real-time</p>
+                  <p className="font-bold text-sm">âœ¨ Real-time</p>
                 </div>
               </div>
             </div>
@@ -631,7 +631,7 @@ const Features = () => {
                 Ready to Experience These Features?
               </h2>
               <p className="text-xl mb-8 max-w-2xl mx-auto text-white/90">
-                Join thousands of users who trust GlobalConnect for their
+                Join thousands of users who trust CallFlow for their
                 international calling needs.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -660,3 +660,4 @@ const Features = () => {
 };
 
 export default Features;
+

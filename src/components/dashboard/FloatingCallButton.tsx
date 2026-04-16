@@ -61,6 +61,28 @@ export const FloatingCallButton = ({
     }
   };
 
+  const navigateToMakeCall = () => {
+    const targetUrl = "/dashboard#make-a-call";
+
+    if (window.location.pathname === "/dashboard") {
+      window.dispatchEvent(new Event("focus-make-call"));
+      window.location.hash = "make-a-call";
+      return;
+    }
+
+    window.location.href = targetUrl;
+  };
+
+  const handleEndCallClick = () => {
+    try {
+      onEndCall();
+    } catch (error) {
+      console.error("End call handler failed:", error);
+    } finally {
+      navigateToMakeCall();
+    }
+  };
+
   return (
     <AnimatePresence>
       {showButton && (
@@ -77,7 +99,18 @@ export const FloatingCallButton = ({
         >
           {isExpanded ? (
             // Expanded view
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-2xl shadow-2xl border border-gray-700 overflow-hidden backdrop-blur-lg">
+            <div
+              onClick={navigateToMakeCall}
+              className="bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-2xl shadow-2xl border border-gray-700 overflow-hidden backdrop-blur-lg cursor-pointer"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  navigateToMakeCall();
+                }
+              }}
+            >
               {/* Header */}
               <div className="px-4 py-3 bg-gray-800/50 border-b border-gray-700 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -89,7 +122,10 @@ export const FloatingCallButton = ({
                   </span>
                 </div>
                 <button
-                  onClick={() => setIsExpanded(false)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setIsExpanded(false);
+                  }}
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   <svg
@@ -127,7 +163,10 @@ export const FloatingCallButton = ({
                   {/* Mute button */}
                   {onMuteToggle && callState === "answered" && (
                     <button
-                      onClick={onMuteToggle}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onMuteToggle();
+                      }}
                       className={`flex-1 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
                         isMuted
                           ? "bg-red-500/20 text-red-400 hover:bg-red-500/30"
@@ -147,7 +186,10 @@ export const FloatingCallButton = ({
 
                   {/* End Call button */}
                   <button
-                    onClick={onEndCall}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleEndCallClick();
+                    }}
                     className="flex-1 py-2.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-red-500/30"
                   >
                     <PhoneOff className="w-4 h-4" />

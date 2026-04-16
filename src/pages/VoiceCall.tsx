@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,7 +23,6 @@ import {
   UserPlus,
   Globe,
   Clock,
-  ArrowLeft,
   Headphones,
 } from "lucide-react";
 
@@ -462,9 +460,7 @@ export default function VoiceCall() {
   };
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col bg-slate-50">
-      <Header user={user} onSignOut={signOut} />
-
+    <div className="h-screen overflow-hidden flex flex-col bg-[#090c12] text-zinc-100">
       <div className="flex flex-1 overflow-hidden">
         <Sidebar
           activeView="voice-call"
@@ -478,40 +474,29 @@ export default function VoiceCall() {
           showAdmin={userType === "company" || userType === "company_admin"}
         />
 
-        <main className="flex-1 overflow-y-auto py-6 px-6 bg-slate-50">
-          {/* Header with Back Button */}
-          <div className="mb-6 flex items-center gap-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/dashboard")}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </Button>
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-[#1a365d]">
-                Voice Calls
-              </h1>
-              <p className="text-gray-600">
-                Conference calling for teams and clients
-              </p>
-            </div>
+        <main className="flex-1 overflow-y-auto py-6 px-6 bg-gradient-to-b from-[#090c12] via-[#0d121a] to-[#0a0f16]">
+          {/* Page Header */}
+          <div className="mb-6">
+            <h1 className="text-3xl md:text-4xl font-bold text-zinc-100">
+              Voice Calls
+            </h1>
+            <p className="text-zinc-400">
+              Conference calling for teams and clients
+            </p>
           </div>
 
           {/* Active Call Banner */}
           {isInCall && (
-            <Card className="mb-6 bg-gradient-to-r from-green-500 to-emerald-500 border-0 text-white">
+            <Card className="mb-6 bg-gradient-to-r from-emerald-700 to-emerald-600 border border-emerald-400/25 text-zinc-100">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center animate-pulse">
+                    <div className="w-12 h-12 bg-white/15 rounded-full flex items-center justify-center animate-pulse border border-white/20">
                       <Phone className="w-6 h-6" />
                     </div>
                     <div>
                       <p className="font-semibold text-lg">Call in Progress</p>
-                      <p className="text-sm text-white/80 flex items-center gap-2">
+                      <p className="text-sm text-zinc-200/80 flex items-center gap-2">
                         <Clock className="w-4 h-4" />
                         {formatDuration(callDuration)}
                       </p>
@@ -522,7 +507,7 @@ export default function VoiceCall() {
                       variant="outline"
                       size="sm"
                       onClick={toggleMute}
-                      className="bg-white/20 border-white/30 text-white hover:bg-white/30"
+                      className="bg-white/15 border-white/25 text-zinc-100 hover:bg-white/25"
                     >
                       {isMuted ? (
                         <MicOff className="w-4 h-4" />
@@ -551,13 +536,6 @@ export default function VoiceCall() {
             onValueChange={(v) => setActiveTab(v as any)}
             className="space-y-6"
           >
-            <TabsList className="grid w-full max-w-[48rem] grid-cols-1 h-12">
-              <TabsTrigger value="internal" className="flex items-center gap-2">
-                <Headphones className="w-4 h-4" />
-                Internal Call
-              </TabsTrigger>
-            </TabsList>
-
             {/* Internal Call Tab */}
             <TabsContent value="internal" className="space-y-6">
               {showInternalCall ? (
@@ -572,25 +550,25 @@ export default function VoiceCall() {
               ) : (
                 <div className="grid gap-6 lg:grid-cols-2">
                   {/* Join/Create Internal Call */}
-                  <Card className="border-2 border-[#0891b2]/20 bg-gradient-to-br from-[#0891b2]/5 to-transparent">
+                  <Card className="border border-cyan-400/25 bg-gradient-to-br from-[#111a29] to-[#0f1622]">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-[#1a365d]">
-                        <Headphones className="w-6 h-6 text-[#0891b2]" />
+                      <CardTitle className="flex items-center gap-2 text-zinc-100">
+                        <Headphones className="w-6 h-6 text-cyan-300" />
                         Internal Team Call
                       </CardTitle>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-zinc-400">
                         💼 Professional calling with your team • $2 per hour
                       </p>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-                        <div className="flex items-center gap-2 text-blue-700 mb-2">
+                      <div className="bg-[#17243a] border border-cyan-400/25 p-4 rounded-lg">
+                        <div className="flex items-center gap-2 text-cyan-200 mb-2">
                           <Users className="w-5 h-5" />
                           <span className="font-semibold">
                             Pricing: $2 per Hour
                           </span>
                         </div>
-                        <ul className="text-sm text-blue-600 space-y-1">
+                        <ul className="text-sm text-cyan-300/90 space-y-1">
                           <li>✓ Billed hourly from your wallet</li>
                           <li>✓ High-quality audio calling</li>
                           <li>✓ Available for all users</li>
@@ -599,13 +577,13 @@ export default function VoiceCall() {
                       </div>
 
                       {/* Toggle between Create and Join */}
-                      <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-lg">
+                      <div className="grid grid-cols-2 gap-2 p-1 bg-[#1b2434] border border-yellow-500/15 rounded-lg">
                         <button
                           onClick={() => setCallMode("create")}
                           className={`py-2 px-4 rounded-md font-medium transition-colors ${
                             callMode === "create"
-                              ? "bg-white text-[#0891b2] shadow-sm"
-                              : "text-gray-600 hover:text-gray-900"
+                              ? "bg-[#243149] text-cyan-300 shadow-sm"
+                              : "text-zinc-500 hover:text-zinc-200"
                           }`}
                         >
                           Create Room
@@ -614,8 +592,8 @@ export default function VoiceCall() {
                           onClick={() => setCallMode("join")}
                           className={`py-2 px-4 rounded-md font-medium transition-colors ${
                             callMode === "join"
-                              ? "bg-white text-[#0891b2] shadow-sm"
-                              : "text-gray-600 hover:text-gray-900"
+                              ? "bg-[#243149] text-cyan-300 shadow-sm"
+                              : "text-zinc-500 hover:text-zinc-200"
                           }`}
                         >
                           Join Room
@@ -625,7 +603,12 @@ export default function VoiceCall() {
                       {callMode === "create" ? (
                         <>
                           <div>
-                            <Label htmlFor="callRoomName">Room Name</Label>
+                            <Label
+                              htmlFor="callRoomName"
+                              className="text-zinc-300"
+                            >
+                              Room Name
+                            </Label>
                             <Input
                               id="callRoomName"
                               placeholder="e.g., Team Standup, Project Discussion"
@@ -633,11 +616,17 @@ export default function VoiceCall() {
                               onChange={(e) =>
                                 setInternalCallRoom(e.target.value)
                               }
+                              className="bg-[#182131] border-yellow-500/20 text-zinc-100 placeholder:text-zinc-500"
                             />
                           </div>
 
                           <div>
-                            <Label htmlFor="displayName">Your Name</Label>
+                            <Label
+                              htmlFor="displayName"
+                              className="text-zinc-300"
+                            >
+                              Your Name
+                            </Label>
                             <Input
                               id="displayName"
                               placeholder="Enter your display name"
@@ -645,6 +634,7 @@ export default function VoiceCall() {
                               onChange={(e) =>
                                 setInternalCallName(e.target.value)
                               }
+                              className="bg-[#182131] border-yellow-500/20 text-zinc-100 placeholder:text-zinc-500"
                             />
                           </div>
 
@@ -670,32 +660,39 @@ export default function VoiceCall() {
                                 duration: 5000,
                               });
                             }}
-                            className="w-full bg-[#0891b2] hover:bg-[#0e7490] text-white h-12 text-lg"
+                            className="w-full bg-cyan-500 hover:bg-cyan-400 text-[#0b1220] h-12 text-lg"
                           >
                             <Plus className="w-5 h-5 mr-2" />
                             Create Room
                           </Button>
 
-                          <p className="text-xs text-gray-500 text-center">
+                          <p className="text-xs text-zinc-500 text-center">
                             Share the generated code with teammates to join
                           </p>
                         </>
                       ) : (
                         <>
                           <div>
-                            <Label htmlFor="roomCode">Room Code</Label>
+                            <Label htmlFor="roomCode" className="text-zinc-300">
+                              Room Code
+                            </Label>
                             <Input
                               id="roomCode"
                               placeholder="Enter 6-digit room code"
                               value={roomCode}
                               onChange={(e) => setRoomCode(e.target.value)}
                               maxLength={6}
-                              className="text-center text-2xl font-bold tracking-widest"
+                              className="text-center text-2xl font-bold tracking-widest bg-[#182131] border-yellow-500/20 text-zinc-100 placeholder:text-zinc-500"
                             />
                           </div>
 
                           <div>
-                            <Label htmlFor="displayNameJoin">Your Name</Label>
+                            <Label
+                              htmlFor="displayNameJoin"
+                              className="text-zinc-300"
+                            >
+                              Your Name
+                            </Label>
                             <Input
                               id="displayNameJoin"
                               placeholder="Enter your display name"
@@ -703,6 +700,7 @@ export default function VoiceCall() {
                               onChange={(e) =>
                                 setInternalCallName(e.target.value)
                               }
+                              className="bg-[#182131] border-yellow-500/20 text-zinc-100 placeholder:text-zinc-500"
                             />
                           </div>
 
@@ -724,13 +722,13 @@ export default function VoiceCall() {
                               setInternalCallRoom(roomCode);
                               setShowInternalCall(true);
                             }}
-                            className="w-full bg-green-600 hover:bg-green-700 text-white h-12 text-lg"
+                            className="w-full bg-emerald-600 hover:bg-emerald-500 text-zinc-100 h-12 text-lg"
                           >
                             <Phone className="w-5 h-5 mr-2" />
                             Join Room
                           </Button>
 
-                          <p className="text-xs text-gray-500 text-center">
+                          <p className="text-xs text-zinc-500 text-center">
                             Ask the room creator for the 6-digit code
                           </p>
                         </>
@@ -739,56 +737,62 @@ export default function VoiceCall() {
                   </Card>
 
                   {/* Instructions */}
-                  <Card>
+                  <Card className="bg-[#101722] border border-yellow-500/15">
                     <CardHeader>
-                      <CardTitle className="text-[#1a365d]">
+                      <CardTitle className="text-zinc-100">
                         How It Works
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="space-y-3">
                         <div className="flex gap-3">
-                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0891b2]/10 flex items-center justify-center text-[#0891b2] font-bold">
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-cyan-400/15 flex items-center justify-center text-cyan-300 font-bold border border-cyan-400/20">
                             1
                           </div>
                           <div>
-                            <p className="font-medium">Create a Room</p>
-                            <p className="text-sm text-gray-600">
+                            <p className="font-medium text-zinc-100">
+                              Create a Room
+                            </p>
+                            <p className="text-sm text-zinc-400">
                               Click "Create Room" and get a 6-digit code
                             </p>
                           </div>
                         </div>
 
                         <div className="flex gap-3">
-                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0891b2]/10 flex items-center justify-center text-[#0891b2] font-bold">
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-cyan-400/15 flex items-center justify-center text-cyan-300 font-bold border border-cyan-400/20">
                             2
                           </div>
                           <div>
-                            <p className="font-medium">Share the Code</p>
-                            <p className="text-sm text-gray-600">
+                            <p className="font-medium text-zinc-100">
+                              Share the Code
+                            </p>
+                            <p className="text-sm text-zinc-400">
                               Send the 6-digit code to your teammates
                             </p>
                           </div>
                         </div>
 
                         <div className="flex gap-3">
-                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0891b2]/10 flex items-center justify-center text-[#0891b2] font-bold">
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-cyan-400/15 flex items-center justify-center text-cyan-300 font-bold border border-cyan-400/20">
                             3
                           </div>
                           <div>
-                            <p className="font-medium">Join with Code</p>
-                            <p className="text-sm text-gray-600">
+                            <p className="font-medium text-zinc-100">
+                              Join with Code
+                            </p>
+                            <p className="text-sm text-zinc-400">
                               Others click "Join Room" and enter the code
                             </p>
                           </div>
                         </div>
                       </div>
 
-                      <div className="pt-4 border-t">
-                        <p className="text-sm font-medium text-gray-700 mb-2">
+                      <div className="pt-4 border-t border-yellow-500/15">
+                        <p className="text-sm font-medium text-zinc-300 mb-2">
                           Best For:
                         </p>
-                        <ul className="text-sm text-gray-600 space-y-1">
+                        <ul className="text-sm text-zinc-400 space-y-1">
                           <li>• Quick team discussions</li>
                           <li>• Daily standups & meetings</li>
                           <li>• Project collaboration</li>
@@ -796,8 +800,8 @@ export default function VoiceCall() {
                         </ul>
                       </div>
 
-                      <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
-                        <p className="text-sm text-blue-700">
+                      <div className="bg-[#17243a] border border-cyan-400/25 p-3 rounded-lg">
+                        <p className="text-sm text-cyan-200">
                           <strong>Note:</strong> Calls are billed at $2 per hour
                           and deducted from your wallet balance.
                         </p>

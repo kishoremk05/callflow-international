@@ -1,0 +1,51 @@
+.contact-page .features-hero-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(hsl(var(--lime) / 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--lime) / 0.04) 1px, transparent 1px);
+  background-size: 64px 64px;
+  opacity: 0.55;
+}
+
+.contact-page .features-hero-shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 28% 35%, hsl(var(--lime) / 0.07), transparent 35%);
+}
+
+.contact-page .contact-panel {
+  background: linear-gradient(180deg, hsl(220 8% 9%) 0%, hsl(220 8% 8%) 100%);
+  border: 1px solid hsl(var(--lime-dark) / 0.24);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.contact-page .contact-input {
+  width: 100%;
+  border-radius: 0.85rem;
+  border: 1px solid hsl(var(--lime-dark) / 0.3);
+  background: hsl(220 8% 7%);
+  color: hsl(var(--text-on-dark));
+  padding: 0.78rem 0.9rem;
+  font-family: var(--font-body);
+  font-size: 0.94rem;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.contact-page .contact-input::placeholder {
+  color: hsl(var(--text-muted-on-dark));
+}
+
+.contact-page .contact-input:focus {
+  outline: none;
+  border-color: hsl(var(--lime));
+  box-shadow: 0 0 0 3px hsl(var(--lime) / 0.16);
+}
+
+.contact-page select.contact-input {
+  appearance: none;
+}

@@ -1,7 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import {
   Card,
@@ -196,220 +195,217 @@ export default function PurchaseNumbers() {
   return (
     <div
       ref={containerRef}
-      className="h-screen overflow-hidden flex flex-col bg-slate-50"
+      className="h-screen overflow-hidden flex bg-[#090c12] text-zinc-100"
     >
-      <div data-animate="header">
-        <Header user={user} onSignOut={signOut} />
-      </div>
+      <Sidebar
+        activeView="numbers"
+        onViewChange={(view) => {
+          if (view === "numbers") navigate("/numbers");
+          else if (view === "voice-call") navigate("/voice-call");
+          else if (view === "admin") navigate("/company-admin/dashboard");
+          else navigate("/dashboard", { state: { view } });
+        }}
+        onLogout={signOut}
+        showAdmin={userType === "company" || userType === "company_admin"}
+        user={user}
+      />
 
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar
-          activeView="numbers"
-          onViewChange={(view) => {
-            if (view === "numbers") navigate("/numbers");
-            else if (view === "voice-call") navigate("/voice-call");
-            else if (view === "admin") navigate("/company-admin/dashboard");
-            else navigate("/dashboard");
-          }}
-          onLogout={signOut}
-          showAdmin={userType === "company" || userType === "company_admin"}
-        />
+      <main className="flex-1 overflow-y-auto py-8 px-6 bg-gradient-to-b from-[#090c12] via-[#0d121a] to-[#0a0f16]">
+        <div className="mb-8" data-animate="title">
+          <h1 className="text-3xl md:text-4xl font-bold text-zinc-100">
+            Phone Numbers
+          </h1>
+          <p className="text-zinc-400 mt-1">
+            Purchase and manage your virtual phone numbers
+          </p>
+        </div>
 
-        <main className="flex-1 overflow-y-auto py-8 px-6 bg-slate-50">
-          <div className="mb-8" data-animate="title">
-            <h1 className="text-3xl md:text-4xl font-bold text-[#1a365d]">
-              Phone Numbers
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Purchase and manage your virtual phone numbers
-            </p>
-          </div>
+        <div className="grid gap-6">
+          {/* Purchase New Number Card */}
+          <Card
+            data-animate="card"
+            className="border-yellow-500/15 bg-[#101722] shadow-sm"
+          >
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-zinc-100">
+                <ShoppingCart className="w-5 h-5 text-cyan-300" />
+                Purchase New Number
+              </CardTitle>
+              <CardDescription className="text-zinc-400">
+                Search and buy phone numbers ($5/month per number)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Popular Countries */}
+              <div className="space-y-2">
+                <Label className="text-zinc-400">Quick Select Country</Label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {popularCountries.map((country) => (
+                    <button
+                      key={country.code}
+                      onClick={() => setCountryCode(country.code)}
+                      className={`flex items-center gap-2 p-3 rounded-xl font-medium text-sm transition-all ${
+                        countryCode === country.code
+                          ? "bg-[#1f2a3d] border border-cyan-400/30 text-cyan-300 shadow-lg"
+                          : "bg-[#182131] border border-yellow-500/10 text-zinc-400 hover:bg-[#223049]"
+                      }`}
+                    >
+                      <span className="text-lg">{country.flag}</span>
+                      {country.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          <div className="grid gap-6">
-            {/* Purchase New Number Card */}
-            <Card data-animate="card" className="border-gray-100 shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-[#1a365d]">
-                  <ShoppingCart className="w-5 h-5 text-[#0891b2]" />
-                  Purchase New Number
-                </CardTitle>
-                <CardDescription>
-                  Search and buy phone numbers ($5/month per number)
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Popular Countries */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-gray-600">Quick Select Country</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {popularCountries.map((country) => (
-                      <button
-                        key={country.code}
-                        onClick={() => setCountryCode(country.code)}
-                        className={`flex items-center gap-2 p-3 rounded-xl font-medium text-sm transition-all ${
-                          countryCode === country.code
-                            ? "bg-[#0891b2] text-white shadow-lg"
-                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                        }`}
+                  <Label className="text-zinc-400">Country Code</Label>
+                  <Input
+                    value={countryCode}
+                    onChange={(e) =>
+                      setCountryCode(e.target.value.toUpperCase())
+                    }
+                    placeholder="US"
+                    className="bg-[#182131] border-yellow-500/20 text-zinc-100 placeholder:text-zinc-500 focus:border-cyan-400 focus:ring-cyan-400/20"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-zinc-400">Area Code (Optional)</Label>
+                  <Input
+                    value={areaCode}
+                    onChange={(e) => setAreaCode(e.target.value)}
+                    placeholder="415"
+                    className="bg-[#182131] border-yellow-500/20 text-zinc-100 placeholder:text-zinc-500 focus:border-cyan-400 focus:ring-cyan-400/20"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>&nbsp;</Label>
+                  <Button
+                    onClick={searchNumbers}
+                    disabled={searching}
+                    className="w-full bg-cyan-500 hover:bg-cyan-400 text-[#0b1220] py-6 rounded-xl font-semibold"
+                  >
+                    <Search className="w-4 h-4 mr-2" />
+                    {searching ? "Searching..." : "Search Numbers"}
+                  </Button>
+                </div>
+              </div>
+
+              {availableNumbers.length > 0 && (
+                <div className="border border-yellow-500/15 rounded-xl p-4 bg-[#0e1624]">
+                  <h3 className="font-semibold text-zinc-100 mb-4 flex items-center gap-2">
+                    <Globe className="w-5 h-5 text-cyan-300" />
+                    Available Numbers
+                  </h3>
+                  <div className="space-y-3">
+                    {availableNumbers.map((num: any) => (
+                      <div
+                        key={num.phoneNumber}
+                        className="flex items-center justify-between p-4 bg-[#182131] rounded-xl border border-yellow-500/10 hover:border-cyan-400/25 transition-all"
                       >
-                        <span className="text-lg">{country.flag}</span>
-                        {country.name}
-                      </button>
+                        <div>
+                          <p className="font-semibold text-zinc-100 text-lg">
+                            {num.phoneNumber}
+                          </p>
+                          <p className="text-sm text-zinc-500">
+                            {num.locality}, {num.region}
+                          </p>
+                        </div>
+                        <Button
+                          onClick={() => purchaseNumber(num.phoneNumber)}
+                          className="bg-yellow-500 hover:bg-yellow-400 text-[#101722] rounded-lg font-semibold"
+                        >
+                          Purchase $5/mo
+                        </Button>
+                      </div>
                     ))}
                   </div>
                 </div>
+              )}
+            </CardContent>
+          </Card>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-gray-600">Country Code</Label>
-                    <Input
-                      value={countryCode}
-                      onChange={(e) =>
-                        setCountryCode(e.target.value.toUpperCase())
-                      }
-                      placeholder="US"
-                      className="border-gray-200 focus:border-[#0891b2] focus:ring-[#0891b2]"
-                    />
+          {/* My Numbers Card */}
+          <Card
+            data-animate="card"
+            className="border-yellow-500/15 bg-[#101722] shadow-sm"
+          >
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-zinc-100">
+                <Phone className="w-5 h-5 text-cyan-300" />
+                My Numbers
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {myNumbers.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-[#182131] border border-yellow-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Phone className="w-8 h-8 text-zinc-500" />
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-gray-600">
-                      Area Code (Optional)
-                    </Label>
-                    <Input
-                      value={areaCode}
-                      onChange={(e) => setAreaCode(e.target.value)}
-                      placeholder="415"
-                      className="border-gray-200 focus:border-[#0891b2] focus:ring-[#0891b2]"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>&nbsp;</Label>
-                    <Button
-                      onClick={searchNumbers}
-                      disabled={searching}
-                      className="w-full bg-[#0891b2] hover:bg-[#0e7490] text-white py-6 rounded-xl font-semibold"
-                    >
-                      <Search className="w-4 h-4 mr-2" />
-                      {searching ? "Searching..." : "Search Numbers"}
-                    </Button>
-                  </div>
+                  <p className="text-zinc-400 font-medium">
+                    No purchased numbers yet
+                  </p>
+                  <p className="text-zinc-500 text-sm mt-1">
+                    Search and purchase a number above
+                  </p>
                 </div>
-
-                {availableNumbers.length > 0 && (
-                  <div className="border border-gray-200 rounded-xl p-4 bg-slate-50">
-                    <h3 className="font-semibold text-[#1a365d] mb-4 flex items-center gap-2">
-                      <Globe className="w-5 h-5 text-[#0891b2]" />
-                      Available Numbers
-                    </h3>
-                    <div className="space-y-3">
-                      {availableNumbers.map((num: any) => (
-                        <div
-                          key={num.phoneNumber}
-                          className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 hover:shadow-md transition-all"
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table className="text-zinc-200">
+                    <TableHeader>
+                      <TableRow className="border-yellow-500/15 hover:bg-transparent">
+                        <TableHead className="text-zinc-400">
+                          Phone Number
+                        </TableHead>
+                        <TableHead className="text-zinc-400">Country</TableHead>
+                        <TableHead className="text-zinc-400">
+                          Monthly Cost
+                        </TableHead>
+                        <TableHead className="text-zinc-400">
+                          Purchased
+                        </TableHead>
+                        <TableHead className="text-zinc-400">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {myNumbers.map((num: any) => (
+                        <TableRow
+                          key={num.id}
+                          className="border-yellow-500/10 hover:bg-[#182131]"
                         >
-                          <div>
-                            <p className="font-semibold text-[#1a365d] text-lg">
-                              {num.phoneNumber}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {num.locality}, {num.region}
-                            </p>
-                          </div>
-                          <Button
-                            onClick={() => purchaseNumber(num.phoneNumber)}
-                            className="bg-[#f97316] hover:bg-[#ea580c] text-white rounded-lg font-semibold"
-                          >
-                            Purchase $5/mo
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* My Numbers Card */}
-            <Card data-animate="card" className="border-gray-100 shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-[#1a365d]">
-                  <Phone className="w-5 h-5 text-[#0891b2]" />
-                  My Numbers
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {myNumbers.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Phone className="w-8 h-8 text-gray-400" />
-                    </div>
-                    <p className="text-gray-500 font-medium">
-                      No purchased numbers yet
-                    </p>
-                    <p className="text-gray-400 text-sm mt-1">
-                      Search and purchase a number above
-                    </p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="border-gray-100">
-                          <TableHead className="text-gray-600">
-                            Phone Number
-                          </TableHead>
-                          <TableHead className="text-gray-600">
-                            Country
-                          </TableHead>
-                          <TableHead className="text-gray-600">
-                            Monthly Cost
-                          </TableHead>
-                          <TableHead className="text-gray-600">
-                            Purchased
-                          </TableHead>
-                          <TableHead className="text-gray-600">
-                            Actions
-                          </TableHead>
+                          <TableCell className="font-semibold text-zinc-100">
+                            {num.phone_number}
+                          </TableCell>
+                          <TableCell className="text-zinc-400">
+                            {num.country_code}
+                          </TableCell>
+                          <TableCell className="text-zinc-400">
+                            ${num.monthly_cost}
+                          </TableCell>
+                          <TableCell className="text-zinc-400">
+                            {new Date(num.purchased_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              onClick={() => releaseNumber(num.id)}
+                              variant="outline"
+                              size="sm"
+                              className="border-red-400/30 bg-red-500/10 text-red-300 hover:bg-red-500/20 hover:text-red-200"
+                            >
+                              <Trash2 className="w-4 h-4 mr-1" />
+                              Release
+                            </Button>
+                          </TableCell>
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {myNumbers.map((num: any) => (
-                          <TableRow key={num.id} className="border-gray-100">
-                            <TableCell className="font-semibold text-[#1a365d]">
-                              {num.phone_number}
-                            </TableCell>
-                            <TableCell className="text-gray-600">
-                              {num.country_code}
-                            </TableCell>
-                            <TableCell className="text-gray-600">
-                              ${num.monthly_cost}
-                            </TableCell>
-                            <TableCell className="text-gray-600">
-                              {new Date(num.purchased_at).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                onClick={() => releaseNumber(num.id)}
-                                variant="outline"
-                                size="sm"
-                                className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
-                              >
-                                <Trash2 className="w-4 h-4 mr-1" />
-                                Release
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </main>
-      </div>
-      {/* end flex */}
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </main>
     </div>
   );
 }

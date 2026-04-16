@@ -1,6 +1,5 @@
-import { useState, useEffect, useLayoutEffect, useRef } from "react";
+﻿import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { Header } from "@/components/layout/Header";
 import {
   Card,
   CardContent,
@@ -20,6 +19,8 @@ import {
   History,
   Wallet,
   ArrowUpRight,
+  Phone,
+  LogOut,
 } from "lucide-react";
 import { gsap } from "gsap";
 
@@ -39,6 +40,15 @@ export default function Payments() {
   const [isCompanyAdmin, setIsCompanyAdmin] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const initials =
+    user?.user_metadata?.full_name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() ||
+    user?.email?.slice(0, 2).toUpperCase() ||
+    "U";
 
   // Entrance animations
   useLayoutEffect(() => {
@@ -197,17 +207,45 @@ export default function Payments() {
   const quickAmounts = [10, 25, 50, 100];
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-slate-50">
-      <div data-animate="header">
-        <Header user={user} onSignOut={signOut} />
+    <div
+      ref={containerRef}
+      className="min-h-screen bg-gradient-to-b from-[#090c12] via-[#0d121a] to-[#0a0f16] text-zinc-100"
+    >
+      <div
+        data-animate="header"
+        className="sticky top-0 z-20 border-b border-yellow-500/15 bg-[#101722]/90 backdrop-blur"
+      >
+        <div className="container h-16 px-4 md:px-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-[0_8px_24px_rgba(34,211,238,0.35)]">
+              <Phone className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-xl font-bold text-zinc-100 tracking-tight">
+              CallFlow
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-200 font-semibold">
+              {initials}
+            </div>
+            <Button
+              variant="outline"
+              onClick={signOut}
+              className="border-yellow-500/20 bg-[#182131] text-zinc-200 hover:bg-[#223049]"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign out
+            </Button>
+          </div>
+        </div>
       </div>
 
       <main className="container py-8 px-4 md:px-6">
         <div className="mb-8" data-animate="title">
-          <h1 className="text-3xl md:text-4xl font-bold text-[#1a365d]">
+          <h1 className="text-3xl md:text-4xl font-bold text-zinc-100 tracking-tight">
             Wallet & Payments
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-zinc-400 mt-1">
             Manage your credits and payment history
           </p>
         </div>
@@ -215,36 +253,36 @@ export default function Payments() {
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6" data-animate="content">
             <Tabs defaultValue="add-credits">
-              <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200 p-1 rounded-xl">
+              <TabsList className="grid w-full grid-cols-2 bg-[#141a24] border border-yellow-500/20 p-1 rounded-xl">
                 <TabsTrigger
                   value="add-credits"
-                  className="rounded-lg data-[state=active]:bg-[#0891b2] data-[state=active]:text-white"
+                  className="rounded-lg text-zinc-400 data-[state=active]:bg-cyan-500 data-[state=active]:text-[#101722]"
                 >
                   Add Credits
                 </TabsTrigger>
                 <TabsTrigger
                   value="history"
-                  className="rounded-lg data-[state=active]:bg-[#0891b2] data-[state=active]:text-white"
+                  className="rounded-lg text-zinc-400 data-[state=active]:bg-cyan-500 data-[state=active]:text-[#101722]"
                 >
                   Payment History
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="add-credits" className="space-y-4 mt-6">
-                <Card className="border-gray-100 shadow-sm">
+                <Card className="border-yellow-500/15 bg-gradient-to-br from-[#182131] to-[#141d2d] shadow-[0_10px_30px_rgba(0,0,0,0.28)]">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-[#1a365d]">
-                      <CreditCard className="w-5 h-5 text-[#0891b2]" />
+                    <CardTitle className="flex items-center gap-2 text-zinc-100">
+                      <CreditCard className="w-5 h-5 text-cyan-300" />
                       Add Credits
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-zinc-400">
                       Choose your preferred payment method
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {/* Quick Amount Buttons */}
                     <div className="space-y-2">
-                      <Label className="text-gray-600">Quick Select</Label>
+                      <Label className="text-zinc-300">Quick Select</Label>
                       <div className="grid grid-cols-4 gap-3">
                         {quickAmounts.map((amt) => (
                           <button
@@ -252,8 +290,8 @@ export default function Payments() {
                             onClick={() => setAmount(amt.toString())}
                             className={`py-3 rounded-xl font-semibold text-sm transition-all ${
                               amount === amt.toString()
-                                ? "bg-[#0891b2] text-white shadow-lg"
-                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                ? "bg-cyan-500 text-[#101722] shadow-[0_10px_20px_rgba(34,211,238,0.35)]"
+                                : "bg-[#101722] text-zinc-300 hover:bg-[#223049] border border-yellow-500/15"
                             }`}
                           >
                             ${amt}
@@ -263,11 +301,11 @@ export default function Payments() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="amount" className="text-gray-600">
+                      <Label htmlFor="amount" className="text-zinc-300">
                         Or enter custom amount
                       </Label>
                       <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 font-medium">
                           $
                         </span>
                         <Input
@@ -277,7 +315,7 @@ export default function Payments() {
                           value={amount}
                           onChange={(e) => setAmount(e.target.value)}
                           min="1"
-                          className="pl-8 py-6 text-lg border-gray-200 rounded-xl focus:border-[#0891b2] focus:ring-[#0891b2]"
+                          className="pl-8 py-6 text-lg rounded-xl bg-[#101722] border-yellow-500/20 text-zinc-100 placeholder:text-zinc-600 focus:border-cyan-400 focus:ring-cyan-400/20"
                         />
                       </div>
                     </div>
@@ -286,7 +324,7 @@ export default function Payments() {
                       <Button
                         onClick={() => handleAddCredits("stripe")}
                         disabled={loading || !amount}
-                        className="w-full py-6 bg-[#0891b2] hover:bg-[#0e7490] text-white rounded-xl font-semibold transition-all"
+                        className="w-full py-6 bg-cyan-500 hover:bg-cyan-400 text-[#101722] rounded-xl font-semibold transition-all"
                       >
                         <CreditCard className="w-5 h-5 mr-2" />
                         Pay with Stripe
@@ -295,15 +333,15 @@ export default function Payments() {
                         onClick={() => handleAddCredits("razorpay")}
                         disabled={loading || !amount}
                         variant="outline"
-                        className="w-full py-6 border-2 border-[#0891b2] text-[#0891b2] hover:bg-[#0891b2] hover:text-white rounded-xl font-semibold transition-all"
+                        className="w-full py-6 border-2 border-yellow-500/35 text-yellow-200 bg-yellow-500/10 hover:bg-yellow-500/20 hover:text-yellow-100 rounded-xl font-semibold transition-all"
                       >
                         <Wallet className="w-5 h-5 mr-2" />
                         Razorpay / UPI
                       </Button>
                     </div>
 
-                    <p className="text-sm text-gray-500 text-center">
-                      Stripe for international payments • Razorpay for Indian
+                    <p className="text-sm text-zinc-500 text-center">
+                      Stripe for international payments â€¢ Razorpay for Indian
                       users
                     </p>
                   </CardContent>
@@ -311,23 +349,23 @@ export default function Payments() {
               </TabsContent>
 
               <TabsContent value="history" className="mt-6">
-                <Card className="border-gray-100 shadow-sm">
+                <Card className="border-yellow-500/15 bg-gradient-to-br from-[#182131] to-[#141d2d] shadow-[0_10px_30px_rgba(0,0,0,0.28)]">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-[#1a365d]">
-                      <History className="w-5 h-5 text-[#0891b2]" />
+                    <CardTitle className="flex items-center gap-2 text-zinc-100">
+                      <History className="w-5 h-5 text-cyan-300" />
                       Payment History
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     {payments.length === 0 ? (
                       <div className="text-center py-12">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <CreditCard className="w-8 h-8 text-gray-400" />
+                        <div className="w-16 h-16 bg-[#101722] border border-yellow-500/15 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <CreditCard className="w-8 h-8 text-zinc-500" />
                         </div>
-                        <p className="text-gray-500 font-medium">
+                        <p className="text-zinc-400 font-medium">
                           No payment history yet
                         </p>
-                        <p className="text-gray-400 text-sm mt-1">
+                        <p className="text-zinc-500 text-sm mt-1">
                           Your transactions will appear here
                         </p>
                       </div>
@@ -336,17 +374,17 @@ export default function Payments() {
                         {payments.map((payment: any) => (
                           <div
                             key={payment.id}
-                            className="flex items-center justify-between p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors"
+                            className="flex items-center justify-between p-4 rounded-xl bg-[#101722] border border-yellow-500/10 hover:border-cyan-400/30 hover:bg-[#182131] transition-colors"
                           >
                             <div className="flex items-center gap-4">
-                              <div className="w-10 h-10 bg-[#0891b2]/10 rounded-full flex items-center justify-center">
-                                <ArrowUpRight className="w-5 h-5 text-[#0891b2]" />
+                              <div className="w-10 h-10 bg-cyan-500/15 rounded-full flex items-center justify-center border border-cyan-400/25">
+                                <ArrowUpRight className="w-5 h-5 text-cyan-300" />
                               </div>
                               <div>
-                                <p className="font-semibold text-[#1a365d]">
+                                <p className="font-semibold text-zinc-100">
                                   {payment.currency} {payment.amount}
                                 </p>
-                                <p className="text-sm text-gray-500">
+                                <p className="text-sm text-zinc-500">
                                   {new Date(
                                     payment.created_at,
                                   ).toLocaleString()}
@@ -357,15 +395,15 @@ export default function Payments() {
                               <span
                                 className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
                                   payment.status === "completed"
-                                    ? "bg-green-100 text-green-700"
+                                    ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/25"
                                     : payment.status === "pending"
-                                      ? "bg-amber-100 text-amber-700"
-                                      : "bg-red-100 text-red-700"
+                                      ? "bg-yellow-500/15 text-yellow-200 border border-yellow-500/25"
+                                      : "bg-red-500/15 text-red-300 border border-red-500/25"
                                 }`}
                               >
                                 {payment.status}
                               </span>
-                              <p className="text-xs text-gray-500 mt-1">
+                              <p className="text-xs text-zinc-500 mt-1">
                                 via {payment.provider}
                               </p>
                             </div>
@@ -380,35 +418,43 @@ export default function Payments() {
           </div>
 
           <div data-animate="sidebar">
-            <Card className="border-gray-100 shadow-sm sticky top-24">
+            <Card className="border-yellow-500/15 bg-gradient-to-br from-[#182131] to-[#141d2d] shadow-[0_10px_30px_rgba(0,0,0,0.28)] sticky top-24">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-[#1a365d]">
-                  <DollarSign className="w-5 h-5 text-[#0891b2]" />
+                <CardTitle className="flex items-center gap-2 text-zinc-100">
+                  <DollarSign className="w-5 h-5 text-cyan-300" />
                   Current Balance
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-6">
-                  <div className="text-5xl font-bold text-[#1a365d] mb-2">
+                  <div className="text-5xl font-bold text-zinc-100 mb-2">
                     {wallet.currency === "USD" ? "$" : wallet.currency}
                     {wallet.availableBalance.toFixed(2)}
                   </div>
-                  <p className="text-gray-500">Available for calls</p>
+                  <p className="text-zinc-400">Available for calls</p>
                 </div>
 
-                <div className="mt-4 p-4 bg-slate-50 rounded-xl">
+                <div className="mt-4 p-4 bg-[#101722] border border-yellow-500/10 rounded-xl">
                   <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="text-gray-600">Estimated calls</span>
-                    <span className="font-semibold text-[#1a365d]">
+                    <span className="text-zinc-500">Estimated calls</span>
+                    <span className="font-semibold text-zinc-200">
                       ~{Math.floor(wallet.availableBalance / 0.02)} min (USA)
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Rate to USA</span>
-                    <span className="font-semibold text-[#0891b2]">
+                    <span className="text-zinc-500">Rate to USA</span>
+                    <span className="font-semibold text-cyan-300">
                       $0.02/min
                     </span>
                   </div>
+                  {isCompanyAdmin && (
+                    <div className="mt-3 pt-3 border-t border-yellow-500/10 flex items-center justify-between text-sm">
+                      <span className="text-zinc-500">Shared to teams</span>
+                      <span className="font-semibold text-yellow-200">
+                        ${totalShared.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -418,3 +464,4 @@ export default function Payments() {
     </div>
   );
 }
+

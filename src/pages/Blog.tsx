@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+﻿import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import {
   Phone,
@@ -19,7 +19,7 @@ const Blog = () => {
     date: "February 10, 2024",
     readTime: "8 min read",
     category: "Industry Insights",
-    image: "🌐",
+    image: "ðŸŒ",
   };
 
   const posts = [
@@ -30,7 +30,7 @@ const Blog = () => {
       date: "February 5, 2024",
       readTime: "5 min read",
       category: "Tips & Tricks",
-      icon: "💡",
+      icon: "ðŸ’¡",
     },
     {
       title: "How VoIP Technology Works: A Simple Guide",
@@ -39,16 +39,16 @@ const Blog = () => {
       date: "January 28, 2024",
       readTime: "6 min read",
       category: "Technology",
-      icon: "🔧",
+      icon: "ðŸ”§",
     },
     {
-      title: "GlobalConnect API: Building Your First Integration",
+      title: "CallFlow API: Building Your First Integration",
       excerpt:
         "A step-by-step guide to integrating voice calling into your application using our API.",
       date: "January 20, 2024",
       readTime: "10 min read",
       category: "Developer",
-      icon: "💻",
+      icon: "ðŸ’»",
     },
     {
       title: "The Rise of Remote Work and Global Teams",
@@ -57,7 +57,7 @@ const Blog = () => {
       date: "January 15, 2024",
       readTime: "7 min read",
       category: "Business",
-      icon: "🚀",
+      icon: "ðŸš€",
     },
     {
       title: "Security Best Practices for Business Calls",
@@ -66,7 +66,7 @@ const Blog = () => {
       date: "January 8, 2024",
       readTime: "6 min read",
       category: "Security",
-      icon: "🔒",
+      icon: "ðŸ”’",
     },
     {
       title: "Customer Success Story: TechCorp International",
@@ -75,7 +75,7 @@ const Blog = () => {
       date: "January 2, 2024",
       readTime: "4 min read",
       category: "Case Study",
-      icon: "⭐",
+      icon: "â­",
     },
   ];
 
@@ -103,7 +103,7 @@ const Blog = () => {
               <div className="w-10 h-10 bg-[#0891b2] rounded-xl flex items-center justify-center">
                 <Phone className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold">GlobalConnect</span>
+              <span className="text-xl font-bold">CallFlow</span>
             </div>
             <div className="flex gap-4">
               <Button variant="outline" onClick={() => navigate("/login")}>
@@ -125,7 +125,7 @@ const Blog = () => {
         <div className="container mx-auto px-4 md:px-6">
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              GlobalConnect Blog
+              CallFlow Blog
             </h1>
             <p className="text-xl text-gray-100 mb-8">
               Insights, tips, and stories about global communication and
@@ -269,7 +269,7 @@ const Blog = () => {
           </h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
             Join thousands of users making crystal-clear international calls
-            with GlobalConnect.
+            with CallFlow.
           </p>
           <Button
             size="lg"
@@ -285,3 +285,4 @@ const Blog = () => {
 };
 
 export default Blog;
+

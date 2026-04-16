@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { OrganizationManagement } from "@/components/dashboard/OrganizationManagement";
+import BrandLogo from "@/components/branding/BrandLogo";
 import {
   Table,
   TableBody,
@@ -31,7 +32,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Shield,
   Building2,
   Users,
   Mail,
@@ -50,6 +50,7 @@ import {
   Bell,
   Trash2,
 } from "lucide-react";
+import "./super-admin-dashboard.css";
 
 interface CompanyAdmin {
   company_name: string;
@@ -560,38 +561,54 @@ const SuperAdminDashboard = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <RefreshCw className="w-8 h-8 animate-spin text-purple-600" />
+      <div className="super-admin-dashboard flex items-center justify-center min-h-screen">
+        <RefreshCw className="w-8 h-8 animate-spin text-yellow-400" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="super-admin-dashboard min-h-screen p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center shadow-lg">
-              <Shield className="w-6 h-6 text-white" />
-            </div>
+            <BrandLogo
+              iconClassName="text-yellow-400 h-9 w-9"
+              showText={false}
+            />
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              <h1 className="font-display text-4xl tracking-tight text-zinc-100 uppercase leading-none">
                 Super Admin Dashboard
               </h1>
-              <p className="text-gray-600">System Overview & Management</p>
+              <p className="text-zinc-400">System Overview & Management</p>
             </div>
           </div>
           <div className="flex gap-2">
-            <Button onClick={populateCountries} variant="outline" size="sm">
+            <Button
+              onClick={populateCountries}
+              variant="outline"
+              size="sm"
+              className="border-yellow-500/25 bg-[#121826] text-zinc-100 hover:bg-[#1a2235]"
+            >
               <Globe className="w-4 h-4 mr-2" />
               Detect Countries
             </Button>
-            <Button onClick={fetchDashboardData} variant="outline" size="sm">
+            <Button
+              onClick={fetchDashboardData}
+              variant="outline"
+              size="sm"
+              className="border-yellow-500/25 bg-[#121826] text-zinc-100 hover:bg-[#1a2235]"
+            >
               <RefreshCw className="w-4 h-4 mr-2" />
               Refresh
             </Button>
-            <Button onClick={handleLogout} variant="outline" size="sm">
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              size="sm"
+              className="border-yellow-500/25 bg-[#121826] text-zinc-100 hover:bg-[#1a2235]"
+            >
               <LogOut className="w-4 h-4 mr-2" />
               Sign Out
             </Button>
@@ -989,6 +1006,7 @@ const SuperAdminDashboard = () => {
                     size="sm"
                     onClick={goToPreviousPage}
                     disabled={currentPage === 1}
+                    className="super-pagination-btn"
                   >
                     <ChevronLeft className="w-4 h-4" />
                     Previous
@@ -1004,7 +1022,10 @@ const SuperAdminDashboard = () => {
                           }
                           size="sm"
                           onClick={() => goToPage(pageNum)}
-                          className="w-10"
+                          className="w-10 super-pagination-btn"
+                          data-active={
+                            currentPage === pageNum ? "true" : "false"
+                          }
                         >
                           {pageNum}
                         </Button>
@@ -1017,6 +1038,7 @@ const SuperAdminDashboard = () => {
                     size="sm"
                     onClick={goToNextPage}
                     disabled={currentPage === totalPages}
+                    className="super-pagination-btn"
                   >
                     Next
                     <ChevronRight className="w-4 h-4" />

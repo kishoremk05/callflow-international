@@ -1,4 +1,4 @@
-import {
+﻿import {
   MdDashboard,
   MdPhone,
   MdGroups,
@@ -8,7 +8,7 @@ import {
   MdAdminPanelSettings,
   MdLogout,
 } from "react-icons/md";
-import { Phone, User, Settings, LogOut } from "lucide-react";
+import { User, Settings, LogOut } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import BrandLogo from "@/components/branding/BrandLogo";
 
 export type SidebarView =
   | "overview"
@@ -70,17 +71,13 @@ export function Sidebar({
     .slice(0, 2);
 
   return (
-    <aside className="w-[250px] flex-shrink-0 bg-white border-r border-gray-100 flex flex-col z-40 shadow-sm">
+    <aside className="w-[250px] flex-shrink-0 bg-[#0f141d] border-r border-yellow-500/10 flex flex-col z-40 shadow-[0_10px_40px_rgba(0,0,0,0.35)]">
       {/* Logo / Brand */}
-      <div className="px-5 py-4 border-b border-gray-100 flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#0891b2] flex items-center justify-center shadow-md flex-shrink-0">
-            <Phone className="w-4 h-4 text-white" />
-          </div>
-          <span className="text-lg font-bold text-[#1a365d]">
-            GlobalConnect
-          </span>
-        </div>
+      <div className="px-5 py-4 border-b border-yellow-500/10 flex-shrink-0">
+        <BrandLogo
+          iconClassName="text-yellow-400"
+          textClassName="text-xl font-bold text-zinc-100"
+        />
       </div>
       {/* Nav Items */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
@@ -94,18 +91,18 @@ export function Sidebar({
                 onClick={() => onViewChange(item.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 ${
                   isActive
-                    ? "bg-[#0891b2]/10 text-[#0891b2] shadow-sm"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    ? "bg-yellow-500/12 text-yellow-300 shadow-sm"
+                    : "text-zinc-400 hover:bg-[#171d28] hover:text-zinc-100"
                 }`}
               >
                 <item.icon
                   className={`text-xl flex-shrink-0 ${
-                    isActive ? "text-[#0891b2]" : "text-gray-500"
+                    isActive ? "text-yellow-300" : "text-zinc-500"
                   }`}
                 />
                 <span>{item.label}</span>
                 {isActive && (
-                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#0891b2]" />
+                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-yellow-400" />
                 )}
               </button>
             );
@@ -113,22 +110,22 @@ export function Sidebar({
       </nav>
 
       {/* Profile + Logout */}
-      <div className="px-3 py-4 border-t border-gray-100 space-y-1">
+      <div className="px-3 py-4 border-t border-yellow-500/10 space-y-1">
         {/* Profile Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-3 w-full hover:bg-gray-50 rounded-xl px-4 py-3 transition-all">
+            <button className="flex items-center gap-3 w-full hover:bg-[#171d28] rounded-xl px-4 py-3 transition-all">
               <Avatar className="h-8 w-8 flex-shrink-0">
                 <AvatarImage src={user?.user_metadata?.avatar_url} />
-                <AvatarFallback className="bg-[#0891b2] text-white font-semibold text-xs">
+                <AvatarFallback className="bg-gradient-to-br from-yellow-500 to-amber-500 text-white font-semibold text-xs">
                   {initials}
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col text-left overflow-hidden">
-                <span className="text-sm font-semibold text-[#1a365d] truncate">
+                <span className="text-sm font-semibold text-zinc-100 truncate">
                   {fullName}
                 </span>
-                <span className="text-xs text-gray-500 truncate">
+                <span className="text-xs text-zinc-500 truncate">
                   {user?.email}
                 </span>
               </div>
@@ -137,20 +134,20 @@ export function Sidebar({
           <DropdownMenuContent
             side="top"
             align="start"
-            className="w-56 bg-white border-gray-100 shadow-lg"
+            className="w-56 bg-[#141a24] border-yellow-500/15 text-zinc-100 shadow-lg"
           >
             <DropdownMenuItem
               onClick={() => toast.info("Profile page coming soon!")}
               className="cursor-pointer"
             >
-              <User className="mr-2 h-4 w-4 text-gray-500" />
+              <User className="mr-2 h-4 w-4 text-zinc-500" />
               Profile
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => toast.info("Settings page coming soon!")}
               className="cursor-pointer"
             >
-              <Settings className="mr-2 h-4 w-4 text-gray-500" />
+              <Settings className="mr-2 h-4 w-4 text-zinc-500" />
               Settings
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -159,7 +156,7 @@ export function Sidebar({
         {/* Logout Button */}
         <button
           onClick={onLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 hover:text-red-600 transition-all duration-150"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all duration-150"
         >
           <MdLogout className="text-xl flex-shrink-0" />
           <span>Logout</span>

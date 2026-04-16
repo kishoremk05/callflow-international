@@ -272,6 +272,57 @@ export default function Dashboard() {
     }
   }, [user, userType]);
 
+  useEffect(() => {
+    if (location.hash !== "#make-a-call") return;
+
+    setSidebarView("overview");
+
+    let attempts = 0;
+    const maxAttempts = 20;
+    const intervalId = setInterval(() => {
+      const makeCallSection = document.getElementById("make-a-call");
+      if (makeCallSection) {
+        makeCallSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        clearInterval(intervalId);
+      }
+
+      attempts += 1;
+      if (attempts >= maxAttempts) {
+        clearInterval(intervalId);
+      }
+    }, 100);
+
+    return () => clearInterval(intervalId);
+  }, [location.hash]);
+
+  useEffect(() => {
+    const handleFocusMakeCall = () => {
+      setSidebarView("overview");
+
+      let attempts = 0;
+      const maxAttempts = 20;
+      const intervalId = setInterval(() => {
+        const makeCallSection = document.getElementById("make-a-call");
+        if (makeCallSection) {
+          makeCallSection.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+          clearInterval(intervalId);
+        }
+
+        attempts += 1;
+        if (attempts >= maxAttempts) {
+          clearInterval(intervalId);
+        }
+      }, 100);
+    };
+
+    window.addEventListener("focus-make-call", handleFocusMakeCall);
+    return () =>
+      window.removeEventListener("focus-make-call", handleFocusMakeCall);
+  }, []);
+
   // Real-time wallet synchronization - ensures all dashboards show same balance
   useEffect(() => {
     if (!user) return;
@@ -735,7 +786,7 @@ export default function Dashboard() {
   return (
     <div
       ref={containerRef}
-      className="h-screen overflow-hidden flex bg-slate-50"
+      className="h-screen overflow-hidden flex bg-[#090c12] text-zinc-100"
     >
       <Sidebar
         activeView={sidebarView}
@@ -755,15 +806,15 @@ export default function Dashboard() {
         user={user}
       />
 
-      <main className="flex-1 overflow-y-auto py-6 px-6 bg-slate-50">
+      <main className="flex-1 overflow-y-auto py-6 px-6 bg-gradient-to-b from-[#090c12] via-[#0d121a] to-[#0a0f16]">
         {/* ── OVERVIEW ── */}
         {sidebarView === "overview" && (
           <>
             {/* ── Page Header ── */}
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h1 className="text-3xl font-bold text-[#1a365d]">Dashboard</h1>
-                <p className="text-gray-500 text-sm mt-1">
+                <h1 className="text-3xl font-bold text-zinc-100">Dashboard</h1>
+                <p className="text-zinc-400 text-sm mt-1">
                   Welcome back, {user?.user_metadata?.full_name || "there"} —
                   here's what's happening today.
                 </p>
@@ -772,7 +823,7 @@ export default function Dashboard() {
                 {userType === "normal" && pendingInvitesCount > 0 && (
                   <button
                     onClick={() => setShowInviteNotifications(true)}
-                    className="relative flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition-all animate-pulse"
+                    className="relative flex items-center gap-2 px-4 py-2 rounded-xl bg-yellow-500 text-[#131720] text-sm font-semibold hover:bg-yellow-400 transition-all animate-pulse"
                   >
                     <Bell className="w-4 h-4" />
                     {pendingInvitesCount} Invite
@@ -782,7 +833,7 @@ export default function Dashboard() {
                 {userType === "company" && (
                   <button
                     onClick={() => setShowCallQueueUpload(true)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl border border-purple-300 text-purple-600 bg-white text-sm font-medium hover:bg-purple-50 transition-all"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl border border-yellow-500/30 text-yellow-300 bg-[#111826] text-sm font-medium hover:bg-[#192232] transition-all"
                   >
                     <Upload className="w-4 h-4" />
                     Upload Call Data
@@ -793,20 +844,20 @@ export default function Dashboard() {
 
             {/* ── Connection Banner ── */}
             {!isConnected && !isInitializing && (
-              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-3">
-                <WifiOff className="w-5 h-5 text-amber-600 flex-shrink-0" />
+              <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-2xl flex items-center gap-3">
+                <WifiOff className="w-5 h-5 text-yellow-300 flex-shrink-0" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-amber-800">
+                  <p className="text-sm font-medium text-yellow-200">
                     Backend server not connected
                   </p>
-                  <p className="text-xs text-amber-600">
+                  <p className="text-xs text-yellow-300/80">
                     Start the backend server to enable calling
                   </p>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-amber-300 text-amber-700 hover:bg-amber-100"
+                  className="border-yellow-500/40 text-yellow-200 hover:bg-yellow-500/20"
                   onClick={retryConnection}
                 >
                   Retry
@@ -818,19 +869,19 @@ export default function Dashboard() {
             {userType === "company" &&
               showCompanyNotification &&
               companyAdminInfo && (
-                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-2xl flex items-start gap-3">
-                  <Building2 className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="mb-6 p-4 bg-[#101a2b] border border-cyan-400/25 rounded-2xl flex items-start gap-3">
+                  <Building2 className="w-5 h-5 text-cyan-300 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <p className="text-sm font-bold text-blue-800">
+                    <p className="text-sm font-bold text-cyan-100">
                       🎉 Your organization has been linked!
                     </p>
-                    <p className="text-xs text-blue-600 mt-0.5">
+                    <p className="text-xs text-cyan-300/80 mt-0.5">
                       {companyAdminInfo.company_name} ·{" "}
                       {companyAdminInfo.company_email}
                     </p>
                   </div>
                   <button
-                    className="text-xs text-blue-600 hover:underline"
+                    className="text-xs text-cyan-200 hover:underline"
                     onClick={() => {
                       localStorage.setItem(
                         `company-notification-dismissed-${user?.id}`,
@@ -844,78 +895,97 @@ export default function Dashboard() {
                 </div>
               )}
 
-            {/* ── 4 Stat Cards ── */}
-            <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+            {/* ── Top Stat Cards ── */}
+            <div className="grid grid-cols-2 xl:grid-cols-5 gap-4 mb-8">
               {/* Total Calls - dark teal (hero card) */}
-              <div className="bg-[#0891b2] rounded-2xl p-5 text-white relative overflow-hidden">
-                <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                  <ArrowUpRight className="w-4 h-4" />
+              <div className="bg-gradient-to-br from-[#1f2130] to-[#161b27] rounded-2xl p-5 text-zinc-100 relative overflow-hidden border border-yellow-500/20 shadow-[0_10px_32px_rgba(0,0,0,0.3)]">
+                <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-yellow-500/15 flex items-center justify-center">
+                  <ArrowUpRight className="w-4 h-4 text-yellow-300" />
                 </div>
-                <p className="text-sm font-medium text-white/80 mb-2">
+                <p className="text-sm font-medium text-zinc-400 mb-2">
                   Total Calls
                 </p>
                 <p className="text-4xl font-bold">{stats.totalCalls}</p>
-                <p className="text-xs text-white/70 mt-2 flex items-center gap-1">
-                  <TrendingUp className="w-3 h-3" /> Increased from last month
+                <p className="text-xs text-zinc-500 mt-2 flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3 text-yellow-300" /> Increased
+                  from last month
                 </p>
               </div>
               {/* Total Minutes */}
-              <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm relative">
-                <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                  <ArrowUpRight className="w-4 h-4 text-gray-500" />
+              <div className="bg-[#101722] rounded-2xl p-5 border border-yellow-500/15 shadow-sm relative">
+                <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                  <ArrowUpRight className="w-4 h-4 text-zinc-300" />
                 </div>
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-6 h-6 rounded-full bg-[#0891b2]/10 flex items-center justify-center">
-                    <Clock className="w-3 h-3 text-[#0891b2]" />
+                  <div className="w-6 h-6 rounded-full bg-cyan-400/20 flex items-center justify-center">
+                    <Clock className="w-3 h-3 text-cyan-300" />
                   </div>
-                  <p className="text-sm font-medium text-gray-500">
+                  <p className="text-sm font-medium text-zinc-400">
                     Total Minutes
                   </p>
                 </div>
-                <p className="text-4xl font-bold text-[#1a365d]">
-                  {stats.totalMinutes}
+                <p className="text-4xl font-bold text-zinc-100">
+                  {Math.round(stats.totalMinutes)}
                 </p>
-                <p className="text-xs text-gray-400 mt-2">
+                <p className="text-xs text-zinc-500 mt-2">
                   Increased from last month
                 </p>
               </div>
               {/* Total Spent */}
-              <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm relative">
-                <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                  <ArrowUpRight className="w-4 h-4 text-gray-500" />
+              <div className="bg-[#101722] rounded-2xl p-5 border border-yellow-500/15 shadow-sm relative">
+                <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                  <ArrowUpRight className="w-4 h-4 text-zinc-300" />
                 </div>
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
-                    <Wallet className="w-3 h-3 text-green-600" />
+                  <div className="w-6 h-6 rounded-full bg-emerald-400/20 flex items-center justify-center">
+                    <Wallet className="w-3 h-3 text-emerald-300" />
                   </div>
-                  <p className="text-sm font-medium text-gray-500">
+                  <p className="text-sm font-medium text-zinc-400">
                     Total Spent
                   </p>
                 </div>
-                <p className="text-4xl font-bold text-[#1a365d]">
+                <p className="text-4xl font-bold text-zinc-100">
                   ${stats.totalSpent.toFixed(2)}
                 </p>
-                <p className="text-xs text-gray-400 mt-2">vs last month</p>
+                <p className="text-xs text-zinc-500 mt-2">vs last month</p>
               </div>
               {/* This Month */}
-              <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm relative">
-                <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                  <ArrowUpRight className="w-4 h-4 text-gray-500" />
+              <div className="bg-[#101722] rounded-2xl p-5 border border-yellow-500/15 shadow-sm relative">
+                <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                  <ArrowUpRight className="w-4 h-4 text-zinc-300" />
                 </div>
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                    <BarChart3 className="w-3 h-3 text-purple-600" />
+                  <div className="w-6 h-6 rounded-full bg-fuchsia-400/20 flex items-center justify-center">
+                    <BarChart3 className="w-3 h-3 text-fuchsia-300" />
                   </div>
-                  <p className="text-sm font-medium text-gray-500">
+                  <p className="text-sm font-medium text-zinc-400">
                     This Month
                   </p>
                 </div>
-                <p className="text-4xl font-bold text-[#1a365d]">
+                <p className="text-4xl font-bold text-zinc-100">
                   ${stats.thisMonth.toFixed(2)}
                 </p>
-                <p className="text-xs text-gray-400 mt-2">
+                <p className="text-xs text-zinc-500 mt-2">
                   Increased +15% vs last month
                 </p>
+              </div>
+
+              {/* Wallet Balance */}
+              <div className="bg-[#101722] rounded-2xl p-5 border border-yellow-500/15 shadow-sm relative">
+                <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-yellow-500/15 flex items-center justify-center">
+                  <Wallet className="w-4 h-4 text-yellow-300" />
+                </div>
+                <p className="text-sm font-medium text-zinc-400 mb-2">
+                  Wallet Balance
+                </p>
+                <p className="text-4xl font-bold text-zinc-100">
+                  $
+                  {(userType === "company_admin"
+                    ? wallet.balance - totalShared
+                    : wallet.balance
+                  ).toFixed(2)}
+                </p>
+                <p className="text-xs text-zinc-500 mt-2">{wallet.currency}</p>
               </div>
             </div>
 
@@ -924,12 +994,12 @@ export default function Dashboard() {
               {/* ── Left Column (analytics + recent calls) ── */}
               <div className="xl:col-span-7 space-y-6">
                 {/* Call Analytics Chart */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <div className="bg-[#101722] rounded-2xl border border-yellow-500/15 shadow-sm p-6">
                   <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-base font-semibold text-[#1a365d]">
+                    <h2 className="text-base font-semibold text-zinc-100">
                       Call Analytics
                     </h2>
-                    <span className="text-xs text-gray-400">Last 7 days</span>
+                    <span className="text-xs text-zinc-500">Last 7 days</span>
                   </div>
                   <ResponsiveContainer width="100%" height={200}>
                     <BarChart
@@ -965,32 +1035,33 @@ export default function Dashboard() {
                       <CartesianGrid
                         strokeDasharray="3 3"
                         vertical={false}
-                        stroke="#f0f0f0"
+                        stroke="rgba(255,255,255,0.08)"
                       />
                       <XAxis
                         dataKey="day"
-                        tick={{ fontSize: 12, fill: "#9ca3af" }}
+                        tick={{ fontSize: 12, fill: "#a1a1aa" }}
                         axisLine={false}
                         tickLine={false}
                       />
                       <YAxis
-                        tick={{ fontSize: 12, fill: "#9ca3af" }}
+                        tick={{ fontSize: 12, fill: "#a1a1aa" }}
                         axisLine={false}
                         tickLine={false}
                         allowDecimals={false}
                       />
                       <Tooltip
                         contentStyle={{
-                          background: "#fff",
-                          border: "1px solid #e5e7eb",
+                          background: "#141b28",
+                          border: "1px solid rgba(232,178,74,0.25)",
                           borderRadius: "12px",
                           fontSize: 12,
+                          color: "#e4e4e7",
                         }}
-                        cursor={{ fill: "#f0f9ff" }}
+                        cursor={{ fill: "rgba(255,255,255,0.06)" }}
                       />
                       <Bar
                         dataKey="calls"
-                        fill="#0891b2"
+                        fill="#e8b24a"
                         radius={[6, 6, 0, 0]}
                       />
                     </BarChart>
@@ -1018,113 +1089,78 @@ export default function Dashboard() {
 
                 {/* Recent Calls */}
                 <RecentCalls
-                  calls={calls}
+                  calls={calls.slice(0, 3)}
                   loading={loading}
                   onCallBack={handleCallBack}
                 />
               </div>
 
-              {/* ── Right Column (wallet + dialer) ── */}
+              {/* ── Right Column (dialer + extras) ── */}
               <div className="xl:col-span-5 space-y-6">
-                {/* Wallet Card - dark style like Donezo hero card */}
-                <div className="bg-gradient-to-br from-[#0891b2] to-[#1a365d] rounded-2xl p-6 text-white">
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-sm font-medium text-white/80">
-                      Wallet Balance
-                    </p>
-                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                      <Wallet className="w-4 h-4" />
-                    </div>
-                  </div>
-                  <p className="text-4xl font-bold mt-1">
-                    $
-                    {(userType === "company_admin"
-                      ? wallet.balance - totalShared
-                      : wallet.balance
-                    ).toFixed(2)}
-                  </p>
-                  <p className="text-sm text-white/70 mt-1">
-                    {wallet.currency}
-                  </p>
-                  <div className="mt-4 pt-4 border-t border-white/20 flex items-center justify-between">
-                    <span className="text-xs text-white/60">
-                      {isConnected
-                        ? "🟢 Calling device ready"
-                        : "🔴 Device not connected"}
-                    </span>
-                    {!isConnected && (
-                      <button
-                        onClick={retryConnection}
-                        className="text-xs text-white/80 hover:text-white underline"
-                      >
-                        Retry
-                      </button>
-                    )}
-                  </div>
-                </div>
-
                 {/* Dialer */}
-                <Dialer
-                  onCall={handleCall}
-                  onEndCall={handleEndCall}
-                  onMarkAnswered={markCallAnswered}
-                  disabled={isInitializing || (!isConnected && !currentCall)}
-                  isInCall={callState === "answered"}
-                  callState={callState}
-                  callDuration={callDuration}
-                  callerName={
-                    currentNumber
-                      ? `${currentCountryCode} ${currentNumber}`
-                      : "Unknown"
-                  }
-                  onUploadCSV={
-                    userType === "company" || joinedOrganizations.length > 0
-                      ? () => setShowCallQueueUpload(true)
-                      : undefined
-                  }
-                />
+                <div id="make-a-call">
+                  <Dialer
+                    onCall={handleCall}
+                    onEndCall={handleEndCall}
+                    onMarkAnswered={markCallAnswered}
+                    disabled={isInitializing || (!isConnected && !currentCall)}
+                    isInCall={callState === "answered"}
+                    callState={callState}
+                    callDuration={callDuration}
+                    callerName={
+                      currentNumber
+                        ? `${currentCountryCode} ${currentNumber}`
+                        : "Unknown"
+                    }
+                    onUploadCSV={
+                      userType === "company" || joinedOrganizations.length > 0
+                        ? () => setShowCallQueueUpload(true)
+                        : undefined
+                    }
+                  />
+                </div>
 
                 {/* Invite Notifications for normal users */}
                 {userType === "normal" && (
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2">
-                    <h3 className="text-sm font-semibold text-[#1a365d]">
+                  <div className="bg-[#101722] rounded-2xl border border-yellow-500/15 shadow-sm p-5 space-y-2">
+                    <h3 className="text-sm font-semibold text-zinc-100">
                       Organizations
                     </h3>
                     <button
                       onClick={() => setShowInviteNotifications(true)}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-all text-left"
+                      className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-[#182131] transition-all text-left"
                     >
-                      <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
-                        <Bell className="w-4 h-4 text-orange-500" />
+                      <div className="w-8 h-8 rounded-full bg-yellow-500/15 flex items-center justify-center flex-shrink-0">
+                        <Bell className="w-4 h-4 text-yellow-300" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-700">
+                        <p className="text-sm font-medium text-zinc-200">
                           Invitations
                         </p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-zinc-500">
                           {pendingInvitesCount > 0
                             ? `${pendingInvitesCount} pending`
                             : "No pending invites"}
                         </p>
                       </div>
                       {pendingInvitesCount > 0 && (
-                        <span className="w-5 h-5 rounded-full bg-orange-500 text-white text-xs flex items-center justify-center font-bold">
+                        <span className="w-5 h-5 rounded-full bg-yellow-500 text-[#141922] text-xs flex items-center justify-center font-bold">
                           {pendingInvitesCount}
                         </span>
                       )}
                     </button>
                     <button
                       onClick={() => setShowJoinedOrgs(true)}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-all text-left"
+                      className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-[#182131] transition-all text-left"
                     >
-                      <div className="w-8 h-8 rounded-full bg-[#0891b2]/10 flex items-center justify-center flex-shrink-0">
-                        <Building2 className="w-4 h-4 text-[#0891b2]" />
+                      <div className="w-8 h-8 rounded-full bg-cyan-400/15 flex items-center justify-center flex-shrink-0">
+                        <Building2 className="w-4 h-4 text-cyan-300" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-700">
+                        <p className="text-sm font-medium text-zinc-200">
                           My Organizations
                         </p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-zinc-500">
                           View joined orgs
                         </p>
                       </div>
@@ -1134,8 +1170,8 @@ export default function Dashboard() {
 
                 {/* Team Activity - Company users */}
                 {userType === "company" && (
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
-                    <h3 className="text-sm font-semibold text-[#1a365d]">
+                  <div className="bg-[#101722] rounded-2xl border border-yellow-500/15 shadow-sm p-5 space-y-3">
+                    <h3 className="text-sm font-semibold text-zinc-100">
                       Team Activity
                     </h3>
                     {[
@@ -1143,26 +1179,26 @@ export default function Dashboard() {
                         icon: (
                           <div className="w-2 h-2 bg-green-500 rounded-full" />
                         ),
-                        bg: "bg-green-100",
+                        bg: "bg-emerald-400/20",
                         label: "12 Online",
                         sub: "Team members",
                       },
                       {
                         icon: <PhoneCall className="w-4 h-4 text-[#0891b2]" />,
-                        bg: "bg-[#0891b2]/10",
+                        bg: "bg-cyan-400/20",
                         label: "3 Active Calls",
                         sub: "Right now",
                       },
                       {
                         icon: <Globe className="w-4 h-4 text-purple-600" />,
-                        bg: "bg-purple-100",
+                        bg: "bg-fuchsia-400/20",
                         label: "15 Countries",
                         sub: "Connected today",
                       },
                     ].map((item, i) => (
                       <div
                         key={i}
-                        className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl"
+                        className="flex items-center gap-3 p-3 bg-[#182131] rounded-xl"
                       >
                         <div
                           className={`w-8 h-8 rounded-full ${item.bg} flex items-center justify-center`}
@@ -1170,10 +1206,10 @@ export default function Dashboard() {
                           {item.icon}
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-800">
+                          <p className="text-sm font-medium text-zinc-200">
                             {item.label}
                           </p>
-                          <p className="text-xs text-gray-500">{item.sub}</p>
+                          <p className="text-xs text-zinc-500">{item.sub}</p>
                         </div>
                       </div>
                     ))}
@@ -1187,7 +1223,7 @@ export default function Dashboard() {
         {/* ── VOICE CALL ── */}
         {sidebarView === "voice-call" && (
           <div className="max-w-md mx-auto pt-4">
-            <h1 className="text-2xl font-bold text-[#1a365d] mb-6">
+            <h1 className="text-2xl font-bold text-zinc-100 mb-6">
               Voice Call
             </h1>
             <Dialer
@@ -1214,7 +1250,7 @@ export default function Dashboard() {
         {/* ── RECENT CALLS ── */}
         {sidebarView === "recent-calls" && (
           <div>
-            <h1 className="text-2xl font-bold text-[#1a365d] mb-6">
+            <h1 className="text-2xl font-bold text-zinc-100 mb-6">
               Recent Calls
             </h1>
             <RecentCalls
@@ -1227,7 +1263,7 @@ export default function Dashboard() {
         {/* ── MEETING CALENDAR ── */}
         {sidebarView === "calendar" && (
           <div>
-            <h1 className="text-2xl font-bold text-[#1a365d] mb-6">
+            <h1 className="text-2xl font-bold text-zinc-100 mb-6">
               Meeting Calendar
             </h1>
             <MeetingCalendar />

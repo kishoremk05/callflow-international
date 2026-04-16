@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -74,7 +74,7 @@ export default function AccountTypeSelection() {
       <Card className="w-full max-w-2xl shadow-xl">
         <CardHeader className="text-center space-y-2">
           <CardTitle className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-orange-400 bg-clip-text text-transparent">
-            Welcome to GlobalConnect Pro!
+            Welcome to CallFlow Pro!
           </CardTitle>
           <CardDescription className="text-base">
             Choose your account type to continue
@@ -232,3 +232,4 @@ export default function AccountTypeSelection() {
     </div>
   );
 }
+

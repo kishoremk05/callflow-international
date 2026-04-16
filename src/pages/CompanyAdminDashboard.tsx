@@ -728,30 +728,30 @@ export default function CompanyAdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-[#090c12]">
         <div className="animate-pulse flex flex-col items-center gap-4">
-          <Building2 className="w-16 h-16 text-blue-500" />
-          <div className="h-4 w-24 bg-muted rounded" />
+          <Building2 className="w-16 h-16 text-cyan-300" />
+          <div className="h-4 w-24 bg-[#1b2434] rounded" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div className="min-h-screen bg-gradient-to-b from-[#090c12] via-[#0d121a] to-[#0a0f16] text-zinc-100">
       {/* Header */}
-      <div className="bg-white border-b shadow-sm sticky top-0 z-10">
+      <div className="bg-[#101722]/95 border-b border-yellow-500/15 backdrop-blur sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-500 to-amber-500 flex items-center justify-center shadow-[0_8px_24px_rgba(232,178,74,0.35)]">
                 <Building2 className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">
+                <h1 className="text-xl font-bold text-zinc-100">
                   {companyAdmin?.company_name || "Company Admin"}
                 </h1>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-zinc-400">
                   {companyAdmin?.company_email || "Company Admin Portal"}
                 </p>
               </div>
@@ -760,7 +760,7 @@ export default function CompanyAdminDashboard() {
               <Button
                 variant="outline"
                 onClick={() => navigate("/dashboard")}
-                className="gap-2 border-blue-300 text-blue-700 hover:bg-blue-50 hover:text-blue-700"
+                className="gap-2 border-cyan-400/30 text-cyan-300 bg-[#182131] hover:bg-[#223049] hover:text-cyan-200"
               >
                 <Home className="w-4 h-4" />
                 Dashboard
@@ -768,7 +768,7 @@ export default function CompanyAdminDashboard() {
               <Button
                 variant="outline"
                 onClick={() => navigate("/payments")}
-                className="gap-2 border-green-300 text-green-700 hover:bg-green-50 hover:text-green-700"
+                className="gap-2 border-emerald-400/30 text-emerald-300 bg-[#182131] hover:bg-[#223049] hover:text-emerald-200"
               >
                 <Wallet className="w-4 h-4" />
                 Wallet
@@ -777,7 +777,7 @@ export default function CompanyAdminDashboard() {
                 variant="outline"
                 size="sm"
                 onClick={fetchCompanyAdminData}
-                className="gap-2"
+                className="gap-2 border-yellow-500/25 text-zinc-200 bg-[#182131] hover:bg-[#223049]"
               >
                 <RefreshCw className="w-4 h-4" />
                 Refresh
@@ -786,7 +786,7 @@ export default function CompanyAdminDashboard() {
                 variant="outline"
                 size="sm"
                 onClick={signOut}
-                className="gap-2"
+                className="gap-2 border-red-400/30 text-red-300 bg-[#182131] hover:bg-red-500/15"
               >
                 <LogOut className="w-4 h-4" />
                 Sign Out
@@ -799,64 +799,70 @@ export default function CompanyAdminDashboard() {
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card>
+          <Card className="bg-gradient-to-br from-[#101722] to-[#0e1624] border-yellow-500/15 shadow-[0_10px_30px_rgba(0,0,0,0.28)]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Teams</CardTitle>
-              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-zinc-300">
+                Teams
+              </CardTitle>
+              <Building2 className="h-4 w-4 text-zinc-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-4xl font-bold text-zinc-100">
                 {stats.totalOrganizations}
               </div>
-              <p className="text-xs text-muted-foreground">Active teams</p>
+              <p className="text-xs text-zinc-500">Active teams</p>
             </CardContent>
           </Card>
 
           <Card
-            className="cursor-pointer hover:shadow-lg transition-shadow"
+            className="cursor-pointer bg-gradient-to-br from-[#101722] to-[#0e1624] border-yellow-500/15 hover:shadow-lg transition-shadow shadow-[0_10px_30px_rgba(0,0,0,0.28)]"
             onClick={handleWalletClick}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-sm font-medium text-zinc-300">
                 Available Balance
               </CardTitle>
-              <Wallet className="h-4 w-4 text-green-600" />
+              <Wallet className="h-4 w-4 text-emerald-300" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-emerald-300">
                 $
                 {((wallet?.balance || 0) - (stats.totalShared || 0)).toFixed(2)}
               </div>
-              <p className="text-xs text-muted-foreground">Click for details</p>
+              <p className="text-xs text-zinc-500">Click for details</p>
             </CardContent>
           </Card>
 
           <Card
-            className="cursor-pointer hover:shadow-lg transition-shadow"
+            className="cursor-pointer bg-gradient-to-br from-[#101722] to-[#0e1624] border-yellow-500/15 hover:shadow-lg transition-shadow shadow-[0_10px_30px_rgba(0,0,0,0.28)]"
             onClick={() => setShowAdminsDialog(true)}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-sm font-medium text-zinc-300">
                 Company Admins
               </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <Users className="h-4 w-4 text-zinc-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{admins.length}</div>
-              <p className="text-xs text-muted-foreground">Click to view all</p>
+              <div className="text-4xl font-bold text-zinc-100">
+                {admins.length}
+              </div>
+              <p className="text-xs text-zinc-500">Click to view all</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-to-br from-[#101722] to-[#0e1624] border-yellow-500/15 shadow-[0_10px_30px_rgba(0,0,0,0.28)]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-sm font-medium text-zinc-300">
                 Total Members
               </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <Users className="h-4 w-4 text-zinc-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalMembers}</div>
-              <p className="text-xs text-muted-foreground">Across all teams</p>
+              <div className="text-4xl font-bold text-zinc-100">
+                {stats.totalMembers}
+              </div>
+              <p className="text-xs text-zinc-500">Across all teams</p>
             </CardContent>
           </Card>
         </div>
@@ -864,15 +870,13 @@ export default function CompanyAdminDashboard() {
         {/* Analytics Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Wallet Activity Chart */}
-          <Card>
+          <Card className="bg-gradient-to-br from-[#101722] to-[#0e1624] border-yellow-500/15 shadow-[0_10px_30px_rgba(0,0,0,0.28)]">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="w-5 h-5 text-blue-600" />
+              <CardTitle className="flex items-center gap-2 text-zinc-100">
+                <Activity className="w-5 h-5 text-cyan-300" />
                 Wallet Activity
               </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Monthly balance trend
-              </p>
+              <p className="text-sm text-zinc-500">Monthly balance trend</p>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
@@ -901,15 +905,25 @@ export default function CompanyAdminDashboard() {
                     { month: "Jun", balance: wallet?.balance || 0 },
                   ]}
                 >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="rgba(255,255,255,0.08)"
+                  />
+                  <XAxis dataKey="month" tick={{ fill: "#a1a1aa" }} />
+                  <YAxis tick={{ fill: "#a1a1aa" }} />
+                  <Tooltip
+                    contentStyle={{
+                      background: "#141b28",
+                      border: "1px solid rgba(232,178,74,0.25)",
+                      borderRadius: "12px",
+                      color: "#e4e4e7",
+                    }}
+                  />
+                  <Legend wrapperStyle={{ color: "#a1a1aa" }} />
                   <Line
                     type="monotone"
                     dataKey="balance"
-                    stroke="#3b82f6"
+                    stroke="#22d3ee"
                     strokeWidth={2}
                     name="Balance ($)"
                   />
@@ -919,15 +933,13 @@ export default function CompanyAdminDashboard() {
           </Card>
 
           {/* Team Distribution */}
-          <Card>
+          <Card className="bg-gradient-to-br from-[#101722] to-[#0e1624] border-yellow-500/15 shadow-[0_10px_30px_rgba(0,0,0,0.28)]">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-green-600" />
+              <CardTitle className="flex items-center gap-2 text-zinc-100">
+                <TrendingUp className="w-5 h-5 text-emerald-300" />
                 Team Distribution
               </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Members across teams
-              </p>
+              <p className="text-sm text-zinc-500">Members across teams</p>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
@@ -962,7 +974,14 @@ export default function CompanyAdminDashboard() {
                       />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip
+                    contentStyle={{
+                      background: "#141b28",
+                      border: "1px solid rgba(232,178,74,0.25)",
+                      borderRadius: "12px",
+                      color: "#e4e4e7",
+                    }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
@@ -970,18 +989,21 @@ export default function CompanyAdminDashboard() {
         </div>
 
         {/* Teams Section */}
-        <Card>
+        <Card className="bg-gradient-to-br from-[#101722] to-[#0e1624] border-yellow-500/15 shadow-[0_10px_30px_rgba(0,0,0,0.28)]">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Teams</CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">
+                <CardTitle className="text-zinc-100 flex items-center gap-2">
+                  <Building2 className="w-5 h-5 text-yellow-300" />
+                  Teams
+                </CardTitle>
+                <p className="text-sm text-zinc-500 mt-1">
                   Manage teams under your company
                 </p>
               </div>
               <Button
                 onClick={() => setShowCreateOrgModal(true)}
-                className="gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
+                className="gap-2 bg-yellow-500 hover:bg-yellow-400 text-[#101722] shadow-[0_8px_24px_rgba(232,178,74,0.3)]"
               >
                 <Plus className="w-4 h-4" />
                 Create Team
@@ -991,63 +1013,100 @@ export default function CompanyAdminDashboard() {
           <CardContent>
             {organizations.length === 0 ? (
               <div className="text-center py-12">
-                <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No teams yet</p>
-                <p className="text-sm text-gray-400 mt-1">
+                <Building2 className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
+                <p className="text-zinc-400">No teams yet</p>
+                <p className="text-sm text-zinc-500 mt-1">
                   Create a team or invite an existing team to get started
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {organizations.map((org) => (
-                  <Card key={org.id} className="border-2">
+                  <Card
+                    key={org.id}
+                    className="relative overflow-hidden border-yellow-500/15 bg-gradient-to-br from-[#182131] via-[#162236] to-[#141d2d] hover:border-cyan-400/30 hover:shadow-[0_14px_32px_rgba(10,18,32,0.45)] transition-all duration-300"
+                  >
+                    <div className="h-px w-full bg-gradient-to-r from-transparent via-cyan-400/45 to-transparent" />
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <CardTitle className="text-lg">{org.name}</CardTitle>
+                          <CardTitle className="text-lg text-zinc-100 tracking-wide">
+                            {org.name}
+                          </CardTitle>
                           {org.description && (
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="text-sm text-zinc-400 mt-1 line-clamp-2">
                               {org.description}
                             </p>
                           )}
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline">
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Badge
+                            variant="outline"
+                            className="border-yellow-500/25 bg-yellow-500/10 text-zinc-100 rounded-full px-3"
+                          >
                             {org.organization_members?.length || 0} members
                           </Badge>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-8 w-8 p-0 rounded-full"
-                            onClick={() => {
-                              setSelectedOrg(org);
-                              setShowOrgManagement(true);
-                            }}
-                          >
-                            <Plus className="w-4 h-4" />
-                          </Button>
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-3">
+                    <CardContent className="space-y-4">
                       {org.organization_members &&
                         org.organization_members.length > 0 && (
-                          <div className="text-sm">
-                            <span className="text-gray-600">Owner:</span>
-                            <p className="font-medium">
-                              {org.organization_members[0]?.profiles?.full_name}
+                          <div className="text-sm rounded-xl p-3.5 bg-[#101722]/75 border border-yellow-500/12">
+                            <p className="text-[11px] uppercase tracking-[0.12em] text-zinc-500 mb-2">
+                              Team Owner
                             </p>
-                            <p className="text-gray-500 text-xs">
-                              {org.organization_members[0]?.profiles?.email}
-                            </p>
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-white text-sm font-semibold shadow-[0_8px_20px_rgba(34,211,238,0.25)]">
+                                {(
+                                  org.organization_members[0]?.profiles
+                                    ?.full_name ||
+                                  org.organization_members[0]?.profiles
+                                    ?.email ||
+                                  "O"
+                                )
+                                  .charAt(0)
+                                  .toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-medium text-zinc-100 truncate">
+                                  {org.organization_members[0]?.profiles
+                                    ?.full_name || "Team owner"}
+                                </p>
+                                <p className="text-zinc-500 text-xs truncate">
+                                  {org.organization_members[0]?.profiles?.email}
+                                </p>
+                              </div>
+                            </div>
                           </div>
                         )}
 
-                      <div className="pt-2">
+                      <div className="grid grid-cols-[44px_1fr_1fr] gap-2.5 pt-1">
                         <Button
                           size="sm"
                           variant="outline"
-                          className="text-red-600 hover:bg-red-50 w-full gap-2"
+                          className="h-9 w-11 p-0 border-yellow-500/30 bg-yellow-500/10 text-yellow-200 hover:bg-yellow-500/20"
+                          onClick={() => openShareDialog(org)}
+                          title="Share wallet"
+                        >
+                          <Wallet className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-2 border-cyan-400/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20"
+                          onClick={() => {
+                            setSelectedOrg(org);
+                            setShowOrgManagement(true);
+                          }}
+                        >
+                          <Users className="w-4 h-4" />
+                          Manage
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-300 border-red-400/30 bg-red-500/10 hover:bg-red-500/20 w-full gap-2"
                           onClick={() =>
                             handleDeleteOrganization(org.id, org.name)
                           }
@@ -1077,16 +1136,18 @@ export default function CompanyAdminDashboard() {
           }
         }}
       >
-        <DialogContent>
+        <DialogContent className="bg-[#141a24] border-yellow-500/20 text-zinc-100">
           <DialogHeader>
-            <DialogTitle>Invite Team</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-zinc-100">Invite Team</DialogTitle>
+            <DialogDescription className="text-zinc-400">
               Search and invite a team owner to join your company
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2 relative">
-              <Label htmlFor="ownerEmail">Team Owner Email</Label>
+              <Label htmlFor="ownerEmail" className="text-zinc-300">
+                Team Owner Email
+              </Label>
               <Input
                 id="ownerEmail"
                 type="email"
@@ -1101,15 +1162,16 @@ export default function CompanyAdminDashboard() {
                     setShowResults(true);
                   }
                 }}
+                className="bg-[#182131] border-yellow-500/20 text-zinc-100 placeholder:text-zinc-500"
               />
 
               {/* Search Results Dropdown */}
               {showResults && searchResults.length > 0 && (
-                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                <div className="absolute z-50 w-full mt-1 bg-[#182131] border border-yellow-500/20 rounded-md shadow-lg max-h-60 overflow-auto">
                   {searchResults.map((owner, index) => (
                     <div
                       key={index}
-                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                      className="px-4 py-3 hover:bg-[#223049] cursor-pointer border-b border-yellow-500/10 last:border-b-0"
                       onClick={() => {
                         setOwnerEmail(owner.email);
                         setShowResults(false);
@@ -1117,13 +1179,16 @@ export default function CompanyAdminDashboard() {
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">
+                          <p className="text-sm font-medium text-zinc-100">
                             {owner.full_name}
                           </p>
-                          <p className="text-xs text-gray-500">{owner.email}</p>
+                          <p className="text-xs text-zinc-500">{owner.email}</p>
                         </div>
                         <div className="ml-2">
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge
+                            variant="secondary"
+                            className="text-xs bg-cyan-400/20 text-cyan-200"
+                          >
                             {owner.organization_name}
                           </Badge>
                         </div>
@@ -1138,8 +1203,8 @@ export default function CompanyAdminDashboard() {
                 searchResults.length === 0 &&
                 !isSearching &&
                 ownerEmail.length >= 2 && (
-                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg p-4">
-                    <p className="text-sm text-gray-500 text-center">
+                  <div className="absolute z-50 w-full mt-1 bg-[#182131] border border-yellow-500/20 rounded-md shadow-lg p-4">
+                    <p className="text-sm text-zinc-500 text-center">
                       No organization owners found
                     </p>
                   </div>
@@ -1147,14 +1212,14 @@ export default function CompanyAdminDashboard() {
 
               {/* Loading State */}
               {isSearching && (
-                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg p-4">
-                  <p className="text-sm text-gray-500 text-center">
+                <div className="absolute z-50 w-full mt-1 bg-[#182131] border border-yellow-500/20 rounded-md shadow-lg p-4">
+                  <p className="text-sm text-zinc-500 text-center">
                     Searching...
                   </p>
                 </div>
               )}
 
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-zinc-500">
                 Start typing to search for organization owners. Once invited,
                 their organization and members will appear here.
               </p>
@@ -1163,6 +1228,7 @@ export default function CompanyAdminDashboard() {
           <DialogFooter>
             <Button
               variant="outline"
+              className="border-yellow-500/20 bg-[#182131] text-zinc-200 hover:bg-[#223049]"
               onClick={() => {
                 setShowInviteOrgDialog(false);
                 setOwnerEmail("");
@@ -1175,6 +1241,7 @@ export default function CompanyAdminDashboard() {
             <Button
               onClick={handleInviteOrganization}
               disabled={!ownerEmail || actionLoading}
+              className="bg-cyan-500 hover:bg-cyan-400 text-[#0b1220]"
             >
               {actionLoading ? "Sending..." : "Send Invitation"}
             </Button>
@@ -1187,31 +1254,36 @@ export default function CompanyAdminDashboard() {
         open={showShareWalletDialog}
         onOpenChange={setShowShareWalletDialog}
       >
-        <DialogContent>
+        <DialogContent className="bg-[#141a24] border-yellow-500/20 text-zinc-100 shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
           <DialogHeader>
-            <DialogTitle>Share Wallet Balance</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-zinc-100 flex items-center gap-2">
+              <Wallet className="w-5 h-5 text-yellow-300" />
+              Share Wallet Balance
+            </DialogTitle>
+            <DialogDescription className="text-zinc-400">
               Share balance with {selectedOrg?.name}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="bg-blue-50 p-4 rounded-lg space-y-2">
+            <div className="bg-[#182131] border border-cyan-400/20 p-4 rounded-lg space-y-2">
               <div className="flex justify-between text-sm">
-                <span>Available Balance:</span>
-                <span className="font-semibold">
+                <span className="text-zinc-400">Available Balance:</span>
+                <span className="font-semibold text-cyan-300">
                   ${wallet?.available.toFixed(2) || "0.00"}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>Current Shared:</span>
-                <span className="font-semibold">
+                <span className="text-zinc-400">Current Shared:</span>
+                <span className="font-semibold text-zinc-200">
                   ${selectedOrg?.shared_balance?.toFixed(2) || "0.00"}
                 </span>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="shareAmount">Amount to Share</Label>
+              <Label htmlFor="shareAmount" className="text-zinc-300">
+                Amount to Share
+              </Label>
               <Input
                 id="shareAmount"
                 type="number"
@@ -1220,21 +1292,26 @@ export default function CompanyAdminDashboard() {
                 placeholder="0.00"
                 value={shareAmount}
                 onChange={(e) => setShareAmount(e.target.value)}
+                className="bg-[#182131] border-yellow-500/20 text-zinc-100 placeholder:text-zinc-500 focus:border-cyan-400 focus:ring-cyan-400/20"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="shareNotes">Notes (Optional)</Label>
+              <Label htmlFor="shareNotes" className="text-zinc-300">
+                Notes (Optional)
+              </Label>
               <Textarea
                 id="shareNotes"
                 placeholder="Add notes about this transaction..."
                 value={shareNotes}
                 onChange={(e) => setShareNotes(e.target.value)}
+                className="bg-[#182131] border-yellow-500/20 text-zinc-100 placeholder:text-zinc-500 focus:border-cyan-400 focus:ring-cyan-400/20"
               />
             </div>
           </div>
           <DialogFooter>
             <Button
               variant="outline"
+              className="border-yellow-500/20 bg-[#182131] text-zinc-200 hover:bg-[#223049]"
               onClick={() => {
                 setShowShareWalletDialog(false);
                 setSelectedOrg(null);
@@ -1249,6 +1326,7 @@ export default function CompanyAdminDashboard() {
               disabled={
                 !shareAmount || parseFloat(shareAmount) <= 0 || actionLoading
               }
+              className="bg-yellow-500 hover:bg-yellow-400 text-[#101722]"
             >
               {actionLoading ? "Sharing..." : "Share Balance"}
             </Button>
@@ -1258,13 +1336,13 @@ export default function CompanyAdminDashboard() {
 
       {/* Company Admins Dialog */}
       <Dialog open={showAdminsDialog} onOpenChange={setShowAdminsDialog}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] bg-[#141a24] border-yellow-500/20 text-zinc-100">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-blue-600" />
+              <Users className="w-5 h-5 text-cyan-300" />
               Company Admins
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-zinc-400">
               All administrators who can manage this company
             </DialogDescription>
           </DialogHeader>
@@ -1272,17 +1350,17 @@ export default function CompanyAdminDashboard() {
             {admins.map((admin) => (
               <div
                 key={admin.id}
-                className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100"
+                className="flex items-center justify-between p-4 bg-[#182131] rounded-lg border border-yellow-500/15"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center text-white font-semibold">
                     {admin.full_name.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">
+                    <p className="font-semibold text-zinc-100">
                       {admin.full_name}
                     </p>
-                    <p className="text-sm text-gray-600">{admin.email}</p>
+                    <p className="text-sm text-zinc-400">{admin.email}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1290,8 +1368,8 @@ export default function CompanyAdminDashboard() {
                     variant={admin.role === "Admin" ? "default" : "secondary"}
                     className={
                       admin.role === "Admin"
-                        ? "bg-gradient-to-r from-blue-600 to-indigo-600"
-                        : "bg-gradient-to-r from-purple-500 to-pink-500"
+                        ? "bg-gradient-to-r from-cyan-500 to-blue-500"
+                        : "bg-gradient-to-r from-fuchsia-500 to-pink-500"
                     }
                   >
                     {admin.role}
@@ -1345,17 +1423,17 @@ export default function CompanyAdminDashboard() {
 
       {/* Delete Organization Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="max-w-md">
+        <AlertDialogContent className="max-w-md bg-[#141a24] border-yellow-500/20 text-zinc-100">
           <AlertDialogHeader>
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                <Trash2 className="w-6 h-6 text-red-600" />
+              <div className="w-12 h-12 rounded-full bg-red-500/15 flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-red-300" />
               </div>
               <div>
-                <AlertDialogTitle className="text-[#1a365d]">
+                <AlertDialogTitle className="text-zinc-100">
                   Delete Team
                 </AlertDialogTitle>
-                <AlertDialogDescription className="text-sm text-gray-600 mt-1">
+                <AlertDialogDescription className="text-sm text-zinc-400 mt-1">
                   This action cannot be undone
                 </AlertDialogDescription>
               </div>
@@ -1363,13 +1441,13 @@ export default function CompanyAdminDashboard() {
           </AlertDialogHeader>
 
           <div className="py-4">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="bg-red-500/10 border border-red-400/25 rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <div className="text-sm">
-                  <p className="font-medium text-red-800 mb-1">
+                  <p className="font-medium text-red-200 mb-1">
                     Are you sure you want to delete "{orgToDelete?.name}"?
                   </p>
-                  <p className="text-red-700">
+                  <p className="text-red-300">
                     All team data and member associations will be permanently
                     removed.
                   </p>
@@ -1379,12 +1457,12 @@ export default function CompanyAdminDashboard() {
           </div>
 
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-gray-300">
+            <AlertDialogCancel className="border-yellow-500/20 bg-[#182131] text-zinc-200 hover:bg-[#223049]">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDeleteOrganization}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-red-600 hover:bg-red-500 text-white"
             >
               Delete Team
             </AlertDialogAction>
@@ -1397,13 +1475,13 @@ export default function CompanyAdminDashboard() {
         open={showWalletDetailsDialog}
         onOpenChange={setShowWalletDetailsDialog}
       >
-        <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto bg-[#141a24] border-yellow-500/20 text-zinc-100 shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Wallet className="w-5 h-5 text-green-600" />
+            <DialogTitle className="flex items-center gap-2 text-zinc-100">
+              <Wallet className="w-5 h-5 text-emerald-300" />
               Wallet Details
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-zinc-400">
               View your wallet shared amounts and usage history
             </DialogDescription>
           </DialogHeader>
@@ -1412,42 +1490,42 @@ export default function CompanyAdminDashboard() {
             {/* Shared to Teammates */}
             <div>
               <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                <Share2 className="w-5 h-5 text-blue-600" />
+                <Share2 className="w-5 h-5 text-cyan-300" />
                 Shared to Teammates
               </h3>
               {loadingHistory ? (
                 <div className="text-center py-8">
-                  <RefreshCw className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">Loading history...</p>
+                  <RefreshCw className="w-8 h-8 animate-spin text-cyan-300 mx-auto mb-2" />
+                  <p className="text-sm text-zinc-500">Loading history...</p>
                 </div>
               ) : walletHistory?.shares && walletHistory.shares.length > 0 ? (
                 <div className="space-y-2 max-h-[300px] overflow-y-auto">
                   {walletHistory.shares.map((share) => (
                     <div
                       key={share.id}
-                      className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100"
+                      className="flex items-center justify-between p-4 bg-[#182131] rounded-lg border border-yellow-500/15"
                     >
                       <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center text-white font-semibold">
                           {share.recipient?.full_name?.charAt(0) ||
                             share.recipient?.email?.charAt(0) ||
                             "?"}
                         </div>
                         <div>
-                          <p className="font-semibold text-gray-900">
+                          <p className="font-semibold text-zinc-100">
                             {share.recipient?.full_name || "Unknown User"}
                           </p>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-zinc-400">
                             {share.recipient?.email || "No email"}
                           </p>
-                          <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                          <p className="text-xs text-zinc-500 flex items-center gap-1 mt-1">
                             <Clock className="w-3 h-3" />
                             {new Date(share.shared_at).toLocaleString()}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-lg font-bold text-blue-600">
+                        <div className="text-lg font-bold text-cyan-300">
                           ${share.shared_amount.toFixed(2)}
                         </div>
                       </div>
@@ -1455,9 +1533,9 @@ export default function CompanyAdminDashboard() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 bg-gray-50 rounded-lg">
-                  <Share2 className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                  <p className="text-gray-500">No sharing history yet</p>
+                <div className="text-center py-8 bg-[#182131] rounded-lg border border-yellow-500/15">
+                  <Share2 className="w-12 h-12 text-zinc-600 mx-auto mb-2" />
+                  <p className="text-zinc-500">No sharing history yet</p>
                 </div>
               )}
             </div>
@@ -1465,31 +1543,31 @@ export default function CompanyAdminDashboard() {
             {/* Usage Summary */}
             <div>
               <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-green-600" />
+                <TrendingUp className="w-5 h-5 text-emerald-300" />
                 Usage Summary
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-100">
+                <div className="p-4 bg-[#182131] rounded-lg border border-fuchsia-400/20">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">Teams Created</p>
-                      <p className="text-2xl font-bold text-purple-600 mt-1">
+                      <p className="text-sm text-zinc-400">Teams Created</p>
+                      <p className="text-2xl font-bold text-fuchsia-300 mt-1">
                         {stats.totalOrganizations}
                       </p>
                     </div>
-                    <Building2 className="w-10 h-10 text-purple-400" />
+                    <Building2 className="w-10 h-10 text-fuchsia-300" />
                   </div>
                 </div>
 
-                <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-100">
+                <div className="p-4 bg-[#182131] rounded-lg border border-emerald-400/20">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">Total Members</p>
-                      <p className="text-2xl font-bold text-green-600 mt-1">
+                      <p className="text-sm text-zinc-400">Total Members</p>
+                      <p className="text-2xl font-bold text-emerald-300 mt-1">
                         {stats.totalMembers}
                       </p>
                     </div>
-                    <Users className="w-10 h-10 text-green-400" />
+                    <Users className="w-10 h-10 text-emerald-300" />
                   </div>
                 </div>
               </div>
@@ -1497,7 +1575,11 @@ export default function CompanyAdminDashboard() {
           </div>
 
           <DialogFooter>
-            <Button onClick={() => setShowWalletDetailsDialog(false)}>
+            <Button
+              onClick={() => setShowWalletDetailsDialog(false)}
+              variant="outline"
+              className="border-yellow-500/20 bg-[#182131] text-zinc-200 hover:bg-[#223049]"
+            >
               Close
             </Button>
           </DialogFooter>

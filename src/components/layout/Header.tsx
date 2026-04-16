@@ -1,4 +1,4 @@
-import { Phone, LogOut, User, Settings } from "lucide-react";
+﻿import { LogOut, User, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import {
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import BrandLogo from "@/components/branding/BrandLogo";
 
 interface HeaderProps {
   user: {
@@ -51,12 +52,11 @@ export function Header({ user, onSignOut }: HeaderProps) {
           className="flex items-center gap-3 cursor-pointer"
           onClick={() => navigate("/")}
         >
-          <div className="w-10 h-10 rounded-xl bg-[#0891b2] flex items-center justify-center shadow-lg">
-            <Phone className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-xl font-bold text-[#1a365d]">
-            GlobalConnect
-          </span>
+          <BrandLogo
+            className="gap-2.5"
+            iconClassName="text-[#1a365d]"
+            textClassName="text-2xl font-bold text-[#1a365d]"
+          />
         </div>
 
         {/* User Menu - Right Side Only */}

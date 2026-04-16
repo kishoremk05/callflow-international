@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import {
-  Phone,
   Mail,
   Lock,
   User,
@@ -22,6 +21,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
+import BrandLogo from "@/components/branding/BrandLogo";
 
 export function AuthForm() {
   const navigate = useNavigate();
@@ -106,88 +106,102 @@ export function AuthForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100/50 p-4 relative">
+    <div className="min-h-screen flex items-center justify-center bg-[#0b0d12] p-3 sm:p-4 relative overflow-hidden">
+      <div
+        className="absolute inset-0 opacity-[0.12] pointer-events-none"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(232,178,74,0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(232,178,74,0.25) 1px, transparent 1px)",
+          backgroundSize: "26px 26px",
+        }}
+      />
+      <div className="absolute -top-20 left-[20%] w-[380px] h-[380px] rounded-full bg-yellow-500/10 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-120px] right-[10%] w-[420px] h-[420px] rounded-full bg-yellow-500/10 blur-[140px] pointer-events-none" />
+
       <Button
         variant="ghost"
         size="sm"
         onClick={() => navigate("/")}
-        className="absolute top-4 left-4 flex items-center gap-2 text-gray-700 hover:text-orange-600"
+        className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20 flex items-center gap-2 text-zinc-300 hover:text-yellow-300 hover:bg-yellow-500/10 border border-yellow-500/25"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Homepage
       </Button>
 
-      <div className="w-full max-w-md space-y-8">
+      <div className="w-full max-w-md space-y-5 relative z-10">
         <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 mb-4">
-            <Phone className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
-            CallFlow
-          </h1>
-          <p className="text-gray-600 mt-2">Global VoIP calling made simple</p>
+          <BrandLogo
+            className="justify-center mb-3"
+            iconClassName="text-yellow-400 h-10 w-10"
+            textClassName="text-4xl font-bold tracking-tight text-yellow-400"
+          />
+          <p className="text-zinc-400 mt-1.5">
+            Global VoIP calling made simple
+          </p>
         </div>
 
-        <Card className="border-2 border-orange-100 shadow-xl rounded-2xl">
-          <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-2xl">
+        <Card className="border border-yellow-500/25 shadow-[0_20px_60px_rgba(0,0,0,0.55)] rounded-2xl bg-[#141821] backdrop-blur-sm">
+          <CardHeader className="space-y-1 pb-2">
+            <CardTitle className="text-2xl text-zinc-100">
               {isLogin ? "Sign in" : "Create account"}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-zinc-400">
               {isLogin
                 ? "Enter your credentials to access your account"
                 : "Fill in your details to get started"}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+          <CardContent className="pt-2">
+            <form onSubmit={handleSubmit} className="space-y-3">
               {!isLogin && (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="fullName">Full Name</Label>
+                    <Label htmlFor="fullName" className="text-zinc-200">
+                      Full Name
+                    </Label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                       <Input
                         id="fullName"
                         placeholder="John Doe"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        className="pl-10"
+                        className="pl-10 bg-[#0f131b] border-yellow-500/20 text-zinc-100 placeholder:text-zinc-500"
                         required={!isLogin}
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Account Type</Label>
+                    <Label className="text-zinc-200">Account Type</Label>
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         type="button"
                         onClick={() => setUserType("normal")}
-                        className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                        className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${
                           userType === "normal"
-                            ? "border-orange-500 bg-orange-50"
-                            : "border-gray-200 hover:border-gray-300"
+                            ? "border-yellow-500 bg-yellow-500/10"
+                            : "border-zinc-700 hover:border-zinc-600"
                         }`}
                       >
                         <UserCircle
                           className={`w-8 h-8 ${
                             userType === "normal"
-                              ? "text-orange-500"
-                              : "text-gray-400"
+                              ? "text-yellow-400"
+                              : "text-zinc-500"
                           }`}
                         />
                         <div className="text-center">
                           <p
                             className={`text-sm font-semibold ${
                               userType === "normal"
-                                ? "text-orange-700"
-                                : "text-gray-700"
+                                ? "text-yellow-300"
+                                : "text-zinc-300"
                             }`}
                           >
                             Normal User
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-zinc-500">
                             Personal calling
                           </p>
                         </div>
@@ -196,30 +210,30 @@ export function AuthForm() {
                       <button
                         type="button"
                         onClick={() => setUserType("company")}
-                        className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                        className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${
                           userType === "company"
-                            ? "border-orange-500 bg-orange-50"
-                            : "border-gray-200 hover:border-gray-300"
+                            ? "border-yellow-500 bg-yellow-500/10"
+                            : "border-zinc-700 hover:border-zinc-600"
                         }`}
                       >
                         <Building2
                           className={`w-8 h-8 ${
                             userType === "company"
-                              ? "text-orange-500"
-                              : "text-gray-400"
+                              ? "text-yellow-400"
+                              : "text-zinc-500"
                           }`}
                         />
                         <div className="text-center">
                           <p
                             className={`text-sm font-semibold ${
                               userType === "company"
-                                ? "text-orange-700"
-                                : "text-gray-700"
+                                ? "text-yellow-300"
+                                : "text-zinc-300"
                             }`}
                           >
                             Company User
                           </p>
-                          <p className="text-xs text-gray-500">Team features</p>
+                          <p className="text-xs text-zinc-500">Team features</p>
                         </div>
                       </button>
                     </div>
@@ -227,31 +241,35 @@ export function AuthForm() {
                 </>
               )}
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-zinc-200">
+                  Email
+                </Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                   <Input
                     id="email"
                     type="email"
                     placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 bg-[#0f131b] border-yellow-500/20 text-zinc-100 placeholder:text-zinc-500"
                     required
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="text-zinc-200">
+                  Password
+                </Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                   <Input
                     id="password"
                     type="password"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 bg-[#0f131b] border-yellow-500/20 text-zinc-100 placeholder:text-zinc-500"
                     required
                     minLength={6}
                   />
@@ -259,8 +277,8 @@ export function AuthForm() {
               </div>
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-full font-semibold"
-                size="lg"
+                className="w-full bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#0b0d12] rounded-full font-semibold"
+                size="default"
                 disabled={loading}
               >
                 {loading
@@ -272,12 +290,12 @@ export function AuthForm() {
             </form>
 
             {/* Divider */}
-            <div className="relative my-6">
+            <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-gray-300" />
+                <span className="w-full border-t border-yellow-500/20" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-gray-500">
+                <span className="bg-[#141821] px-2 text-zinc-500">
                   Or continue with
                 </span>
               </div>
@@ -290,19 +308,19 @@ export function AuthForm() {
                 variant="outline"
                 onClick={() => handleSocialLogin("google")}
                 disabled={loading}
-                className="w-full border-2 hover:bg-gray-50 transition-all"
+                className="w-full border-yellow-500/25 bg-[#0f131b] hover:bg-[#171c27] text-zinc-200 transition-all"
               >
                 <FcGoogle className="w-5 h-5 mr-2" />
                 Continue with Google
               </Button>
             </div>
 
-            <div className="mt-6 space-y-3">
+            <div className="mt-4 space-y-2">
               <div className="text-center">
                 <button
                   type="button"
                   onClick={() => setIsLogin(!isLogin)}
-                  className="text-sm text-gray-600 hover:text-orange-600 transition-colors font-medium"
+                  className="text-sm text-zinc-400 hover:text-yellow-400 transition-colors font-medium"
                 >
                   {isLogin
                     ? "Don't have an account? Sign up"

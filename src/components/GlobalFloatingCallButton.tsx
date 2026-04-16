@@ -5,12 +5,16 @@ export const GlobalFloatingCallButton = () => {
   const { callState, callDuration, currentNumber, hangupCall } =
     useCallContext();
 
+  const handleEndCall = () => {
+    hangupCall();
+  };
+
   return (
     <FloatingCallButton
       callState={callState}
       duration={callDuration}
       toNumber={currentNumber}
-      onEndCall={hangupCall}
+      onEndCall={handleEndCall}
     />
   );
 };

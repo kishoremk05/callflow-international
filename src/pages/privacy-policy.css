@@ -1,0 +1,160 @@
+.privacy-page,
+.terms-page {
+  background: hsl(var(--dark));
+}
+
+.privacy-page .features-hero-shell::before,
+.terms-page .features-hero-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(hsl(var(--lime) / 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--lime) / 0.04) 1px, transparent 1px);
+  background-size: 64px 64px;
+  opacity: 0.55;
+}
+
+.privacy-page .features-hero-shell::after,
+.terms-page .features-hero-shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 28% 35%, hsl(var(--lime) / 0.07), transparent 35%);
+}
+
+.privacy-page .policy-card,
+.terms-page .policy-card {
+  background: linear-gradient(180deg, hsl(220 8% 9%) 0%, hsl(220 8% 8%) 100%);
+  border: 1px solid hsl(var(--lime-dark) / 0.24);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.privacy-page .prose,
+.terms-page .prose {
+  color: hsl(var(--text-muted-on-dark));
+}
+
+.privacy-page .text-gray-900,
+.privacy-page .text-gray-800,
+.privacy-page .text-gray-700,
+.terms-page .text-gray-900,
+.terms-page .text-gray-800,
+.terms-page .text-gray-700 {
+  color: hsl(var(--text-on-dark));
+}
+
+.privacy-page .text-gray-600,
+.terms-page .text-gray-600 {
+  color: hsl(var(--text-muted-on-dark));
+}
+
+.privacy-page .text-cyan-600,
+.privacy-page .text-green-600,
+.privacy-page .text-red-600,
+.privacy-page .text-yellow-600,
+.privacy-page .text-purple-600,
+.privacy-page .text-orange-600,
+.privacy-page .text-blue-600,
+.terms-page .text-cyan-600,
+.terms-page .text-green-600,
+.terms-page .text-red-600,
+.terms-page .text-yellow-600,
+.terms-page .text-purple-600,
+.terms-page .text-orange-600,
+.terms-page .text-blue-600 {
+  color: hsl(var(--lime));
+}
+
+.privacy-page .border-gray-200,
+.privacy-page .border-gray-300,
+.privacy-page .divide-gray-200,
+.terms-page .border-gray-200,
+.terms-page .border-gray-300,
+.terms-page .divide-gray-200 {
+  border-color: hsl(var(--lime-dark) / 0.2);
+}
+
+.privacy-page .bg-white,
+.privacy-page .bg-gray-50,
+.privacy-page .bg-cyan-50,
+.privacy-page .bg-blue-50,
+.privacy-page .bg-yellow-50,
+.privacy-page .bg-red-50,
+.privacy-page .from-cyan-50,
+.privacy-page .to-blue-50,
+.privacy-page .from-green-50,
+.privacy-page .to-emerald-50,
+.privacy-page .from-red-50,
+.privacy-page .to-pink-50,
+.privacy-page .from-yellow-50,
+.privacy-page .to-amber-50,
+.privacy-page .from-purple-50,
+.privacy-page .to-violet-50,
+.privacy-page .from-orange-50,
+.privacy-page .to-red-50,
+.privacy-page .from-blue-50,
+.privacy-page .to-indigo-50,
+.privacy-page .from-gray-50,
+.privacy-page .to-slate-50,
+.terms-page .bg-white,
+.terms-page .bg-gray-50,
+.terms-page .bg-cyan-50,
+.terms-page .bg-blue-50,
+.terms-page .bg-yellow-50,
+.terms-page .bg-red-50,
+.terms-page .from-cyan-50,
+.terms-page .to-blue-50,
+.terms-page .from-green-50,
+.terms-page .to-emerald-50,
+.terms-page .from-red-50,
+.terms-page .to-pink-50,
+.terms-page .from-yellow-50,
+.terms-page .to-amber-50,
+.terms-page .from-purple-50,
+.terms-page .to-violet-50,
+.terms-page .from-orange-50,
+.terms-page .to-red-50,
+.terms-page .from-blue-50,
+.terms-page .to-indigo-50,
+.terms-page .from-gray-50,
+.terms-page .to-slate-50 {
+  background: hsl(220 8% 10%);
+}
+
+.privacy-page .border-cyan-200,
+.privacy-page .border-green-200,
+.privacy-page .border-red-200,
+.privacy-page .border-yellow-200,
+.privacy-page .border-purple-200,
+.privacy-page .border-orange-200,
+.privacy-page .border-blue-200,
+.terms-page .border-cyan-200,
+.terms-page .border-green-200,
+.terms-page .border-red-200,
+.terms-page .border-yellow-200,
+.terms-page .border-purple-200,
+.terms-page .border-orange-200,
+.terms-page .border-blue-200 {
+  border-color: hsl(var(--lime-dark) / 0.24);
+}
+
+.privacy-page .border-cyan-500,
+.privacy-page .border-yellow-500,
+.privacy-page .border-red-500,
+.privacy-page .border-blue-500,
+.terms-page .border-cyan-500,
+.terms-page .border-yellow-500,
+.terms-page .border-red-500,
+.terms-page .border-blue-500 {
+  border-color: hsl(var(--lime-dark));
+}
+
+.privacy-page a:hover,
+.privacy-page button:hover,
+.terms-page a:hover,
+.terms-page button:hover {
+  color: hsl(var(--lime));
+}

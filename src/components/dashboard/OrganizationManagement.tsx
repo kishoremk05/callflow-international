@@ -460,13 +460,13 @@ export function OrganizationManagement({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[650px] max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[650px] max-h-[85vh] overflow-y-auto bg-[#141a24] border-yellow-500/20 text-zinc-100">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-[#1a365d]">
-            <Building2 className="w-5 h-5 text-[#0891b2]" />
+          <DialogTitle className="flex items-center gap-2 text-zinc-100">
+            <Building2 className="w-5 h-5 text-cyan-300" />
             {organizationName || "Organization"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-zinc-400">
             Invite team members by email and manage your organization.
           </DialogDescription>
         </DialogHeader>
@@ -474,33 +474,35 @@ export function OrganizationManagement({
         <div className="space-y-6 py-4">
           {/* Company Admin Info */}
           {companyAdmin && (
-            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-lg p-4">
+            <div className="bg-[#182131] border border-cyan-400/25 rounded-lg p-4">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center flex-shrink-0">
                   <Building2 className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-semibold text-blue-900">
+                    <h4 className="font-semibold text-cyan-100">
                       Managed by Company
                     </h4>
-                    <Badge className="bg-blue-500">Company</Badge>
+                    <Badge className="bg-cyan-500/20 text-cyan-200 border border-cyan-400/30">
+                      Company
+                    </Badge>
                   </div>
                   <div className="space-y-1 text-sm">
-                    <p className="text-blue-800 font-medium">
+                    <p className="text-zinc-200 font-medium">
                       {companyAdmin.company_name}
                     </p>
-                    <p className="text-blue-700 flex items-center gap-1">
+                    <p className="text-zinc-400 flex items-center gap-1">
                       <Mail className="w-3 h-3" />
                       {companyAdmin.company_email}
                     </p>
                     {companyAdmin.company_phone && (
-                      <p className="text-blue-700">
+                      <p className="text-zinc-400">
                         📞 {companyAdmin.company_phone}
                       </p>
                     )}
                   </div>
-                  <p className="text-xs text-blue-600 mt-2">
+                  <p className="text-xs text-zinc-500 mt-2">
                     Your organization is under this company's management
                   </p>
                 </div>
@@ -512,8 +514,8 @@ export function OrganizationManagement({
           {!hideInviteSection && (
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-[#0891b2]" />
-                <h3 className="font-semibold text-sm text-[#1a365d]">
+                <Mail className="w-4 h-4 text-cyan-300" />
+                <h3 className="font-semibold text-sm text-zinc-100">
                   Invite Member
                 </h3>
               </div>
@@ -528,16 +530,16 @@ export function OrganizationManagement({
                       if (searchResults.length > 0) setShowSuggestions(true);
                     }}
                     disabled={loading}
-                    className="w-full border-gray-200 focus:border-[#0891b2] focus:ring-[#0891b2]"
+                    className="w-full bg-[#182131] border-yellow-500/20 text-zinc-100 placeholder:text-zinc-500 focus:border-cyan-400 focus:ring-cyan-400/20"
                     autoComplete="off"
                   />
                   {searching && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                      <Loader2 className="w-4 h-4 animate-spin text-zinc-500" />
                     </div>
                   )}
                   {showSuggestions && searchResults.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                    <div className="absolute z-50 w-full mt-1 bg-[#182131] border border-yellow-500/20 rounded-md shadow-lg max-h-60 overflow-auto">
                       {searchResults.map((user) => (
                         <button
                           key={user.id}
@@ -546,18 +548,18 @@ export function OrganizationManagement({
                             setEmail(user.email);
                             setShowSuggestions(false);
                           }}
-                          className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors"
+                          className="w-full px-4 py-3 text-left hover:bg-[#223049] border-b border-yellow-500/10 last:border-0 transition-colors"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#0891b2] to-[#06b6d4] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
                               {user.full_name?.charAt(0)?.toUpperCase() ||
                                 user.email.charAt(0).toUpperCase()}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">
+                              <p className="text-sm font-medium text-zinc-100 truncate">
                                 {user.full_name || "User"}
                               </p>
-                              <p className="text-xs text-gray-500 truncate">
+                              <p className="text-xs text-zinc-500 truncate">
                                 {user.email}
                               </p>
                             </div>
@@ -570,7 +572,7 @@ export function OrganizationManagement({
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="bg-gradient-to-r from-[#0891b2] to-[#06b6d4] hover:from-[#0e7490] hover:to-[#0891b2]"
+                  className="bg-cyan-500 hover:bg-cyan-400 text-[#0b1220]"
                 >
                   {loading ? (
                     <>
@@ -585,7 +587,7 @@ export function OrganizationManagement({
                   )}
                 </Button>
               </form>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-zinc-500">
                 The user must be registered as a Normal User or Company User to
                 accept the invite.
               </p>
@@ -596,13 +598,13 @@ export function OrganizationManagement({
           {!hideInviteSection && pendingInvites.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-amber-600" />
-                <h3 className="font-semibold text-sm text-[#1a365d]">
+                <Mail className="w-4 h-4 text-yellow-300" />
+                <h3 className="font-semibold text-sm text-zinc-100">
                   Pending Invitations
                 </h3>
                 <Badge
                   variant="secondary"
-                  className="ml-2 bg-amber-100 text-amber-700"
+                  className="ml-2 bg-yellow-500/15 text-yellow-200 border border-yellow-500/30"
                 >
                   {pendingInvites.length}
                 </Badge>
@@ -611,7 +613,7 @@ export function OrganizationManagement({
                 {pendingInvites.map((invite) => (
                   <Card
                     key={invite.id}
-                    className="border-amber-200 bg-amber-50/30 hover:shadow-sm transition-all"
+                    className="border-yellow-500/20 bg-[#182131] hover:shadow-sm transition-all"
                   >
                     <CardContent className="p-3">
                       <div className="flex items-center justify-between">
@@ -620,10 +622,10 @@ export function OrganizationManagement({
                             {invite.invited_email.charAt(0).toUpperCase()}
                           </div>
                           <div className="flex-1">
-                            <p className="font-medium text-sm text-gray-900">
+                            <p className="font-medium text-sm text-zinc-100">
                               {invite.invited_email}
                             </p>
-                            <p className="text-xs text-amber-700">
+                            <p className="text-xs text-zinc-500">
                               Invited {formatDate(invite.invited_at)} • Waiting
                               for response
                             </p>
@@ -631,7 +633,7 @@ export function OrganizationManagement({
                         </div>
                         <Badge
                           variant="outline"
-                          className="bg-amber-100 text-amber-700 border-amber-300"
+                          className="bg-yellow-500/15 text-yellow-200 border-yellow-500/30"
                         >
                           Pending
                         </Badge>
@@ -644,19 +646,17 @@ export function OrganizationManagement({
           )}
 
           {/* Divider */}
-          <div className="border-t pt-4" />
+          <div className="border-t border-yellow-500/15 pt-4" />
 
           {/* Members List */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-[#0891b2]" />
-                <h3 className="font-semibold text-sm text-[#1a365d]">
-                  Members
-                </h3>
+                <Users className="w-4 h-4 text-cyan-300" />
+                <h3 className="font-semibold text-sm text-zinc-100">Members</h3>
                 <Badge
                   variant="secondary"
-                  className="ml-2 bg-[#0891b2]/10 text-[#0891b2]"
+                  className="ml-2 bg-cyan-400/15 text-cyan-200 border border-cyan-400/25"
                 >
                   {members.length}
                 </Badge>
@@ -669,7 +669,7 @@ export function OrganizationManagement({
                   fetchPendingInvites();
                 }}
                 disabled={loadingMembers || loadingInvites}
-                className="text-[#0891b2] hover:text-[#0e7490] hover:bg-[#0891b2]/10"
+                className="text-cyan-300 hover:text-cyan-200 hover:bg-cyan-400/10"
               >
                 {loadingMembers || loadingInvites ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -681,16 +681,14 @@ export function OrganizationManagement({
 
             {loadingMembers ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-[#0891b2]" />
+                <Loader2 className="w-6 h-6 animate-spin text-cyan-300" />
               </div>
             ) : members.length === 0 ? (
-              <Card className="border-dashed border-2">
+              <Card className="border-dashed border-2 border-yellow-500/20 bg-[#182131]">
                 <CardContent className="flex flex-col items-center justify-center py-8 text-center">
-                  <Users className="w-12 h-12 text-muted-foreground/50 mb-3" />
-                  <p className="text-sm text-muted-foreground">
-                    No members yet
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <Users className="w-12 h-12 text-zinc-600 mb-3" />
+                  <p className="text-sm text-zinc-400">No members yet</p>
+                  <p className="text-xs text-zinc-500 mt-1">
                     Invite team members using the form above
                   </p>
                 </CardContent>
@@ -702,44 +700,44 @@ export function OrganizationManagement({
                     key={member.id}
                     className={`hover:shadow-md transition-all ${
                       member.role === "owner"
-                        ? "bg-gradient-to-r from-[#0891b2]/5 to-[#06b6d4]/5 border-[#0891b2]/30"
-                        : "border-gray-100 hover:border-[#0891b2]/30"
+                        ? "bg-gradient-to-r from-[#182131] to-[#1d2b42] border-cyan-400/30"
+                        : "bg-[#182131] border-yellow-500/15 hover:border-cyan-400/30"
                     }`}
                   >
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3 flex-1">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#0891b2] to-[#06b6d4] flex items-center justify-center text-white font-semibold shadow-sm">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center text-white font-semibold shadow-sm">
                             {member.full_name?.charAt(0)?.toUpperCase() ||
                               member.email.charAt(0).toUpperCase()}
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <p className="font-medium text-sm text-[#1a365d]">
+                              <p className="font-medium text-sm text-zinc-100">
                                 {member.full_name || "Unknown User"}
                               </p>
                               {member.role === "owner" && (
                                 <Badge
                                   variant="default"
-                                  className="bg-[#0891b2] text-xs"
+                                  className="bg-cyan-500/20 text-cyan-100 border border-cyan-400/30 text-xs"
                                 >
                                   Owner
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs text-zinc-500">
                               {member.email}
                             </p>
                             <div className="flex items-center gap-4 mt-1">
-                              <p className="text-xs text-gray-500">
+                              <p className="text-xs text-zinc-500">
                                 Joined {formatDate(member.joined_at)}
                               </p>
                               {member.role !== "owner" && (
                                 <div className="flex items-center gap-1 text-xs">
-                                  <span className="text-gray-500">
+                                  <span className="text-zinc-500">
                                     Balance:
                                   </span>
-                                  <span className="font-semibold text-green-600">
+                                  <span className="font-semibold text-emerald-300">
                                     ${(member.wallet_balance || 0).toFixed(2)}
                                   </span>
                                 </div>
@@ -758,7 +756,7 @@ export function OrganizationManagement({
                                     setSelectedMember(member);
                                     setShowShareCredit(true);
                                   }}
-                                  className="text-[#0891b2] border-[#0891b2]/30 hover:bg-[#0891b2]/10 hover:text-[#0e7490]"
+                                  className="text-cyan-300 border-cyan-400/30 bg-cyan-500/10 hover:bg-cyan-500/20 hover:text-cyan-200"
                                 >
                                   <ArrowRightLeft className="w-3 h-3 mr-1" />
                                   Share Credit
@@ -770,7 +768,7 @@ export function OrganizationManagement({
                                   variant="outline"
                                   onClick={handleLeaveOrganization}
                                   disabled={leavingOrg}
-                                  className="text-orange-600 border-orange-300 hover:bg-orange-50 hover:text-orange-700"
+                                  className="text-orange-300 border-orange-400/30 bg-orange-500/10 hover:bg-orange-500/20 hover:text-orange-200"
                                 >
                                   {leavingOrg ? (
                                     <Loader2 className="w-3 h-3 mr-1 animate-spin" />
@@ -790,7 +788,7 @@ export function OrganizationManagement({
                                     )
                                   }
                                   disabled={removingMemberId === member.id}
-                                  className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700"
+                                  className="text-red-300 border-red-400/30 bg-red-500/10 hover:bg-red-500/20 hover:text-red-200"
                                 >
                                   {removingMemberId === member.id ? (
                                     <Loader2 className="w-3 h-3 mr-1 animate-spin" />
@@ -803,7 +801,7 @@ export function OrganizationManagement({
                             </>
                           )}
                           {member.role === "owner" && (
-                            <UserCheck className="w-5 h-5 text-green-500" />
+                            <UserCheck className="w-5 h-5 text-emerald-300" />
                           )}
                         </div>
                       </div>
@@ -815,8 +813,12 @@ export function OrganizationManagement({
           </div>
         </div>
 
-        <div className="flex justify-end pt-4 border-t">
-          <Button variant="outline" onClick={onClose}>
+        <div className="flex justify-end pt-4 border-t border-yellow-500/15">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="border-yellow-500/20 bg-[#182131] text-zinc-200 hover:bg-[#223049]"
+          >
             Close
           </Button>
         </div>
@@ -843,17 +845,17 @@ export function OrganizationManagement({
 
       {/* Remove Member Confirmation Dialog */}
       <AlertDialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
-        <AlertDialogContent className="max-w-md">
+        <AlertDialogContent className="max-w-md bg-[#141a24] border-yellow-500/20 text-zinc-100">
           <AlertDialogHeader>
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                <UserMinus className="w-6 h-6 text-red-600" />
+              <div className="w-12 h-12 rounded-full bg-red-500/15 flex items-center justify-center">
+                <UserMinus className="w-6 h-6 text-red-300" />
               </div>
               <div>
-                <AlertDialogTitle className="text-[#1a365d]">
+                <AlertDialogTitle className="text-zinc-100">
                   Remove Team Member
                 </AlertDialogTitle>
-                <AlertDialogDescription className="text-sm text-gray-600 mt-1">
+                <AlertDialogDescription className="text-sm text-zinc-400 mt-1">
                   This action cannot be undone
                 </AlertDialogDescription>
               </div>
@@ -861,14 +863,14 @@ export function OrganizationManagement({
           </AlertDialogHeader>
 
           <div className="py-4">
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <div className="bg-yellow-500/10 border border-yellow-500/25 rounded-lg p-4">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                <AlertTriangle className="w-5 h-5 text-yellow-300 mt-0.5 flex-shrink-0" />
                 <div className="text-sm">
-                  <p className="font-medium text-amber-800 mb-1">
+                  <p className="font-medium text-yellow-200 mb-1">
                     Are you sure you want to remove {memberToRemove?.name}?
                   </p>
-                  <p className="text-amber-700">
+                  <p className="text-yellow-300/90">
                     Their wallet credits will be transferred to your account.
                   </p>
                 </div>
@@ -877,7 +879,7 @@ export function OrganizationManagement({
           </div>
 
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-gray-300">
+            <AlertDialogCancel className="border-yellow-500/20 bg-[#182131] text-zinc-200 hover:bg-[#223049]">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
@@ -892,17 +894,17 @@ export function OrganizationManagement({
 
       {/* Leave Organization Confirmation Dialog */}
       <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
-        <AlertDialogContent className="max-w-md">
+        <AlertDialogContent className="max-w-md bg-[#141a24] border-yellow-500/20 text-zinc-100">
           <AlertDialogHeader>
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
-                <LogOut className="w-6 h-6 text-orange-600" />
+              <div className="w-12 h-12 rounded-full bg-orange-500/15 flex items-center justify-center">
+                <LogOut className="w-6 h-6 text-orange-300" />
               </div>
               <div>
-                <AlertDialogTitle className="text-[#1a365d]">
+                <AlertDialogTitle className="text-zinc-100">
                   Leave Organization
                 </AlertDialogTitle>
-                <AlertDialogDescription className="text-sm text-gray-600 mt-1">
+                <AlertDialogDescription className="text-sm text-zinc-400 mt-1">
                   You can be re-invited later
                 </AlertDialogDescription>
               </div>
@@ -910,14 +912,14 @@ export function OrganizationManagement({
           </AlertDialogHeader>
 
           <div className="py-4">
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <div className="bg-yellow-500/10 border border-yellow-500/25 rounded-lg p-4">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                <AlertTriangle className="w-5 h-5 text-yellow-300 mt-0.5 flex-shrink-0" />
                 <div className="text-sm">
-                  <p className="font-medium text-amber-800 mb-1">
+                  <p className="font-medium text-yellow-200 mb-1">
                     Leave {organizationName}?
                   </p>
-                  <p className="text-amber-700">
+                  <p className="text-yellow-300/90">
                     Your wallet credits will be transferred to the organization
                     owner.
                   </p>
@@ -927,7 +929,7 @@ export function OrganizationManagement({
           </div>
 
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-gray-300">
+            <AlertDialogCancel className="border-yellow-500/20 bg-[#182131] text-zinc-200 hover:bg-[#223049]">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction

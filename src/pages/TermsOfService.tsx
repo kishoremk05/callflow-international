@@ -1,68 +1,220 @@
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { Phone, FileText } from "lucide-react";
+﻿import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
+import gsap from "gsap";
+import LandingFooter from "@/components/LandingFooter";
+import BrandLogo from "@/components/branding/BrandLogo";
+import "./privacy-policy.css";
 
 const TermsOfService = () => {
-  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+
+  const navItems = [
+    { href: "/", label: "Home" },
+    { href: "/features", label: "Features" },
+    { href: "/how-it-works", label: "Analysis" },
+    { href: "/pricing", label: "Pricing" },
+  ];
+
+  const currentPath =
+    pathname.length > 1 && pathname.endsWith("/")
+      ? pathname.slice(0, -1)
+      : pathname;
+
+  const isNavItemActive = (href: string) => {
+    const normalizedHref =
+      href.length > 1 && href.endsWith("/") ? href.slice(0, -1) : href;
+    return currentPath === normalizedHref;
+  };
+
+  const closeMenu = () => setIsOpen(false);
+
+  useEffect(() => {
+    if (!titleRef.current) return;
+
+    const lines = titleRef.current.querySelectorAll(".privacy-title-line");
+    if (!lines.length) return;
+
+    const tl = gsap.timeline();
+    tl.fromTo(
+      lines,
+      {
+        x: -110,
+        opacity: 0,
+        filter: "blur(12px)",
+      },
+      {
+        x: 0,
+        opacity: 1,
+        filter: "blur(0px)",
+        duration: 0.9,
+        stagger: 0.14,
+        ease: "power3.out",
+      },
+    );
+
+    return () => {
+      tl.kill();
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      {/* Navigation */}
-      <nav className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 md:px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div
-              className="flex items-center gap-2 cursor-pointer"
-              onClick={() => navigate("/")}
-            >
-              <div className="w-10 h-10 bg-[#0891b2] rounded-xl flex items-center justify-center">
-                <Phone className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold">GlobalConnect</span>
-            </div>
-            <div className="flex gap-4">
-              <Button variant="outline" onClick={() => navigate("/login")}>
-                Login
-              </Button>
-              <Button
-                onClick={() => navigate("/signup")}
-                className="bg-[#0891b2] hover:bg-[#0e7490]"
-              >
-                Get Started
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
+    <div className="terms-page min-h-screen bg-dark text-on-dark">
+      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-10 py-4 mix-blend-difference">
+        <a
+          href="/"
+          className="text-on-dark font-display text-xl md:text-2xl tracking-widest"
+          onClick={closeMenu}
+        >
+          <BrandLogo
+            iconClassName="text-lime"
+            textClassName="font-display text-xl md:text-2xl tracking-widest text-on-dark uppercase"
+          />
+        </a>
 
-      {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-br from-[#0891b2] to-[#0e7490] text-white">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <FileText className="w-8 h-8" />
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              Terms of Service
+        <nav className="hidden md:flex items-center gap-8">
+          {navItems.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              className={`font-display text-sm tracking-[0.2em] uppercase transition-colors duration-300 ${
+                isNavItemActive(item.href)
+                  ? "text-lime"
+                  : "text-on-dark hover:text-lime"
+              }`}
+            >
+              {item.label}
+            </a>
+          ))}
+          <a
+            href="/signup"
+            className="font-display text-sm tracking-[0.2em] uppercase bg-lime text-on-lime px-5 py-2 hover:bg-lime/90 transition-all duration-300 glow-lime-hover"
+          >
+            Get Started
+          </a>
+        </nav>
+
+        <button
+          onClick={() => setIsOpen((v) => !v)}
+          className="md:hidden flex flex-col gap-[5px] z-50 relative"
+          aria-label="Toggle menu"
+        >
+          <span
+            className={`block w-6 h-[2px] bg-current text-on-dark transition-all ${isOpen ? "rotate-45 translate-y-[7px]" : ""}`}
+          />
+          <span
+            className={`block w-6 h-[2px] bg-current text-on-dark transition-all ${isOpen ? "opacity-0" : "opacity-100"}`}
+          />
+          <span
+            className={`block w-6 h-[2px] bg-current text-on-dark transition-all ${isOpen ? "-rotate-45 -translate-y-[7px]" : ""}`}
+          />
+        </button>
+      </header>
+
+      {isOpen ? (
+        <div className="fixed inset-0 z-40 bg-dark flex flex-col items-center justify-center gap-8 overflow-hidden md:hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,hsl(var(--lime)_/_0.18),transparent_35%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--dark-card))_0%,hsl(var(--dark))_100%)] opacity-95" />
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-lime/40 to-transparent" />
+
+          {navItems.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              onClick={closeMenu}
+              className={`relative z-10 font-display text-4xl tracking-widest uppercase transition-colors ${
+                isNavItemActive(item.href)
+                  ? "text-lime"
+                  : "text-on-dark hover:text-lime"
+              }`}
+            >
+              {item.label}
+            </a>
+          ))}
+
+          <p className="absolute bottom-8 text-lime/50 text-xs font-body tracking-widest uppercase">
+            Global Communication, Zero Boundaries
+          </p>
+        </div>
+      ) : null}
+
+      <section
+        className="features-hero-shell relative z-20 pt-[118px] md:pt-[132px] pb-16 md:pb-20 px-6 md:px-12"
+        style={{
+          background:
+            "linear-gradient(180deg, hsl(220 8% 5%) 0%, hsl(220 8% 7%) 100%)",
+        }}
+      >
+        <div className="max-w-7xl mx-auto">
+          <div className="max-w-5xl">
+            <p className="font-body text-xs tracking-[0.28em] uppercase text-lime/70 mb-5">
+              Legal
+            </p>
+            <h1
+              ref={titleRef}
+              className="font-display text-[4.2rem] md:text-[8.4rem] lg:text-[9rem] leading-[0.86] text-on-dark uppercase tracking-[-0.02em]"
+            >
+              <span className="privacy-title-line block">Terms of</span>
+              <span className="privacy-title-line block">Service</span>
             </h1>
-            <p className="text-xl text-gray-100">
+            <p className="font-body text-[1.05rem] text-muted-dark mt-6 leading-relaxed max-w-2xl">
               Last updated: February 12, 2024
+            </p>
+            <p className="font-body text-sm text-muted-dark mt-2 max-w-2xl">
+              Please read these terms carefully before using our services.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Content */}
-      <section className="py-20">
-        <div className="container mx-auto px-4 md:px-6">
+      <section className="relative z-20 bg-dark-lighter">
+        <div className="grid grid-cols-2 md:grid-cols-4">
+          <div className="text-center px-6 py-10 md:px-8 md:py-12 border-l border-lime/10 first:border-l-0">
+            <p className="font-display text-[2.4rem] md:text-[2.9rem] text-lime leading-none mb-2 tracking-[-0.015em]">
+              12
+            </p>
+            <p className="font-display text-[0.7rem] tracking-[0.21em] uppercase text-muted-dark">
+              Sections
+            </p>
+          </div>
+          <div className="text-center px-6 py-10 md:px-8 md:py-12 border-l border-lime/10">
+            <p className="font-display text-[2.4rem] md:text-[2.9rem] text-lime leading-none mb-2 tracking-[-0.015em]">
+              99.9
+            </p>
+            <p className="font-display text-[0.7rem] tracking-[0.21em] uppercase text-muted-dark">
+              Uptime Target
+            </p>
+          </div>
+          <div className="text-center px-6 py-10 md:px-8 md:py-12 border-l border-lime/10">
+            <p className="font-display text-[2.4rem] md:text-[2.9rem] text-lime leading-none mb-2 tracking-[-0.015em]">
+              30D
+            </p>
+            <p className="font-display text-[0.7rem] tracking-[0.21em] uppercase text-muted-dark">
+              Pricing Notice
+            </p>
+          </div>
+          <div className="text-center px-6 py-10 md:px-8 md:py-12 border-l border-lime/10">
+            <p className="font-display text-[2.4rem] md:text-[2.9rem] text-lime leading-none mb-2 tracking-[-0.015em]">
+              24/7
+            </p>
+            <p className="font-display text-[0.7rem] tracking-[0.21em] uppercase text-muted-dark">
+              Support Channel
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 bg-dark">
+        <div className="max-w-7xl mx-auto px-4 md:px-6">
           <div className="max-w-4xl mx-auto prose prose-lg">
-            <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12">
+            <div className="policy-card rounded-2xl p-8 md:p-12">
               <section className="mb-12">
                 <h2 className="text-2xl font-bold mb-4 text-gray-900">
                   1. Agreement to Terms
                 </h2>
                 <p className="text-gray-600 mb-4">
-                  By accessing or using GlobalConnect's services, you agree to
+                  By accessing or using CallFlow&apos;s services, you agree to
                   be bound by these Terms of Service and all applicable laws and
                   regulations. If you do not agree with any of these terms, you
                   are prohibited from using or accessing this service.
@@ -74,7 +226,7 @@ const TermsOfService = () => {
                   2. Use License
                 </h2>
                 <p className="text-gray-600 mb-4">
-                  Permission is granted to temporarily use GlobalConnect's
+                  Permission is granted to temporarily use CallFlow&apos;s
                   services for personal or commercial telecommunications
                   purposes only. This is the grant of a license, not a transfer
                   of title, and under this license you may not:
@@ -227,7 +379,7 @@ const TermsOfService = () => {
                   8. Limitation of Liability
                 </h2>
                 <p className="text-gray-600 mb-4">
-                  In no event shall GlobalConnect, its directors, employees, or
+                  In no event shall CallFlow, its directors, employees, or
                   agents be liable for any indirect, incidental, special,
                   consequential, or punitive damages, including without
                   limitation loss of profits, data, use, goodwill, or other
@@ -254,7 +406,7 @@ const TermsOfService = () => {
                 </h2>
                 <p className="text-gray-600 mb-4">
                   Your use of the service is at your sole risk. The service is
-                  provided on an "AS IS" and "AS AVAILABLE" basis. GlobalConnect
+                  provided on an "AS IS" and "AS AVAILABLE" basis. CallFlow
                   expressly disclaims all warranties of any kind, whether
                   express or implied.
                 </p>
@@ -292,7 +444,7 @@ const TermsOfService = () => {
                   contact us:
                 </p>
                 <ul className="list-none text-gray-600 space-y-2">
-                  <li>Email: legal@globalconnect.com</li>
+                  <li>Email: legal@callflow.com</li>
                   <li>Phone: +1 (555) 123-4567</li>
                   <li>Address: 123 Tech Street, San Francisco, CA 94105</li>
                 </ul>
@@ -302,25 +454,7 @@ const TermsOfService = () => {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4 md:px-6 text-center">
-          <h2 className="text-3xl font-bold mb-6">
-            Questions About Our Terms?
-          </h2>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            We're here to help clarify any questions you may have about our
-            terms of service.
-          </p>
-          <Button
-            size="lg"
-            onClick={() => navigate("/contact")}
-            className="bg-[#0891b2] hover:bg-[#0e7490]"
-          >
-            Contact Us
-          </Button>
-        </div>
-      </section>
+      <LandingFooter />
     </div>
   );
 };

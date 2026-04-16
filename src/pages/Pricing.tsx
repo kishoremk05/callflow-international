@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+﻿import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Phone, CheckCircle2, Globe, Zap } from "lucide-react";
 
@@ -6,18 +6,18 @@ const Pricing = () => {
   const navigate = useNavigate();
 
   const popularDestinations = [
-    { country: "United States", flag: "🇺🇸", rate: "$0.012/min" },
-    { country: "United Kingdom", flag: "🇬🇧", rate: "$0.015/min" },
-    { country: "Canada", flag: "🇨🇦", rate: "$0.013/min" },
-    { country: "Australia", flag: "🇦🇺", rate: "$0.018/min" },
-    { country: "India", flag: "🇮🇳", rate: "$0.008/min" },
-    { country: "Germany", flag: "🇩🇪", rate: "$0.016/min" },
-    { country: "France", flag: "🇫🇷", rate: "$0.017/min" },
-    { country: "China", flag: "🇨🇳", rate: "$0.011/min" },
-    { country: "Brazil", flag: "🇧🇷", rate: "$0.014/min" },
-    { country: "Mexico", flag: "🇲🇽", rate: "$0.010/min" },
-    { country: "Japan", flag: "🇯🇵", rate: "$0.019/min" },
-    { country: "South Korea", flag: "🇰🇷", rate: "$0.016/min" },
+    { country: "United States", flag: "ðŸ‡ºðŸ‡¸", rate: "$0.012/min" },
+    { country: "United Kingdom", flag: "ðŸ‡¬ðŸ‡§", rate: "$0.015/min" },
+    { country: "Canada", flag: "ðŸ‡¨ðŸ‡¦", rate: "$0.013/min" },
+    { country: "Australia", flag: "ðŸ‡¦ðŸ‡º", rate: "$0.018/min" },
+    { country: "India", flag: "ðŸ‡®ðŸ‡³", rate: "$0.008/min" },
+    { country: "Germany", flag: "ðŸ‡©ðŸ‡ª", rate: "$0.016/min" },
+    { country: "France", flag: "ðŸ‡«ðŸ‡·", rate: "$0.017/min" },
+    { country: "China", flag: "ðŸ‡¨ðŸ‡³", rate: "$0.011/min" },
+    { country: "Brazil", flag: "ðŸ‡§ðŸ‡·", rate: "$0.014/min" },
+    { country: "Mexico", flag: "ðŸ‡²ðŸ‡½", rate: "$0.010/min" },
+    { country: "Japan", flag: "ðŸ‡¯ðŸ‡µ", rate: "$0.019/min" },
+    { country: "South Korea", flag: "ðŸ‡°ðŸ‡·", rate: "$0.016/min" },
   ];
 
   const plans = [
@@ -101,7 +101,7 @@ const Pricing = () => {
               <div className="w-10 h-10 bg-[#0891b2] rounded-xl flex items-center justify-center">
                 <Phone className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold">GlobalConnect</span>
+              <span className="text-xl font-bold">CallFlow</span>
             </div>
             <div className="flex gap-4">
               <Button variant="outline" onClick={() => navigate("/login")}>
@@ -256,7 +256,7 @@ const Pricing = () => {
             Start Saving on International Calls Today
           </h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Join thousands of users who trust GlobalConnect for affordable,
+            Join thousands of users who trust CallFlow for affordable,
             high-quality international calling.
           </p>
           <Button
@@ -273,3 +273,4 @@ const Pricing = () => {
 };
 
 export default Pricing;
+

@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+﻿import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Phone, Cookie } from "lucide-react";
 
@@ -18,7 +18,7 @@ const CookiePolicy = () => {
               <div className="w-10 h-10 bg-[#0891b2] rounded-xl flex items-center justify-center">
                 <Phone className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold">GlobalConnect</span>
+              <span className="text-xl font-bold">CallFlow</span>
             </div>
             <div className="flex gap-4">
               <Button variant="outline" onClick={() => navigate("/login")}>
@@ -68,7 +68,7 @@ const CookiePolicy = () => {
                   information to the owners of the site.
                 </p>
                 <p className="text-gray-600 mb-4">
-                  GlobalConnect uses cookies to distinguish you from other users
+                  CallFlow uses cookies to distinguish you from other users
                   and to provide you with a better experience when you browse
                   our website and use our services.
                 </p>
@@ -274,10 +274,10 @@ const CookiePolicy = () => {
                     your experience of our services.
                   </p>
                   <ul className="list-disc pl-6 text-gray-600 space-y-1">
-                    <li>Chrome: Settings → Privacy and Security → Cookies</li>
-                    <li>Firefox: Options → Privacy & Security → Cookies</li>
-                    <li>Safari: Preferences → Privacy → Cookies</li>
-                    <li>Edge: Settings → Privacy → Cookies</li>
+                    <li>Chrome: Settings â†’ Privacy and Security â†’ Cookies</li>
+                    <li>Firefox: Options â†’ Privacy & Security â†’ Cookies</li>
+                    <li>Safari: Preferences â†’ Privacy â†’ Cookies</li>
+                    <li>Edge: Settings â†’ Privacy â†’ Cookies</li>
                   </ul>
                 </div>
 
@@ -328,7 +328,7 @@ const CookiePolicy = () => {
                   contact us:
                 </p>
                 <ul className="list-none text-gray-600 space-y-2">
-                  <li>Email: privacy@globalconnect.com</li>
+                  <li>Email: privacy@callflow.com</li>
                   <li>Phone: +1 (555) 123-4567</li>
                   <li>Address: 123 Tech Street, San Francisco, CA 94105</li>
                 </ul>
@@ -360,3 +360,4 @@ const CookiePolicy = () => {
 };
 
 export default CookiePolicy;
+
