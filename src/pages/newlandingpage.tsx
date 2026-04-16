@@ -20,7 +20,7 @@ const companyInfo = {
 };
 
 const showcaseStats = [
-  { number: "0s", label: "Load Time" },
+  { number: "<5s", label: "Load Time" },
   { number: "150+", label: "Countries" },
   { number: "99.9%", label: "Uptime SLA" },
 ];
@@ -40,7 +40,7 @@ const premiumFeatures = [
     title: "Browser Calling",
     desc: "Make HD calls directly from your browser. No apps or downloads required, just instant connectivity.",
     stats: [
-      { label: "Load Time", value: "<2s" },
+      { label: "Load Time", value: "<5s" },
       { label: "Compatibility", value: "100%" },
     ],
   },
@@ -63,29 +63,11 @@ const premiumFeatures = [
     ],
   },
   {
-    icon: "AI",
-    title: "AI Agent Automation Support (Coming Soon)",
-    desc: "AI assistant for call summaries, ticket drafting, follow-up reminders, and workflow automation after every conversation.",
-    stats: [
-      { label: "Status", value: "Coming Soon" },
-      { label: "Use Cases", value: "Support + Ops" },
-    ],
-  },
-  {
-    icon: "REC",
-    title: "Call Recording (Coming Soon)",
-    desc: "Automatic recording options with secure storage, searchable transcripts, and role-based playback controls.",
-    stats: [
-      { label: "Status", value: "Coming Soon" },
-      { label: "Storage", value: "Encrypted" },
-    ],
-  },
-  {
     icon: "ANL",
     title: "Call Analytics",
     desc: "Monitor pilot usage, validate call quality, and prepare reporting workflows before public rollout.",
     stats: [
-      { label: "Mode", value: "Pre-Launch" },
+      { label: "Starting From", value: "$0.01/min" },
       { label: "Pilot Calls", value: "0-100" },
       { label: "Report Status", value: "Baseline" },
     ],
@@ -100,13 +82,22 @@ const premiumFeatures = [
       { label: "Duration", value: "Unlimited" },
     ],
   },
+  {
+    icon: "AI",
+    title: "AI Agent Automation Support (Coming Soon)",
+    desc: "AI assistant for call summaries, ticket drafting, follow-up reminders, and workflow automation after every conversation.",
+    stats: [
+      { label: "Status", value: "Coming Soon" },
+      { label: "Use Cases", value: "Support + Ops" },
+    ],
+  },
 ];
 
 const stats = [
-  { label: "Load Time", value: "0s", numericValue: 0 },
+  { label: "Load Time", value: "<5s", numericValue: 5 },
   { label: "Countries", value: "150+", numericValue: 150 },
   { label: "Uptime SLA", value: "99.9%", numericValue: 99.9 },
-  { label: "Launch Stage", value: "Pre-Launch", numericValue: 0 },
+  { label: "By Country", value: "$0.01+", numericValue: 0.01 },
 ];
 
 const pricingTiers = [
@@ -167,11 +158,11 @@ const dashboardAnalysisMetrics = [
 ];
 
 const companyDashboardAnalysisMetrics = [
-  { label: "Team Members", value: "0-120" },
-  { label: "Shared Wallets", value: "0-15" },
-  { label: "CSV Imports", value: "0-10" },
-  { label: "Queue Depth", value: "0-25" },
-  { label: "Ops Readiness", value: "Enabled" },
+  { label: "Calls", value: "Call" },
+  { label: "Minutes", value: "Minutes" },
+  { label: "Shares", value: "Shares" },
+  { label: "Growth", value: "Growth" },
+  { label: "Outreaches", value: "Outreach" },
 ];
 
 const dashboardAnalysisCards = [
@@ -237,16 +228,9 @@ const companyDashboardAnalysisCards = [
   {
     icon: "QUE",
     category: "Routing",
-    subtitle: "Inbound Operations",
+    subtitle: "Outbound Operations",
     title: "Call Queuing",
-    desc: "Manage queue load, waiting time, and escalation flows to keep incoming calls distributed effectively.",
-  },
-  {
-    icon: "CTRL",
-    category: "Governance",
-    subtitle: "Company Controls",
-    title: "Admin & Access Overview",
-    desc: "Manage role permissions, approval flows, and audit visibility for wallet actions, team settings, and operational controls.",
+    desc: "Upload a CSV contact list and start an outbound call queue. Calls run one by one, and once a call ends, the next queued contact is dialed automatically.",
   },
 ];
 
@@ -297,11 +281,11 @@ const analysisContentByItem = {
         desc: "Review latest inbound and outbound calls with timestamp, outcome, and assigned owner.",
       },
       {
-        icon: "TASK",
-        category: "Action",
-        subtitle: "Post-Call",
-        title: "Follow-Up Queue",
-        desc: "Automatically queue callback and action items based on missed calls, short calls, or flagged outcomes.",
+        icon: "MON",
+        category: "Activity",
+        subtitle: "Monthly Trend",
+        title: "Monthly Activity",
+        desc: "Track monthly call volume, answered ratio, and follow-up completion trends to understand consistency.",
       },
     ],
   },
@@ -365,13 +349,6 @@ const analysisContentByItem = {
     ],
     cards: [
       {
-        icon: "RBAC",
-        category: "Security",
-        subtitle: "Role Control",
-        title: "Access Management",
-        desc: "Manage role-based permissions for billing, number control, analytics, and organization settings.",
-      },
-      {
         icon: "AUDIT",
         category: "Compliance",
         subtitle: "Event Logs",
@@ -391,12 +368,7 @@ const companyAnalysisSidebarItems = [
   "Admin Access",
 ];
 
-const normalAnalysisSidebarItems = [
-  "Dashboard",
-  "Recent Calls",
-  "Meeting Calendar",
-  "Numbers",
-];
+const normalAnalysisSidebarItems = ["Dashboard", "Recent Calls"];
 
 const featureDeepDive = [
   {
@@ -404,14 +376,14 @@ const featureDeepDive = [
     category: "calling",
     subtitle: "Crystal-Clear Calls",
     title: "International VoIP",
-    desc: "Make and receive PSTN calls worldwide with reliable carrier routing. HD voice quality with adaptive bitrate, noise cancellation, and call recording.",
+    desc: "Make and receive PSTN calls worldwide with reliable carrier routing. HD voice quality with adaptive bitrate and noise cancellation.",
   },
   {
     icon: "MEET",
     category: "meetings",
     subtitle: "Internal Conferencing",
     title: "Team Meetings",
-    desc: "Powered by LiveKit - unlimited internal team meetings with screen sharing, virtual backgrounds, and real-time collaboration.",
+    desc: "Unlimited internal team meetings with screen sharing, virtual backgrounds, and real-time collaboration.",
   },
   {
     icon: "PAY",
@@ -425,21 +397,14 @@ const featureDeepDive = [
     category: "calling",
     subtitle: "Local Presence, Global Reach",
     title: "Virtual Numbers",
-    desc: "Purchase virtual phone numbers in 150+ countries. Establish local presence, set up IVR menus, and route calls intelligently.",
-  },
-  {
-    icon: "RBAC",
-    category: "platform",
-    subtitle: "Enterprise Security",
-    title: "Role-Based Access",
-    desc: "Granular role-based access control with SSO integration, audit logs, compliance reporting, and organization-level policies.",
+    desc: "Purchase virtual phone numbers in 150+ countries. Establish local presence and route calls intelligently.",
   },
   {
     icon: "SCL",
     category: "platform",
     subtitle: "Built for Growth",
     title: "Scalable Architecture",
-    desc: "From solo users to 10,000+ seat enterprises. Auto-scaling infrastructure, 99.9% uptime SLA, and global edge deployment.",
+    desc: "From solo users to 1,000+ seat enterprises with global edge deployment.",
   },
 ];
 
@@ -529,7 +494,6 @@ const fullPricingTiers = [
     features: [
       "All Starter features",
       "150+ countries",
-      "Call recording",
       "Priority support",
       "11+ users",
       "Organization management",
@@ -565,12 +529,6 @@ const comparisonRows = [
   {
     feature: "HD Browser Calling",
     starter: "Yes",
-    business: "Yes",
-    enterprise: "Yes",
-  },
-  {
-    feature: "Call Recording",
-    starter: "-",
     business: "Yes",
     enterprise: "Yes",
   },
@@ -633,15 +591,15 @@ const comparisonRows = [
 const faqs = [
   {
     q: "How does wallet billing work?",
-    a: "Each user and organization has a wallet with real-time balance updates. Usage is metered per minute and deducted automatically. You can set low-balance alerts, enable auto-recharge, and export billing reports from the dashboard.",
+    a: "The platform follows a pay-as-you-go pricing model, so users are charged only for the minutes they actually use, with rates starting at just a few cents per minute. There are no subscriptions, long-term contracts, or hidden fees to worry about. Unused minutes never expire and automatically roll over into the next month.",
   },
   {
     q: "Do I need to install anything?",
     a: "No. CallFlow is 100% browser-based. It works on Chrome, Firefox, Safari, and Edge - on desktop, tablet, and mobile devices.",
   },
   {
-    q: "Are internal meetings really free?",
-    a: "Internal meetings are billed at a low usage rate starting around $0.01 per minute, depending on duration and routing type. This keeps pricing predictable while still supporting unlimited team participants.",
+    q: "What are the rates for international calls?",
+    a: "Our rates vary by country and are competitive with major carriers. You can view our current rates in the pricing section below. We charge per minute, and you only pay for what you use.",
   },
   {
     q: "Can I get a virtual number?",
@@ -652,8 +610,8 @@ const faqs = [
     a: "CallFlow uses adaptive bitrate, intelligent jitter buffering, and regional media routing to keep calls stable. During pilot rollout, quality metrics are tracked continuously so teams can tune performance before full launch.",
   },
   {
-    q: "Is CallFlow suitable for regulated industries?",
-    a: "Yes. We support encrypted signaling, role-based access controls, and audit-ready activity logs. Additional compliance configurations can be enabled based on your industry and deployment requirements.",
+    q: "Is my call data secure?",
+    a: "Yes, we take privacy seriously. All calls are encrypted, and we only store the minimum information needed for to display calls in your call history. You can review our Privacy Policy for more details.",
   },
 ];
 
@@ -1277,6 +1235,10 @@ const LandingPage = () => {
     }
   }, [analysisUserType, currentAnalysisSidebarItems, selectedAnalysisItem]);
 
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
   const closeMenu = () => setIsOpen(false);
 
   const simpleHeader = (
@@ -1332,38 +1294,43 @@ const LandingPage = () => {
         </button>
       </header>
 
-      {isOpen ? (
-        <div className="fixed inset-0 z-40 bg-dark flex flex-col items-center justify-center gap-8 overflow-hidden md:hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,hsl(var(--lime)_/_0.18),transparent_35%)]" />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--dark-card))_0%,hsl(var(--dark))_100%)] opacity-95" />
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-lime/40 to-transparent" />
+      <div
+        className={`fixed inset-0 z-40 bg-dark flex flex-col items-center justify-center gap-8 overflow-hidden md:hidden transition-opacity duration-200 ${
+          isOpen
+            ? "opacity-100 visible pointer-events-auto"
+            : "opacity-0 invisible pointer-events-none"
+        }`}
+        aria-hidden={!isOpen}
+      >
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,hsl(var(--lime)_/_0.18),transparent_35%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--dark-card))_0%,hsl(var(--dark))_100%)] opacity-95" />
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-lime/40 to-transparent" />
 
-          {navItems.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              onClick={closeMenu}
-              className={`relative z-10 font-display text-4xl tracking-widest uppercase transition-colors ${
-                isNavItemActive(item.href)
-                  ? "text-lime"
-                  : "text-on-dark hover:text-lime"
-              }`}
-            >
-              {item.label}
-            </a>
-          ))}
+        {navItems.map((item) => (
+          <a
+            key={item.href}
+            href={item.href}
+            onClick={closeMenu}
+            className={`relative z-10 font-display text-4xl tracking-widest uppercase transition-colors ${
+              isNavItemActive(item.href)
+                ? "text-lime"
+                : "text-on-dark hover:text-lime"
+            }`}
+          >
+            {item.label}
+          </a>
+        ))}
 
-          <p className="absolute bottom-8 text-lime/50 text-xs font-body tracking-widest uppercase">
-            {companyInfo.tagline}
-          </p>
-        </div>
-      ) : null}
+        <p className="absolute bottom-8 text-lime/50 text-xs font-body tracking-widest uppercase">
+          {companyInfo.tagline}
+        </p>
+      </div>
     </>
   );
 
   if (isFeaturesPage) {
     return (
-      <div className="lp-root bg-dark min-h-screen">
+      <div key="features-page" className="lp-root bg-dark min-h-screen">
         {simpleHeader}
         <section
           ref={featuresHeroRef}
@@ -1418,19 +1385,13 @@ const LandingPage = () => {
           }}
         >
           <div className="relative z-10 max-w-7xl mx-auto">
-            <p className="analysis-hero-reveal text-lime font-body text-xs tracking-[0.3em] uppercase mb-5">
-              Analysis
-            </p>
-            <h1 className="analysis-hero-reveal font-display text-[5rem] md:text-[8rem] lg:text-[9rem] leading-[0.86] text-on-dark uppercase tracking-[-0.02em]">
-              Analysis
-            </h1>
             <p className="analysis-hero-reveal font-body text-[1.05rem] text-muted-dark max-w-2xl mt-5 leading-relaxed mb-10">
               Track performance across calls, minutes, shares, growth, and
               outreach with real-time visibility and actionable insights.
             </p>
 
-            <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8 md:gap-10 items-start mt-3 md:mt-5">
-              <div className="analysis-hero-reveal">
+            <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8 md:gap-10 items-stretch mt-3 md:mt-5">
+              <div className="analysis-hero-reveal h-full flex flex-col">
                 <div className="mb-3 p-1 flex items-center gap-1 bg-dark-lighter border border-lime/15 rounded-xl">
                   <button
                     type="button"
@@ -1456,7 +1417,7 @@ const LandingPage = () => {
                   </button>
                 </div>
 
-                <aside className="bg-dark-lighter/70 border border-lime/10 rounded-2xl p-5 md:p-6">
+                <aside className="bg-dark-lighter/70 border border-lime/10 rounded-2xl p-5 md:p-6 flex-1">
                   <div className="flex items-center gap-4 pb-5 border-b border-lime/10">
                     <div className="w-14 h-14 rounded-xl bg-lime/20 flex items-center justify-center text-2xl">
                       CF
@@ -1497,63 +1458,27 @@ const LandingPage = () => {
                       );
                     })}
                   </nav>
-
-                  <div className="analysis-hero-reveal mt-20 p-4 border border-lime/10 bg-dark-card rounded-xl">
-                    <p className="font-display text-[10px] tracking-[0.2em] uppercase text-lime/80 mb-3">
-                      Today Snapshot
-                    </p>
-
-                    <div className="space-y-2.5 text-sm font-body">
-                      <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-dark/50 border border-lime/10">
-                        <span className="text-muted-dark">
-                          Active Campaigns
-                        </span>
-                        <span className="text-on-dark font-display text-base">
-                          12
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-dark/50 border border-lime/10">
-                        <span className="text-muted-dark">New Leads</span>
-                        <span className="text-lime font-display text-base">
-                          284
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-dark/50 border border-lime/10">
-                        <span className="text-muted-dark">Conversion</span>
-                        <span className="text-on-dark font-display text-base">
-                          21.6%
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="mt-4">
-                      <p className="text-[10px] uppercase tracking-wider text-muted-dark mb-2">
-                        Daily Goal
-                      </p>
-                      <div className="h-2 rounded-full bg-dark/60 overflow-hidden">
-                        <div className="h-full w-[72%] bg-lime" />
-                      </div>
-                    </div>
-                  </div>
                 </aside>
               </div>
 
               <div className="lg:mt-12">
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mb-6">
-                  {activeAnalysisContent.metrics.map((item) => (
-                    <div
-                      key={item.label}
-                      className="analysis-kpi text-left px-4 py-4 border border-lime/10 bg-dark-card"
-                    >
-                      <p className="font-display text-2xl md:text-3xl text-lime leading-none mb-1">
-                        {item.value}
-                      </p>
-                      <p className="font-display text-[0.6rem] tracking-[0.18em] uppercase text-muted-dark">
-                        {item.label}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+                {analysisUserType === "company" ? (
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mb-6">
+                    {activeAnalysisContent.metrics.map((item) => (
+                      <div
+                        key={item.label}
+                        className="analysis-kpi text-left px-4 py-4 border border-lime/10 bg-dark-card"
+                      >
+                        <p className="font-display text-2xl md:text-3xl text-lime leading-none mb-1">
+                          {item.value}
+                        </p>
+                        <p className="font-display text-[0.6rem] tracking-[0.18em] uppercase text-muted-dark">
+                          {item.label}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {activeAnalysisContent.cards.map((item, idx) => {
@@ -1648,7 +1573,7 @@ const LandingPage = () => {
 
   if (isHowItWorksPage) {
     return (
-      <div className="lp-root bg-dark min-h-screen">
+      <div key="analysis-page" className="lp-root bg-dark min-h-screen">
         {simpleHeader}
         <section
           ref={howItWorksRef}
@@ -1659,19 +1584,13 @@ const LandingPage = () => {
           }}
         >
           <div className="relative z-10 max-w-7xl mx-auto">
-            <p className="analysis-hero-reveal text-lime font-body text-xs tracking-[0.3em] uppercase mb-5">
-              Analysis
-            </p>
-            <h1 className="analysis-hero-reveal font-display text-[5rem] md:text-[8rem] lg:text-[9rem] leading-[0.86] text-on-dark uppercase tracking-[-0.02em]">
-              Analysis
-            </h1>
             <p className="analysis-hero-reveal font-body text-[1.05rem] text-muted-dark max-w-2xl mt-5 leading-relaxed mb-10">
               Track performance across calls, minutes, shares, growth, and
               outreach with real-time visibility and actionable insights.
             </p>
 
-            <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8 md:gap-10 items-start mt-3 md:mt-5">
-              <div className="analysis-hero-reveal">
+            <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8 md:gap-10 items-stretch mt-3 md:mt-5">
+              <div className="analysis-hero-reveal h-full flex flex-col">
                 <div className="mb-3 p-1 flex items-center gap-1 bg-dark-lighter border border-lime/15 rounded-xl">
                   <button
                     type="button"
@@ -1697,7 +1616,7 @@ const LandingPage = () => {
                   </button>
                 </div>
 
-                <aside className="bg-dark-lighter/70 border border-lime/10 rounded-2xl p-5 md:p-6">
+                <aside className="bg-dark-lighter/70 border border-lime/10 rounded-2xl p-5 md:p-6 flex-1">
                   <div className="flex items-center gap-4 pb-5 border-b border-lime/10">
                     <div className="w-14 h-14 rounded-xl bg-lime/20 flex items-center justify-center text-2xl">
                       CF
@@ -1738,63 +1657,27 @@ const LandingPage = () => {
                       );
                     })}
                   </nav>
-
-                  <div className="analysis-hero-reveal mt-20 p-4 border border-lime/10 bg-dark-card rounded-xl">
-                    <p className="font-display text-[10px] tracking-[0.2em] uppercase text-lime/80 mb-3">
-                      Today Snapshot
-                    </p>
-
-                    <div className="space-y-2.5 text-sm font-body">
-                      <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-dark/50 border border-lime/10">
-                        <span className="text-muted-dark">
-                          Active Campaigns
-                        </span>
-                        <span className="text-on-dark font-display text-base">
-                          12
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-dark/50 border border-lime/10">
-                        <span className="text-muted-dark">New Leads</span>
-                        <span className="text-lime font-display text-base">
-                          284
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-dark/50 border border-lime/10">
-                        <span className="text-muted-dark">Conversion</span>
-                        <span className="text-on-dark font-display text-base">
-                          21.6%
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="mt-4">
-                      <p className="text-[10px] uppercase tracking-wider text-muted-dark mb-2">
-                        Daily Goal
-                      </p>
-                      <div className="h-2 rounded-full bg-dark/60 overflow-hidden">
-                        <div className="h-full w-[72%] bg-lime" />
-                      </div>
-                    </div>
-                  </div>
                 </aside>
               </div>
 
               <div className="lg:mt-12">
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mb-6">
-                  {activeAnalysisContent.metrics.map((item) => (
-                    <div
-                      key={item.label}
-                      className="analysis-kpi text-left px-4 py-4 border border-lime/10 bg-dark-card"
-                    >
-                      <p className="font-display text-2xl md:text-3xl text-lime leading-none mb-1">
-                        {item.value}
-                      </p>
-                      <p className="font-display text-[0.6rem] tracking-[0.18em] uppercase text-muted-dark">
-                        {item.label}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+                {analysisUserType === "company" ? (
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mb-6">
+                    {activeAnalysisContent.metrics.map((item) => (
+                      <div
+                        key={item.label}
+                        className="analysis-kpi text-left px-4 py-4 border border-lime/10 bg-dark-card"
+                      >
+                        <p className="font-display text-2xl md:text-3xl text-lime leading-none mb-1">
+                          {item.value}
+                        </p>
+                        <p className="font-display text-[0.6rem] tracking-[0.18em] uppercase text-muted-dark">
+                          {item.label}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {activeAnalysisContent.cards.map((item, idx) => {
@@ -1840,7 +1723,7 @@ const LandingPage = () => {
 
   if (isPricingPage) {
     return (
-      <div className="lp-root bg-dark min-h-screen">
+      <div key="pricing-page" className="lp-root bg-dark min-h-screen">
         {simpleHeader}
         <section
           ref={pricingHeroRef}
@@ -2076,7 +1959,7 @@ const LandingPage = () => {
   }
 
   return (
-    <div className="lp-root bg-dark min-h-screen" id="home">
+    <div key="home-page" className="lp-root bg-dark min-h-screen" id="home">
       <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-10 py-4 mix-blend-difference">
         <a
           href="#home"
@@ -2128,32 +2011,37 @@ const LandingPage = () => {
         </button>
       </header>
 
-      {isOpen ? (
-        <div className="fixed inset-0 z-40 bg-dark flex flex-col items-center justify-center gap-8 overflow-hidden md:hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,hsl(var(--lime)_/_0.18),transparent_35%)]" />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--dark-card))_0%,hsl(var(--dark))_100%)] opacity-95" />
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-lime/40 to-transparent" />
+      <div
+        className={`fixed inset-0 z-40 bg-dark flex flex-col items-center justify-center gap-8 overflow-hidden md:hidden transition-opacity duration-200 ${
+          isOpen
+            ? "opacity-100 visible pointer-events-auto"
+            : "opacity-0 invisible pointer-events-none"
+        }`}
+        aria-hidden={!isOpen}
+      >
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,hsl(var(--lime)_/_0.18),transparent_35%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--dark-card))_0%,hsl(var(--dark))_100%)] opacity-95" />
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-lime/40 to-transparent" />
 
-          {navItems.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              onClick={closeMenu}
-              className={`relative z-10 font-display text-4xl tracking-widest uppercase transition-colors ${
-                isNavItemActive(item.href)
-                  ? "text-lime"
-                  : "text-on-dark hover:text-lime"
-              }`}
-            >
-              {item.label}
-            </a>
-          ))}
+        {navItems.map((item) => (
+          <a
+            key={item.href}
+            href={item.href}
+            onClick={closeMenu}
+            className={`relative z-10 font-display text-4xl tracking-widest uppercase transition-colors ${
+              isNavItemActive(item.href)
+                ? "text-lime"
+                : "text-on-dark hover:text-lime"
+            }`}
+          >
+            {item.label}
+          </a>
+        ))}
 
-          <p className="absolute bottom-8 text-lime/50 text-xs font-body tracking-widest uppercase">
-            {companyInfo.tagline}
-          </p>
-        </div>
-      ) : null}
+        <p className="absolute bottom-8 text-lime/50 text-xs font-body tracking-widest uppercase">
+          {companyInfo.tagline}
+        </p>
+      </div>
 
       <div ref={heroWrapperRef} className="hero-zoom-wrapper">
         <div ref={showcaseRef} className="hero-showcase-bg">
@@ -2342,7 +2230,6 @@ const LandingPage = () => {
               className="pf-card flex-shrink-0 w-[280px] md:w-[300px] bg-dark-lighter border border-lime/10 p-6 hover:border-lime/30 transition-all duration-500 group rounded-sm"
               style={{ marginTop: i % 2 === 0 ? "-60px" : "60px" }}
             >
-              <span className="text-2xl mb-3 block text-lime">{feat.icon}</span>
               <h4 className="font-display text-lg text-on-dark tracking-wider mb-1.5 group-hover:text-lime transition-colors">
                 {feat.title}
               </h4>

@@ -10,7 +10,6 @@ const footerInfoLinks = [
   { href: "/contact", label: "Contact" },
   { href: "/privacy-policy", label: "Privacy" },
   { href: "/terms", label: "Terms of use" },
-  { href: "/about", label: "About" },
 ];
 
 const LandingFooter = () => {
