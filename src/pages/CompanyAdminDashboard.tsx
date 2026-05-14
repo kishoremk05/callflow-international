@@ -151,6 +151,7 @@ export default function CompanyAdminDashboard() {
   const [actionLoading, setActionLoading] = useState(false);
   const hasRedirected = useRef(false);
   const [showWalletDetailsDialog, setShowWalletDetailsDialog] = useState(false);
+  const [showAnalysisDialog, setShowAnalysisDialog] = useState(false);
   const [walletHistory, setWalletHistory] = useState<WalletHistory | null>(
     null,
   );
@@ -737,6 +738,35 @@ export default function CompanyAdminDashboard() {
     );
   }
 
+  const availableBalance =
+    (wallet?.balance || 0) - (stats.totalShared || 0);
+  const teamsWithMembers = organizations.filter(
+    (org) => org.organization_members?.length > 0,
+  ).length;
+  const averageMembersPerTeam = stats.totalOrganizations
+    ? (stats.totalMembers / stats.totalOrganizations).toFixed(1)
+    : "0.0";
+  const shareRate = wallet?.balance
+    ? ((stats.totalShared / wallet.balance) * 100).toFixed(0)
+    : "0";
+  const improvementItems = [
+    stats.totalOrganizations === 0
+      ? "Create your first team to start organizing members."
+      : null,
+    stats.totalMembers === 0
+      ? "Invite members to activate your teams."
+      : null,
+    teamsWithMembers < stats.totalOrganizations
+      ? "Assign members to empty teams to balance distribution."
+      : null,
+    walletHistory?.shares?.length
+      ? "Review sharing history and adjust limits if needed."
+      : "Start sharing wallet balance to empower teams.",
+    availableBalance < 10
+      ? "Add funds to avoid low-balance interruptions."
+      : "Keep a buffer for upcoming usage spikes.",
+  ].filter(Boolean) as string[];
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#090c12] via-[#0d121a] to-[#0a0f16] text-zinc-100">
       {/* Header */}
@@ -776,11 +806,11 @@ export default function CompanyAdminDashboard() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={fetchCompanyAdminData}
-                className="gap-2 border-yellow-500/25 text-zinc-200 bg-[#182131] hover:bg-[#223049]"
+                onClick={() => setShowAnalysisDialog(true)}
+                className="gap-2 border-yellow-500/25 text-yellow-200 bg-[#182131] hover:bg-[#223049]"
               >
-                <RefreshCw className="w-4 h-4" />
-                Refresh
+                <Activity className="w-4 h-4" />
+                Analysis
               </Button>
               <Button
                 variant="outline"
@@ -1577,6 +1607,147 @@ export default function CompanyAdminDashboard() {
           <DialogFooter>
             <Button
               onClick={() => setShowWalletDetailsDialog(false)}
+              variant="outline"
+              className="border-yellow-500/20 bg-[#182131] text-zinc-200 hover:bg-[#223049]"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Analysis Dialog */}
+      <Dialog open={showAnalysisDialog} onOpenChange={setShowAnalysisDialog}>
+        <DialogContent className="sm:max-w-[760px] max-h-[80vh] overflow-y-auto bg-[#141a24] border-yellow-500/20 text-zinc-100 shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-zinc-100">
+              <Activity className="w-5 h-5 text-yellow-300" />
+              Analysis
+            </DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              Purpose: summarize company health, wallet usage, and team activity
+              so you can make clear improvements.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-zinc-500">Company overview</p>
+                <h3 className="text-lg font-semibold text-zinc-100">
+                  Health snapshot
+                </h3>
+              </div>
+              <div className="px-3 py-1 rounded-full text-xs bg-yellow-500/10 text-yellow-200 border border-yellow-500/20">
+                Live summary
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="p-4 rounded-xl border border-yellow-500/15 bg-gradient-to-br from-[#182131] to-[#151c2a]">
+                <p className="text-sm text-zinc-400">Teams</p>
+                <p className="text-2xl font-bold text-zinc-100 mt-1">
+                  {stats.totalOrganizations}
+                </p>
+                <p className="text-xs text-zinc-500">
+                  {teamsWithMembers} with members
+                </p>
+              </div>
+              <div className="p-4 rounded-xl border border-cyan-400/20 bg-gradient-to-br from-[#182131] to-[#141d2a]">
+                <p className="text-sm text-zinc-400">Members</p>
+                <p className="text-2xl font-bold text-cyan-300 mt-1">
+                  {stats.totalMembers}
+                </p>
+                <p className="text-xs text-zinc-500">
+                  Avg {averageMembersPerTeam} per team
+                </p>
+              </div>
+              <div className="p-4 rounded-xl border border-emerald-400/20 bg-gradient-to-br from-[#182131] to-[#121c28]">
+                <p className="text-sm text-zinc-400">Admins</p>
+                <p className="text-2xl font-bold text-emerald-300 mt-1">
+                  {admins.length}
+                </p>
+                <p className="text-xs text-zinc-500">Active company admins</p>
+              </div>
+              <div className="p-4 rounded-xl border border-blue-400/20 bg-gradient-to-br from-[#182131] to-[#121a26]">
+                <p className="text-sm text-zinc-400">Share Rate</p>
+                <p className="text-2xl font-bold text-blue-300 mt-1">
+                  {shareRate}%
+                </p>
+                <p className="text-xs text-zinc-500">Of wallet shared</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 rounded-xl border border-yellow-500/20 bg-gradient-to-br from-[#182131] to-[#171f2c]">
+                <p className="text-sm text-zinc-400">Available</p>
+                <p className="text-2xl font-bold text-yellow-300 mt-1">
+                  ${availableBalance.toFixed(2)}
+                </p>
+                <p className="text-xs text-zinc-500">Balance after sharing</p>
+              </div>
+              <div className="p-4 rounded-xl border border-cyan-400/20 bg-gradient-to-br from-[#182131] to-[#13202c]">
+                <p className="text-sm text-zinc-400">Shared Total</p>
+                <p className="text-2xl font-bold text-cyan-300 mt-1">
+                  ${stats.totalShared.toFixed(2)}
+                </p>
+                <p className="text-xs text-zinc-500">Total allocated</p>
+              </div>
+              <div className="p-4 rounded-xl border border-blue-400/20 bg-gradient-to-br from-[#182131] to-[#121a26]">
+                <p className="text-sm text-zinc-400">Usage Total</p>
+                <p className="text-2xl font-bold text-blue-300 mt-1">
+                  ${walletHistory?.totalUsage?.toFixed(2) || "0.00"}
+                </p>
+                <p className="text-xs text-zinc-500">Overall wallet usage</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 rounded-xl border border-fuchsia-400/20 bg-gradient-to-br from-[#182131] to-[#181a2a]">
+                <p className="text-sm text-zinc-400">Shared to Teammates</p>
+                <p className="text-2xl font-bold text-fuchsia-300 mt-1">
+                  ${totalSharedToTeammates.toFixed(2)}
+                </p>
+                <p className="text-xs text-zinc-500">From wallet history</p>
+              </div>
+              <div className="p-4 rounded-xl border border-emerald-400/20 bg-gradient-to-br from-[#182131] to-[#121c28]">
+                <p className="text-sm text-zinc-400">Company Signal</p>
+                <p className="text-2xl font-bold text-emerald-300 mt-1">
+                  {stats.totalMembers > 0 ? "Active" : "Starting"}
+                </p>
+                <p className="text-xs text-zinc-500">
+                  {stats.totalMembers > 0
+                    ? "Teams are ready for growth"
+                    : "Invite members to unlock momentum"}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-zinc-100">
+                  Improvements
+                </h3>
+                <span className="text-xs text-zinc-500">
+                  {improvementItems.length} suggestions
+                </span>
+              </div>
+              <div className="grid grid-cols-1 gap-2">
+                {improvementItems.map((item, index) => (
+                  <div
+                    key={`${item}-${index}`}
+                    className="p-3 bg-[#182131] rounded-lg border border-yellow-500/15 text-sm text-zinc-200"
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              onClick={() => setShowAnalysisDialog(false)}
               variant="outline"
               className="border-yellow-500/20 bg-[#182131] text-zinc-200 hover:bg-[#223049]"
             >

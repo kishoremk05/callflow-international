@@ -5,6 +5,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import LandingFooter from "@/components/LandingFooter";
 import BrandLogo from "@/components/branding/BrandLogo";
+import LandingSupportChatbot from "@/components/landing/LandingSupportChatbot";
 import "./newlandingpage.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -1852,7 +1853,9 @@ const LandingPage = () => {
                   </ul>
 
                   <a
-                    href={tier.highlighted ? "/pricing" : "/pricing"}
+                    href={
+                      tier.id === "enterprise-full" ? "/contact" : "/signup"
+                    }
                     className={`mt-auto block w-full text-center font-display text-sm tracking-[0.2em] uppercase px-6 py-3 transition-all duration-300 ${
                       tier.highlighted
                         ? "bg-lime text-on-lime hover:bg-lime/90 glow-lime-hover"
@@ -2558,6 +2561,7 @@ const LandingPage = () => {
       </section>
 
       <LandingFooter />
+      <LandingSupportChatbot />
     </div>
   );
 };

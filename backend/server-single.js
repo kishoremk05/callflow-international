@@ -7306,6 +7306,271 @@ app.post("/api/calendar/availability", async (req, res, next) => {
 });
 
 // ============================================================================
+// LANDING PAGE SUPPORT CHATBOT (xAI -> Grok -> Gemini fallback)
+// ============================================================================
+
+const SUPPORT_FALLBACK_MESSAGE = "Let me check that for you";
+
+const SUPPORT_SYSTEM_PROMPT = `You are CallFlow International's customer support assistant for landing page visitors.
+Rules:
+- Keep responses very short, clear, and practical.
+- Always format replies as 2-4 bullet points.
+- Each bullet must be one short line (max ~12 words).
+- Total response should usually be under 45 words.
+- Friendly and professional tone.
+- Focus on value: fast support, 24/7 help, smart responses.
+- Help with product info, pricing, and support guidance.
+- If user asks "how to", provide step-by-step instructions.
+- Never mention internal systems, APIs, model names, keys, stack traces, or technical diagnostics.
+- Never expose uncertainty in a scary way. If unsure, provide the best safe general guidance.
+- Never output raw errors.
+- If information is unknown, suggest contacting support@callflow.com politely.`;
+
+function sanitizeSupportResponse(text) {
+  if (!text || typeof text !== "string") return SUPPORT_FALLBACK_MESSAGE;
+  const cleaned = text.replace(/\r/g, "").trim();
+  if (!cleaned) return SUPPORT_FALLBACK_MESSAGE;
+
+  const normalized = cleaned
+    .replace(/\s*[-*•]\s+/g, "\n")
+    .replace(/\s*(\d+[.)])\s+/g, "\n");
+
+  // Keep it point-wise and compact for landing page UX.
+  let parts = normalized
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .flatMap((line) => {
+      const plainLine = line.replace(/^[-*•\d.)\s]+/, "").trim();
+      if (plainLine.length < 80) return [plainLine];
+      return plainLine.split(/[.!?]\s+/).map((part) => part.trim());
+    })
+    .filter(Boolean);
+
+  if (parts.length <= 1) {
+    parts = cleaned
+      .split(/[.!?]\s+/)
+      .map((part) => part.trim())
+      .filter(Boolean);
+  }
+
+  const bullets = parts
+    .slice(0, 4)
+    .map((part) => part.replace(/^[-*•\d.)\s]+/, "").trim())
+    .filter(Boolean)
+    .map((part) => {
+      const words = part.split(/\s+/).slice(0, 14).join(" ");
+      return `- ${words}${part.split(/\s+/).length > 14 ? "..." : ""}`;
+    });
+
+  const compact = bullets.join("\n");
+  if (!compact) return SUPPORT_FALLBACK_MESSAGE;
+  return compact.length > 260 ? `${compact.slice(0, 257)}...` : compact;
+}
+
+async function callXaiProvider(userMessage) {
+  if (!process.env.XAI_API_KEY) throw new Error("xAI key missing");
+
+  const response = await fetch("https://api.x.ai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.XAI_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: process.env.XAI_MODEL || "grok-2-latest",
+      temperature: 0.4,
+      max_tokens: 220,
+      messages: [
+        { role: "system", content: SUPPORT_SYSTEM_PROMPT },
+        { role: "user", content: userMessage },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(
+      `xAI failed: ${response.status} ${errText?.slice(0, 180) || ""}`,
+    );
+  }
+  const data = await response.json();
+  return data?.choices?.[0]?.message?.content || "";
+}
+
+async function callGrokProvider(userMessage) {
+  if (!process.env.GROK_API_KEY) throw new Error("Grok key missing");
+  const key = process.env.GROK_API_KEY;
+  const useGroq =
+    (process.env.GROK_PROVIDER || "auto") === "groq" ||
+    ((process.env.GROK_PROVIDER || "auto") === "auto" &&
+      key.startsWith("gsk_"));
+
+  if (useGroq) {
+    const groqResponse = await fetch(
+      process.env.GROQ_API_BASE || "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: process.env.GROQ_MODEL || "llama-3.1-8b-instant",
+          temperature: 0.4,
+          max_tokens: 220,
+          messages: [
+            { role: "system", content: SUPPORT_SYSTEM_PROMPT },
+            { role: "user", content: userMessage },
+          ],
+        }),
+      },
+    );
+
+    if (!groqResponse.ok) {
+      const errText = await groqResponse.text();
+      throw new Error(
+        `Groq fallback failed: ${groqResponse.status} ${errText?.slice(0, 180) || ""}`,
+      );
+    }
+
+    const groqData = await groqResponse.json();
+    return groqData?.choices?.[0]?.message?.content || "";
+  }
+
+  const xaiStyleResponse = await fetch(
+    process.env.GROK_API_BASE || "https://api.x.ai/v1/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: process.env.GROK_MODEL || "grok-2-latest",
+        temperature: 0.4,
+        max_tokens: 220,
+        messages: [
+          { role: "system", content: SUPPORT_SYSTEM_PROMPT },
+          { role: "user", content: userMessage },
+        ],
+      }),
+    },
+  );
+
+  if (!xaiStyleResponse.ok) {
+    const errText = await xaiStyleResponse.text();
+    throw new Error(
+      `Grok failed: ${xaiStyleResponse.status} ${errText?.slice(0, 180) || ""}`,
+    );
+  }
+  const data = await xaiStyleResponse.json();
+  return data?.choices?.[0]?.message?.content || "";
+}
+
+async function callGeminiProvider(userMessage) {
+  if (!process.env.GEMINI_API_KEY) throw new Error("Gemini key missing");
+
+  const model = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      systemInstruction: {
+        parts: [{ text: SUPPORT_SYSTEM_PROMPT }],
+      },
+      generationConfig: {
+        temperature: 0.4,
+        maxOutputTokens: 220,
+      },
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: userMessage }],
+        },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(
+      `Gemini failed: ${response.status} ${errText?.slice(0, 180) || ""}`,
+    );
+  }
+  const data = await response.json();
+  return data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+}
+
+app.post("/api/support-chat", async (req, res) => {
+  const rawMessage = req.body?.message;
+  const message = typeof rawMessage === "string" ? rawMessage.trim() : "";
+
+  if (!message) {
+    return res.json({
+      success: true,
+      reply:
+        "I can help with features, pricing, and support. What would you like to know?",
+    });
+  }
+
+  try {
+    const providerMap = {
+      grok: { name: "grok", run: callGrokProvider },
+      gemini: { name: "gemini", run: callGeminiProvider },
+      xai: { name: "xai", run: callXaiProvider },
+    };
+    const order = (process.env.SUPPORT_PROVIDER_ORDER || "grok,gemini,xai")
+      .split(",")
+      .map((item) => item.trim().toLowerCase())
+      .filter((item) => providerMap[item]);
+    const providers = order.map((item) => providerMap[item]);
+
+    for (const provider of providers) {
+      try {
+        const output = await provider.run(message);
+        const safeReply = sanitizeSupportResponse(output);
+        if (safeReply) {
+          return res.json({
+            success: true,
+            reply: safeReply,
+          });
+        }
+      } catch (providerError) {
+        const msg = String(providerError?.message || "");
+        const isExpectedPermissionIssue =
+          provider.name === "xai" &&
+          (msg.includes("403") ||
+            msg.toLowerCase().includes("permission") ||
+            msg.toLowerCase().includes("credits") ||
+            msg.toLowerCase().includes("license"));
+
+        if (!isExpectedPermissionIssue) {
+          console.warn(
+            `[support-chat] ${provider.name} fallback triggered: ${msg}`,
+          );
+        }
+      }
+    }
+
+    return res.json({
+      success: true,
+      reply:
+        "Let me check that for you. For immediate help, please contact support@callflow.com.",
+    });
+  } catch (error) {
+    console.error("[support-chat] unexpected error:", error.message);
+    return res.json({
+      success: true,
+      reply:
+        "Let me check that for you. I can still help with product, pricing, or support questions.",
+    });
+  }
+});
+
+// ============================================================================
 // ERROR HANDLING
 // ============================================================================
 
