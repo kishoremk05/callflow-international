@@ -402,7 +402,7 @@ const Index = () => {
               onScroll={false}
               delay={0.5}
             >
-              CALLFLOW
+              PALODIAL
             </SplitText>
 
             <SplitText
@@ -485,7 +485,7 @@ const Index = () => {
             className="text-lime font-body text-xs tracking-[0.3em] uppercase mb-10 quote-word"
             style={{ display: "inline-block" }}
           >
-            Why CallFlow
+            Why Palodial
           </p>
           <h2 className="font-display text-4xl md:text-6xl lg:text-7xl text-on-dark leading-[1.1] tracking-tight uppercase">
             <span className="quote-word font-serif-accent">Redefining</span>{" "}

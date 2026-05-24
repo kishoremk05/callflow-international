@@ -214,7 +214,7 @@ const TermsOfService = () => {
                   1. Agreement to Terms
                 </h2>
                 <p className="text-gray-600 mb-4">
-                  By accessing or using CallFlow&apos;s services, you agree to
+                  By accessing or using Palodial&apos;s services, you agree to
                   be bound by these Terms of Service and all applicable laws and
                   regulations. If you do not agree with any of these terms, you
                   are prohibited from using or accessing this service.
@@ -226,7 +226,7 @@ const TermsOfService = () => {
                   2. Use License
                 </h2>
                 <p className="text-gray-600 mb-4">
-                  Permission is granted to temporarily use CallFlow&apos;s
+                  Permission is granted to temporarily use Palodial&apos;s
                   services for personal or commercial telecommunications
                   purposes only. This is the grant of a license, not a transfer
                   of title, and under this license you may not:
@@ -379,7 +379,7 @@ const TermsOfService = () => {
                   8. Limitation of Liability
                 </h2>
                 <p className="text-gray-600 mb-4">
-                  In no event shall CallFlow, its directors, employees, or
+                  In no event shall Palodial, its directors, employees, or
                   agents be liable for any indirect, incidental, special,
                   consequential, or punitive damages, including without
                   limitation loss of profits, data, use, goodwill, or other
@@ -406,7 +406,7 @@ const TermsOfService = () => {
                 </h2>
                 <p className="text-gray-600 mb-4">
                   Your use of the service is at your sole risk. The service is
-                  provided on an "AS IS" and "AS AVAILABLE" basis. CallFlow
+                  provided on an "AS IS" and "AS AVAILABLE" basis. Palodial
                   expressly disclaims all warranties of any kind, whether
                   express or implied.
                 </p>

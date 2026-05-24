@@ -11,8 +11,8 @@ import "./newlandingpage.css";
 gsap.registerPlugin(ScrollTrigger);
 
 const companyInfo = {
-  name: "CallFlow International",
-  shortName: "CallFlow",
+  name: "Palodial",
+  shortName: "Palodial",
   tagline: "Global Communication, Zero Boundaries",
   description:
     "Browser-based VoIP SaaS platform for calling, meetings, and enterprise communication.",
@@ -605,7 +605,7 @@ const faqs = [
   },
   {
     q: "Do I need to install anything?",
-    a: "No. CallFlow is 100% browser-based. It works on Chrome, Firefox, Safari, and Edge - on desktop, tablet, and mobile devices.",
+    a: "No. Palodial is 100% browser-based. It works on Chrome, Firefox, Safari, and Edge - on desktop, tablet, and mobile devices.",
   },
   {
     q: "What are the rates for international calls?",
@@ -617,7 +617,7 @@ const faqs = [
   },
   {
     q: "What about call quality?",
-    a: "CallFlow uses adaptive bitrate, intelligent jitter buffering, and regional media routing to keep calls stable. During pilot rollout, quality metrics are tracked continuously so teams can tune performance before full launch.",
+    a: "Palodial uses adaptive bitrate, intelligent jitter buffering, and regional media routing to keep calls stable. During pilot rollout, quality metrics are tracked continuously so teams can tune performance before full launch.",
   },
   {
     q: "Is my call data secure?",
@@ -1430,11 +1430,11 @@ const LandingPage = () => {
                 <aside className="bg-dark-lighter/70 border border-lime/10 rounded-2xl p-5 md:p-6 flex-1">
                   <div className="flex items-center gap-4 pb-5 border-b border-lime/10">
                     <div className="w-14 h-14 rounded-xl bg-lime/20 flex items-center justify-center text-2xl">
-                      CF
+                      P
                     </div>
                     <div>
                       <p className="font-display text-2xl text-on-dark normal-case tracking-normal">
-                        CallFlow
+                        Palodial
                       </p>
                       <p className="text-xs text-muted-dark font-body mt-1">
                         {analysisUserType === "company"
@@ -1537,7 +1537,7 @@ const LandingPage = () => {
                 Deep <span className="text-lime">Dive</span>
               </h2>
               <p className="mt-5 font-body text-[1.15rem] text-muted-dark leading-relaxed">
-                Explore every capability that makes CallFlow the most complete
+                Explore every capability that makes Palodial the most complete
                 browser-based communication platform.
               </p>
             </div>
@@ -1629,11 +1629,11 @@ const LandingPage = () => {
                 <aside className="bg-dark-lighter/70 border border-lime/10 rounded-2xl p-5 md:p-6 flex-1">
                   <div className="flex items-center gap-4 pb-5 border-b border-lime/10">
                     <div className="w-14 h-14 rounded-xl bg-lime/20 flex items-center justify-center text-2xl">
-                      CF
+                      P
                     </div>
                     <div>
                       <p className="font-display text-2xl text-on-dark normal-case tracking-normal">
-                        CallFlow
+                        Palodial
                       </p>
                       <p className="text-xs text-muted-dark font-body mt-1">
                         {analysisUserType === "company"
@@ -2104,7 +2104,7 @@ const LandingPage = () => {
             className="relative z-10 text-center px-4 sm:px-6 max-w-5xl mx-auto"
           >
             <h1 className="font-display text-[clamp(3.75rem,18vw,5.5rem)] sm:text-[7rem] md:text-[11rem] lg:text-[13rem] xl:text-[15rem] leading-[0.82] text-on-dark tracking-tighter">
-              CALLFLOW
+              PALODIAL
             </h1>
             <p className="text-muted-dark font-body text-base md:text-lg max-w-2xl mx-auto mt-8">
               {companyInfo.description}
@@ -2168,7 +2168,7 @@ const LandingPage = () => {
             className="text-lime font-body text-xs tracking-[0.3em] uppercase mb-10 quote-word"
             style={{ display: "inline-block" }}
           >
-            Why CallFlow
+            Why Palodial
           </p>
           <h2 className="font-display text-4xl md:text-6xl lg:text-7xl text-on-dark leading-[1.1] tracking-tight uppercase">
             <span className="quote-word font-serif-accent">Powering</span>{" "}

@@ -42,7 +42,7 @@ const Blog = () => {
       icon: "ðŸ”§",
     },
     {
-      title: "CallFlow API: Building Your First Integration",
+      title: "Palodial API: Building Your First Integration",
       excerpt:
         "A step-by-step guide to integrating voice calling into your application using our API.",
       date: "January 20, 2024",
@@ -103,7 +103,7 @@ const Blog = () => {
               <div className="w-10 h-10 bg-[#0891b2] rounded-xl flex items-center justify-center">
                 <Phone className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold">CallFlow</span>
+              <span className="text-xl font-bold">Palodial</span>
             </div>
             <div className="flex gap-4">
               <Button variant="outline" onClick={() => navigate("/login")}>
@@ -125,7 +125,7 @@ const Blog = () => {
         <div className="container mx-auto px-4 md:px-6">
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              CallFlow Blog
+              Palodial Blog
             </h1>
             <p className="text-xl text-gray-100 mb-8">
               Insights, tips, and stories about global communication and
@@ -269,7 +269,7 @@ const Blog = () => {
           </h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
             Join thousands of users making crystal-clear international calls
-            with CallFlow.
+            with Palodial.
           </p>
           <Button
             size="lg"
@@ -285,4 +285,3 @@ const Blog = () => {
 };
 
 export default Blog;
-

@@ -112,7 +112,7 @@ const API = () => {
               <div className="w-10 h-10 bg-[#0891b2] rounded-xl flex items-center justify-center">
                 <Phone className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold">CallFlow</span>
+              <span className="text-xl font-bold">Palodial</span>
             </div>
             <div className="flex gap-4">
               <Button variant="outline" onClick={() => navigate("/login")}>
@@ -134,7 +134,7 @@ const API = () => {
         <div className="container mx-auto px-4 md:px-6">
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              CallFlow API
+              Palodial API
             </h1>
             <p className="text-xl text-gray-100 mb-8">
               Integrate voice calling into your application with our powerful,
@@ -189,9 +189,7 @@ const API = () => {
                 <span className="text-gray-400"># Install the SDK</span>
               </div>
               <div className="mb-6">
-                <code className="text-green-400">
-                  npm install callflow-sdk
-                </code>
+                <code className="text-green-400">npm install callflow-sdk</code>
               </div>
               <div className="mb-4">
                 <span className="text-gray-400">
@@ -305,7 +303,7 @@ console.log('Call initiated:', call.callId);`}</code>
         <div className="container mx-auto px-4 md:px-6">
           <div className="bg-gradient-to-br from-[#0891b2] to-[#0e7490] rounded-3xl p-12 md:p-16 text-center text-white">
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              Ready to Build with CallFlow?
+              Ready to Build with Palodial?
             </h2>
             <p className="text-xl mb-8 max-w-2xl mx-auto">
               Get your API key and start integrating voice calling into your
@@ -336,4 +334,3 @@ console.log('Call initiated:', call.callId);`}</code>
 };
 
 export default API;
-

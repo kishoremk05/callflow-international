@@ -63,7 +63,7 @@ const Careers = () => {
       location: "Remote",
       type: "Full-time",
       description:
-        "Help our customers succeed and grow their businesses with CallFlow.",
+        "Help our customers succeed and grow their businesses with Palodial.",
     },
     {
       title: "DevOps Engineer",
@@ -113,7 +113,7 @@ const Careers = () => {
               <div className="w-10 h-10 bg-[#0891b2] rounded-xl flex items-center justify-center">
                 <Phone className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold">CallFlow</span>
+              <span className="text-xl font-bold">Palodial</span>
             </div>
             <div className="flex gap-4">
               <Button variant="outline" onClick={() => navigate("/login")}>
@@ -161,7 +161,7 @@ const Careers = () => {
         <div className="container mx-auto px-4 md:px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Why CallFlow?
+              Why Palodial?
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
               Join a team that's passionate about making a global impact and
@@ -279,4 +279,3 @@ const Careers = () => {
 };
 
 export default Careers;
-

@@ -219,7 +219,7 @@ const PrivacyPolicy = () => {
                   1. Introduction and Scope
                 </h2>
                 <p className="text-gray-600 mb-4">
-                  Welcome to CallFlow. We respect your privacy and are committed
+                  Welcome to Palodial. We respect your privacy and are committed
                   to protecting your personal data in accordance with the
                   General Data Protection Regulation (GDPR) - Regulation (EU)
                   2016/679. This privacy policy will inform you about how we
@@ -228,7 +228,7 @@ const PrivacyPolicy = () => {
                   explain how the law protects you.
                 </p>
                 <p className="text-gray-600 mb-4">
-                  <strong>Data Controller:</strong> CallFlow is the data
+                  <strong>Data Controller:</strong> Palodial is the data
                   controller responsible for your personal data. If you have any
                   questions about this privacy policy or our data processing
                   practices, please contact our Data Protection Officer (DPO) at

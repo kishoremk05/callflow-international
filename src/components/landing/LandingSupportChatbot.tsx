@@ -88,7 +88,7 @@ export default function LandingSupportChatbot() {
                 <FaRobot className="h-4 w-4" aria-hidden="true" />
               </span>
               <p className="text-lime font-display text-xs tracking-widest uppercase">
-                CallFlow Support
+                Palodial Support
               </p>
               <p className="text-zinc-300 text-xs">Fast 24/7 help</p>
             </div>

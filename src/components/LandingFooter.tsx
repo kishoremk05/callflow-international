@@ -82,7 +82,7 @@ const LandingFooter = () => {
 
           <div className="mt-14 pt-8 border-t border-lime/5 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-muted-dark text-xs md:text-sm font-body">
-              © 2026 CallFlow International. All rights reserved.
+              © 2026 Palodial. All rights reserved.
             </p>
             <p className="text-muted-dark text-xs md:text-sm font-body">
               Built with React &amp; Vite

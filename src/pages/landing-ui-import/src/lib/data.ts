@@ -1,9 +1,9 @@
-// CallFlow International — Content Data
+// Palodial — Content Data
 
 export const companyInfo = {
-  name: "CallFlow International",
-  shortName: "CallFlow",
-  product: "CallFlow Pro",
+  name: "Palodial",
+  shortName: "Palodial",
+  product: "Palodial Pro",
   tagline: "Global Communication, Zero Boundaries",
   description:
     "Browser-based VoIP SaaS platform for calling, meetings, and enterprise communication.",
@@ -181,7 +181,7 @@ export const testimonials: Testimonial[] = [
   {
     id: 1,
     quote:
-      "CallFlow replaced three separate tools for us. Our international calling costs dropped 60% in the first month.",
+      "Palodial replaced three separate tools for us. Our international calling costs dropped 60% in the first month.",
     author: "Sarah Chen",
     role: "VP Operations",
     company: "TechScale Global",
@@ -205,7 +205,7 @@ export const testimonials: Testimonial[] = [
   {
     id: 4,
     quote:
-      "Enterprise-grade security with the simplicity of a consumer app. CallFlow is how business communication should work.",
+      "Enterprise-grade security with the simplicity of a consumer app. Palodial is how business communication should work.",
     author: "James Whitfield",
     role: "Head of IT",
     company: "Pinnacle Financial",
@@ -285,7 +285,7 @@ export const faqItems = [
   {
     question: "Do I need to install anything?",
     answer:
-      "No. CallFlow is 100% browser-based. It works on Chrome, Firefox, Safari, and Edge — on desktop, tablet, and mobile devices.",
+      "No. Palodial is 100% browser-based. It works on Chrome, Firefox, Safari, and Edge — on desktop, tablet, and mobile devices.",
   },
   {
     question: "Are internal meetings really free?",
@@ -300,10 +300,10 @@ export const faqItems = [
   {
     question: "What about call quality?",
     answer:
-      "CallFlow uses adaptive bitrate technology with Opus codec, built-in noise cancellation, and global edge servers to deliver crystal-clear HD voice quality even on variable connections.",
+      "Palodial uses adaptive bitrate technology with Opus codec, built-in noise cancellation, and global edge servers to deliver crystal-clear HD voice quality even on variable connections.",
   },
   {
-    question: "Is CallFlow suitable for regulated industries?",
+    question: "Is Palodial suitable for regulated industries?",
     answer:
       "Absolutely. We offer SOC 2 Type II compliance, end-to-end encryption, HIPAA-ready configurations, detailed audit logs, and data residency options for healthcare, finance, and government sectors.",
   },

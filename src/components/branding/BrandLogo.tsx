@@ -12,7 +12,7 @@ const BrandLogo = ({
   className,
   iconClassName,
   textClassName,
-  label = "CALLFLOW",
+  label = "PALODIAL",
   showText = true,
 }: BrandLogoProps) => {
   return (

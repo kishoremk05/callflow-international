@@ -18,7 +18,7 @@ const CookiePolicy = () => {
               <div className="w-10 h-10 bg-[#0891b2] rounded-xl flex items-center justify-center">
                 <Phone className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold">CallFlow</span>
+              <span className="text-xl font-bold">Palodial</span>
             </div>
             <div className="flex gap-4">
               <Button variant="outline" onClick={() => navigate("/login")}>
@@ -68,9 +68,9 @@ const CookiePolicy = () => {
                   information to the owners of the site.
                 </p>
                 <p className="text-gray-600 mb-4">
-                  CallFlow uses cookies to distinguish you from other users
-                  and to provide you with a better experience when you browse
-                  our website and use our services.
+                  Palodial uses cookies to distinguish you from other users and
+                  to provide you with a better experience when you browse our
+                  website and use our services.
                 </p>
               </section>
 
@@ -274,7 +274,9 @@ const CookiePolicy = () => {
                     your experience of our services.
                   </p>
                   <ul className="list-disc pl-6 text-gray-600 space-y-1">
-                    <li>Chrome: Settings â†’ Privacy and Security â†’ Cookies</li>
+                    <li>
+                      Chrome: Settings â†’ Privacy and Security â†’ Cookies
+                    </li>
                     <li>Firefox: Options â†’ Privacy & Security â†’ Cookies</li>
                     <li>Safari: Preferences â†’ Privacy â†’ Cookies</li>
                     <li>Edge: Settings â†’ Privacy â†’ Cookies</li>
@@ -360,4 +362,3 @@ const CookiePolicy = () => {
 };
 
 export default CookiePolicy;
-

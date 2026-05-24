@@ -73,7 +73,7 @@ const AboutUs = () => {
       year: "2020",
       title: "Founded",
       description:
-        "CallFlow launched with a mission to make international calling accessible, clear, and affordable.",
+        "Palodial launched with a mission to make international calling accessible, clear, and affordable.",
     },
     {
       year: "2021",
@@ -309,7 +309,7 @@ const AboutUs = () => {
               className="font-display text-[4.1rem] md:text-[8.6rem] lg:text-[9.3rem] leading-[0.86] text-on-dark uppercase tracking-[-0.02em]"
             >
               <span className="about-title-line block">About</span>
-              <span className="about-title-line block">CallFlow</span>
+              <span className="about-title-line block">Palodial</span>
             </h1>
             <p className="font-body text-[1.05rem] text-muted-dark mt-6 leading-relaxed max-w-3xl">
               We build communication software that makes global conversations

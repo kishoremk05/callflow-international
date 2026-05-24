@@ -111,7 +111,7 @@ const Platform = () => {
               <p className="text-muted-dark font-body text-sm mt-4 leading-relaxed">
                 Auto-scaling cloud infrastructure with global edge deployment.
                 99.9% uptime SLA, end-to-end encryption, and real-time failover.
-                From 1 user to 10,000+ seats — CallFlow grows with your
+                From 1 user to 10,000+ seats — Palodial grows with your
                 organization.
               </p>
             </ScrollReveal>

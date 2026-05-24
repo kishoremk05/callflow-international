@@ -74,7 +74,7 @@ export default function AccountTypeSelection() {
       <Card className="w-full max-w-2xl shadow-xl">
         <CardHeader className="text-center space-y-2">
           <CardTitle className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-orange-400 bg-clip-text text-transparent">
-            Welcome to CallFlow Pro!
+            Welcome to Palodial!
           </CardTitle>
           <CardDescription className="text-base">
             Choose your account type to continue
@@ -232,4 +232,3 @@ export default function AccountTypeSelection() {
     </div>
   );
 }
-

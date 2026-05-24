@@ -101,7 +101,7 @@ const Pricing = () => {
               <div className="w-10 h-10 bg-[#0891b2] rounded-xl flex items-center justify-center">
                 <Phone className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold">CallFlow</span>
+              <span className="text-xl font-bold">Palodial</span>
             </div>
             <div className="flex gap-4">
               <Button variant="outline" onClick={() => navigate("/login")}>
@@ -256,7 +256,7 @@ const Pricing = () => {
             Start Saving on International Calls Today
           </h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Join thousands of users who trust CallFlow for affordable,
+            Join thousands of users who trust Palodial for affordable,
             high-quality international calling.
           </p>
           <Button
@@ -273,4 +273,3 @@ const Pricing = () => {
 };
 
 export default Pricing;
-

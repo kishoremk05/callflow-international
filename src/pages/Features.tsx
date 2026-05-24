@@ -132,7 +132,7 @@ const Features = () => {
                 <Phone className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-bold text-foreground">
-                CallFlow
+                Palodial
               </span>
             </div>
             <div className="flex gap-3">
@@ -203,8 +203,8 @@ const Features = () => {
               Everything You Need
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Discover all the features that make CallFlow the perfect
-              choice for your international calling needs.
+              Discover all the features that make Palodial the perfect choice
+              for your international calling needs.
             </p>
           </div>
 
@@ -631,7 +631,7 @@ const Features = () => {
                 Ready to Experience These Features?
               </h2>
               <p className="text-xl mb-8 max-w-2xl mx-auto text-white/90">
-                Join thousands of users who trust CallFlow for their
+                Join thousands of users who trust Palodial for their
                 international calling needs.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -660,4 +660,3 @@ const Features = () => {
 };
 
 export default Features;
-

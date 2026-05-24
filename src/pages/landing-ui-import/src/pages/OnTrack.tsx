@@ -43,7 +43,8 @@ const Features = () => {
           </SplitText>
           <ScrollReveal delay={0.6} y={20}>
             <p className="text-muted-dark font-body text-sm mt-4 max-w-md">
-              Everything your team needs for international communication — calling, meetings, billing, and security.
+              Everything your team needs for international communication —
+              calling, meetings, billing, and security.
             </p>
           </ScrollReveal>
         </div>
@@ -75,7 +76,8 @@ const Features = () => {
               Deep <span className="text-lime">Dive</span>
             </h2>
             <p className="text-muted-dark font-body text-sm max-w-lg mb-12">
-              Explore every capability that makes CallFlow the most complete browser-based communication platform.
+              Explore every capability that makes Palodial the most complete
+              browser-based communication platform.
             </p>
           </ScrollReveal>
 
