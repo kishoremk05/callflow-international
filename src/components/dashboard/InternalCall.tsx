@@ -202,7 +202,7 @@ function CallRoom({ roomName, userName, onLeave }: InternalCallProps) {
               roomName,
               participantName: userName,
             }),
-          }
+          },
         );
 
         const data = await response.json();
@@ -252,7 +252,7 @@ function CallRoom({ roomName, userName, onLeave }: InternalCallProps) {
               headers: {
                 Authorization: `Bearer ${accessToken}`,
               },
-            }
+            },
           );
         }
       }
@@ -266,7 +266,7 @@ function CallRoom({ roomName, userName, onLeave }: InternalCallProps) {
   const handleApproved = (
     approvedToken: string,
     roomId: string,
-    serverUrl: string
+    serverUrl: string,
   ) => {
     setToken(approvedToken);
     setWsUrl(serverUrl);
@@ -373,9 +373,6 @@ export default function InternalCall({
           <h1 className="text-3xl font-bold text-[#1a365d]">
             Internal Call: {roomName}
           </h1>
-          <p className="text-gray-600">
-            Professional team calling - $2 per hour
-          </p>
         </div>
 
         <CallRoom roomName={roomName} userName={userName} onLeave={onLeave} />

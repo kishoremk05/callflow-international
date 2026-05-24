@@ -336,7 +336,7 @@ export function MeetingCalendar() {
           <CalendarDays className="w-8 h-8 text-[#0891b2]" />
         </div>
         <div className="text-center">
-          <h2 className="text-xl font-bold text-[#1a365d] mb-2">
+          <h2 className="text-xl font-bold text-white mb-2">
             Connect Google Calendar
           </h2>
           <p className="text-gray-500 text-sm max-w-sm">

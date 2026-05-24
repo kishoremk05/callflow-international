@@ -557,7 +557,7 @@ export default function VoiceCall() {
                         Internal Team Call
                       </CardTitle>
                       <p className="text-sm text-zinc-400">
-                        💼 Professional calling with your team • $2 per hour
+                        💼 Professional calling with your team
                       </p>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -565,11 +565,10 @@ export default function VoiceCall() {
                         <div className="flex items-center gap-2 text-cyan-200 mb-2">
                           <Users className="w-5 h-5" />
                           <span className="font-semibold">
-                            Pricing: $2 per Hour
+                            Team calling features
                           </span>
                         </div>
                         <ul className="text-sm text-cyan-300/90 space-y-1">
-                          <li>✓ Billed hourly from your wallet</li>
                           <li>✓ High-quality audio calling</li>
                           <li>✓ Available for all users</li>
                           <li>✓ One-to-one or group calls</li>
@@ -802,8 +801,8 @@ export default function VoiceCall() {
 
                       <div className="bg-[#17243a] border border-cyan-400/25 p-3 rounded-lg">
                         <p className="text-sm text-cyan-200">
-                          <strong>Note:</strong> Calls are billed at $2 per hour
-                          and deducted from your wallet balance.
+                          <strong>Note:</strong> Use a room code to start or
+                          join a team call.
                         </p>
                       </div>
                     </CardContent>

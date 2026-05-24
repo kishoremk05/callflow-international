@@ -226,10 +226,9 @@ export function useTwilioDevice() {
         console.log(
           `💰 Call to ${costEstimate.countryName} (${costEstimate.phoneType}): $${costEstimate.ratePerMinute.toFixed(4)}/min - Est. cost: $${costEstimate.estimatedCost.toFixed(4)}`,
         );
-        toast.info(
-          `Call to ${costEstimate.countryName}: $${costEstimate.ratePerMinute.toFixed(4)}/min`,
-          { duration: 3000 },
-        );
+        toast.info(`Preparing call to ${costEstimate.countryName}`, {
+          duration: 3000,
+        });
       }
 
       const response = await fetch(`${API_URL}/api/calls/initiate`, {
