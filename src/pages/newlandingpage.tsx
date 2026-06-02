@@ -680,6 +680,70 @@ const LandingPage = () => {
   const particleCanvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
+    const pageTitle = "Palodial | Global Communication, Zero Boundaries";
+    const pageDescription =
+      "Palodial is a browser-based communication platform for calling, meetings, and enterprise collaboration.";
+
+    const setMetaContent = (
+      selector: string,
+      attribute: "name" | "property",
+      value: string,
+      content: string,
+    ) => {
+      let element = document.head.querySelector(
+        selector,
+      ) as HTMLMetaElement | null;
+
+      if (!element) {
+        element = document.createElement("meta");
+        element.setAttribute(attribute, value);
+        document.head.appendChild(element);
+      }
+
+      element.setAttribute(attribute, value);
+      element.setAttribute("content", content);
+    };
+
+    const previousTitle = document.title;
+    document.title = pageTitle;
+
+    setMetaContent(
+      'meta[name="description"]',
+      "name",
+      "description",
+      pageDescription,
+    );
+    setMetaContent(
+      'meta[property="og:title"]',
+      "property",
+      "og:title",
+      pageTitle,
+    );
+    setMetaContent(
+      'meta[property="og:description"]',
+      "property",
+      "og:description",
+      pageDescription,
+    );
+    setMetaContent(
+      'meta[name="twitter:title"]',
+      "name",
+      "twitter:title",
+      pageTitle,
+    );
+    setMetaContent(
+      'meta[name="twitter:description"]',
+      "name",
+      "twitter:description",
+      pageDescription,
+    );
+
+    return () => {
+      document.title = previousTitle;
+    };
+  }, [pathname]);
+
+  useEffect(() => {
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
