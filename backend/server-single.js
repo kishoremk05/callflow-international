@@ -111,6 +111,84 @@ if (
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+const SUPABASE_PING_ENABLED = process.env.SUPABASE_PING_ENABLED !== "false";
+const SUPABASE_PING_TIME = process.env.SUPABASE_PING_TIME || "06:00";
+const SUPABASE_PING_TABLE = process.env.SUPABASE_PING_TABLE || "wallets";
+const SUPABASE_PING_SELECT = process.env.SUPABASE_PING_SELECT || "id";
+const SUPABASE_PING_LIMIT = process.env.SUPABASE_PING_LIMIT || "1";
+
+function getNextScheduledRun(timeString) {
+  const [hours, minutes] = timeString.split(":").map((value) => Number(value));
+  const nextRun = new Date();
+
+  nextRun.setHours(hours, minutes, 0, 0);
+
+  if (nextRun <= new Date()) {
+    nextRun.setDate(nextRun.getDate() + 1);
+  }
+
+  return nextRun;
+}
+
+async function pingSupabaseRest() {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+    throw new Error("Missing Supabase credentials for scheduled ping");
+  }
+
+  const endpoint = new URL(
+    `${process.env.SUPABASE_URL}/rest/v1/${encodeURIComponent(SUPABASE_PING_TABLE)}`,
+  );
+  endpoint.searchParams.set("select", SUPABASE_PING_SELECT);
+  endpoint.searchParams.set("limit", SUPABASE_PING_LIMIT);
+
+  const response = await fetch(endpoint, {
+    method: "GET",
+    headers: {
+      apikey: process.env.SUPABASE_SERVICE_KEY,
+      Authorization: `Bearer ${process.env.SUPABASE_SERVICE_KEY}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Supabase ping failed: ${response.status} ${errorText?.slice(0, 200) || ""}`,
+    );
+  }
+
+  console.log(
+    `✅ Supabase ping completed against ${SUPABASE_PING_TABLE} at ${new Date().toISOString()}`,
+  );
+}
+
+function scheduleDailySupabasePing() {
+  if (!SUPABASE_PING_ENABLED) {
+    console.log("ℹ️ Supabase daily ping is disabled");
+    return;
+  }
+
+  const nextRun = getNextScheduledRun(SUPABASE_PING_TIME);
+  const delay = nextRun.getTime() - Date.now();
+
+  console.log(
+    `🕕 Next Supabase ping scheduled for ${nextRun.toLocaleString()} (${SUPABASE_PING_TIME})`,
+  );
+
+  const timer = setTimeout(async () => {
+    try {
+      await pingSupabaseRest();
+    } catch (error) {
+      console.error("❌ Supabase ping failed:", error.message);
+    } finally {
+      scheduleDailySupabasePing();
+    }
+  }, delay);
+
+  if (typeof timer.unref === "function") {
+    timer.unref();
+  }
+}
+
 // Middleware
 app.use(helmet());
 
@@ -7408,7 +7486,8 @@ async function callGrokProvider(userMessage) {
 
   if (useGroq) {
     const groqResponse = await fetch(
-      process.env.GROQ_API_BASE || "https://api.groq.com/openai/v1/chat/completions",
+      process.env.GROQ_API_BASE ||
+        "https://api.groq.com/openai/v1/chat/completions",
       {
         method: "POST",
         headers: {
@@ -7598,6 +7677,8 @@ const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`📱 Environment: ${process.env.NODE_ENV}`);
   console.log(`✅ Server is ready to accept connections`);
 });
+
+scheduleDailySupabasePing();
 
 server.on("error", (error) => {
   console.error("❌ Server error:", error);
