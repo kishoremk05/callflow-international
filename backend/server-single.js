@@ -400,6 +400,34 @@ app.get("/health", (req, res) => {
   });
 });
 
+app.get("/supabase-keepalive", async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from(SUPABASE_PING_TABLE)
+      .select(SUPABASE_PING_SELECT)
+      .limit(Number(SUPABASE_PING_LIMIT));
+
+    if (error) {
+      throw error;
+    }
+
+    res.json({
+      success: true,
+      status: "supabase-active",
+      table: SUPABASE_PING_TABLE,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    res.status(503).json({
+      success: false,
+      status: "supabase-unreachable",
+      table: SUPABASE_PING_TABLE,
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
 // Root endpoint
 app.get("/", (req, res) => {
   res.json({
@@ -408,6 +436,7 @@ app.get("/", (req, res) => {
     status: "running",
     endpoints: {
       health: "/health",
+      supabaseKeepAlive: "/supabase-keepalive",
       api: "/api",
     },
   });
